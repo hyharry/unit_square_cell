@@ -10,7 +10,7 @@ ffc_options = {"optimize": True, \
                "precompute_ip_const": True}
 
 
-class computation(object):
+class MicroComputation(object):
     def __init__(self, cell, bc, function_space):
         self.domain_mesh = cell.mesh
         self.subdom_data = cell.domain
