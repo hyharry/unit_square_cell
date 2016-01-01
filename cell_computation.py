@@ -92,7 +92,7 @@ class MicroComputation(object):
             return project(F_ex, FS)
         elif F_dim == dim:
             VFS = VectorFunctionSpace(self.cell.mesh, 'R', 0)
-            F_ex = Expression(('F1','F2'), F1=F_li[0], F2=F_li[1])
+            F_ex = Expression(('F1', 'F2'), F1=F_li[0], F2=F_li[1])
             return project(F_ex, VFS)
         elif F_dim == dim**2:
             TFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
@@ -105,20 +105,19 @@ class MicroComputation(object):
         else:
             raise Exception('Please Input Right Dimension')
 
-
     # ==== Pre-Processing Stage ====
     def _field_compose(self):
         if self.multi_field_label:
             FS_li = [wi.function_space() for wi in self.w]
             MFS = MixedFunctionSpace(FS_li)
             self.w_composed = Function(MFS)
-            self.v_composed = TestFunctions(MFS)
+            self.v_composed = TestFunction(MFS)
             self.dw_composed = TrialFunction(MFS)
             self.w_composed_tuple = self.w_composed.split()
         else:
             FS = self.w[0].function_space()
             self.w_composed = Function(FS)
-            self.v_composed = TestFunctions(FS)
+            self.v_composed = TestFunction(FS)
             self.dw_composed = TrialFunction(FS)
             # TODO no w_composed_tuple for one field case, is it correct??
 
@@ -164,7 +163,7 @@ class MicroComputation(object):
         solve(self.F_w == 0, self.w_composed, self.bc, J=self.J,
               form_compiler_parameters=ffc_options)
 
-        # plot(self.w, mode='displacement', interactive=True)
+        plot(self.w_composed, mode='displacement', interactive=True)
 
         print 'fluctuation computation finished'
 
