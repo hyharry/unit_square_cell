@@ -4,13 +4,16 @@ from dolfin import *
 import numpy as np
 
 parameters["form_compiler"]["cpp_optimize"] = True
-ffc_options = {"optimize": True, \
-               "eliminate_zeros": True, \
-               "precompute_basis_const": True, \
+ffc_options = {"optimize": True,
+               "eliminate_zeros": True,
+               "precompute_basis_const": True,
                "precompute_ip_const": True}
 
 
 class MicroComputation(object):
+    """
+
+    """
     def __init__(self, cell, bc, function_space):
         self.domain_mesh = cell.mesh
         self.subdom_data = cell.domain
@@ -30,7 +33,8 @@ class MicroComputation(object):
     def compute(self, *component_psi):
         self.fem_formulation_composite(*component_psi)
 
-        solve(self.F_w == 0, self.w, self.bc, J=self.J, form_compiler_parameters=ffc_options)
+        solve(self.F_w == 0, self.w, self.bc, J=self.J,
+              form_compiler_parameters=ffc_options)
 
         # plot(self.w, mode='displacement', interactive=True)
 
@@ -52,7 +56,8 @@ class MicroComputation(object):
         print PP_assem
 
     def avg_stress(self, *psi_material):
-        dx = Measure('dx', domain=self.domain_mesh, subdomain_data=self.subdom_data)
+        dx = Measure('dx', domain=self.domain_mesh,
+                     subdomain_data=self.subdom_data)
         FF = self.FF
         d = self.w.geometric_dimension()
 
@@ -71,7 +76,8 @@ class MicroComputation(object):
     def fem_formulation_composite(self, *material_list):
         Pi = self.total_energy(*material_list)
 
-        # Compute first variation of Pi (directional derivative about u in the direction of v)
+        # Compute first variation of Pi (directional derivative
+        # about u in the direction of v)
         F_w = derivative(Pi, self.w, self.v)
 
         # Compute Jacobian of F
@@ -105,7 +111,8 @@ class MicroComputation(object):
 
     def total_energy(self, *material):
         # please be careful about the ordering dx(0) -> matrix
-        dx = Measure('dx', domain=self.domain_mesh, subdomain_data=self.subdom_data)
+        dx = Measure('dx', domain=self.domain_mesh,
+                     subdomain_data=self.subdom_data)
 
         int_i_l = [mat * dx(i) for i, mat in enumerate(material)]
         Pi = sum(int_i_l)
@@ -134,10 +141,12 @@ class MicroComputation(object):
         FF_bar_test = TestFunction(TFS_R)
 
         # generate the constant form of C and assemble C
-        dx = Measure('dx', domain=self.domain_mesh, subdomain_data=self.subdom_data)
+        dx = Measure('dx', domain=self.domain_mesh,
+                     subdomain_data=self.subdom_data)
         i, j, k, l = indices(4)
-        c = FF_bar_test[i, j] * C_i_[i, j, k, l] * FF_bar_trial[k, l] * dx(1) + FF_bar_test[i, j] * C_m_[i, j, k, l] * \
-                                                                                FF_bar_trial[k, l] * dx(0)
+        c = FF_bar_test[i, j] * C_i_[i, j, k, l] * FF_bar_trial[k, l] * dx(1)\
+            + \
+            FF_bar_test[i, j] * C_m_[i, j, k, l] * FF_bar_trial[k, l] * dx(0)
         cc = assemble(c)
         CC = cc.array()
 
@@ -184,10 +193,12 @@ class MicroComputation(object):
 
         # compute four columns
         for i in range(4):
-            L_assign.vector().set_local(L[:, i])  # set the coefficient of Function as a column of L matrix
+            L_assign.vector().set_local(L[:,
+                                        i])  # set the coefficient of Function as a column of L matrix
             solve(K_a, x,
                   L_assign.vector())  # solve the system and store it in x (all arguments should be dolfin.Vector or Matrix)
-            LTKL[:, i] = L.T.dot(x.array())  # set the answer to the column of LTKL3
+            LTKL[:, i] = L.T.dot(
+                x.array())  # set the answer to the column of LTKL3
         return LTKL
 
     def F_bar_init(self, F_bar):
@@ -218,7 +229,8 @@ if __name__ == '__main__':
     inc = [inc]
     cell.inclusion(inc)
 
-    VFS = VectorFunctionSpace(cell.mesh, "CG", 1, constrained_domain=ce.PeriodicBoundary_no_corner())
+    VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
+                              constrained_domain=ce.PeriodicBoundary_no_corner())
 
     corners = cell.mark_corner_bc()
     fixed_corner = Constant((0.0, 0.0))
@@ -254,6 +266,6 @@ if __name__ == '__main__':
     psi_i = comp.material_energy(E_i, nu_i)
     print comp.avg_stress(psi_m, psi_i)
 
-    comp.effective_moduli_2(E_m,nu_m,E_i,nu_i)
+    comp.effective_moduli_2(E_m, nu_m, E_i, nu_i)
 
     # print comp.w.vector().array()
