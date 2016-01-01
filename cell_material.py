@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from dolfin import Identity, tr
 
 class Material(object):
     """
@@ -114,9 +115,11 @@ class Material(object):
         return [lambda x: fi(g(x)) for fi in f]
 
 
-def st_venant_kirchhoff(F, E_m, nu_m):
-    mu = Constant(E_m / (2 * (1 + nu_m)))
-    lmbda = Constant(E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m)))
+def st_venant_kirchhoff(E_m, nu_m):
+    mu = E_m / (2 * (1 + nu_m))
+    lmbda = E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m))
+    # mu = Constant(E_m / (2 * (1 + nu_m)))
+    # lmbda = Constant(E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m)))
 
     def psi(inv, lmbda, mu):
         return 0.5*lmbda*(inv[0])**2 + mu*inv[1]
@@ -142,11 +145,10 @@ def st_venant_kirchhoff(F, E_m, nu_m):
     # Method 2: Direct generate using functions
     svk.invariant_generator_init((0,), [invariant1, invariant2])
 
-    svk([F])
     return svk
 
 
-def simo_pister(C, theta, mu0, m0, lmbda0, ro0, cv, theta0):
+def simo_pister(mu0, m0, lmbda0, ro0, cv, theta0):
     def psi(inva, mu0, m0, lmbda0, ro0, cv, theta0):
         """
         simo pister model (thermo-elasticity) 'from Hoere Mech 3'
@@ -173,11 +175,10 @@ def simo_pister(C, theta, mu0, m0, lmbda0, ro0, cv, theta0):
     sp.invariant_generator_init((0,), C_invar_gen)
     sp.invariant_generator_init((1,), [lambda x: x, ])
 
-    sp([C, theta])
     return sp
 
 
-def magneto_mechano(C, M, N, a, b, c):
+def magneto_mechano(N, a, b, c):
     """
     Artificial material model, experiment mixed invariants
     invariants are partly referred from 'K.Danas, 2012, JMPS'
@@ -200,7 +201,6 @@ def magneto_mechano(C, M, N, a, b, c):
     mre.invariant_generator_init((1,), [lambda x: inner(x, x), ])
     mre.invariant_generator_init((0, 1), [lambda x, y: inner(y, x * y), ])
 
-    mre([C, M])
     return mre
 
 
@@ -220,16 +220,19 @@ if __name__ == '__main__':
     FS = FunctionSpace(mesh, 'CG', 1)
 
     E_m, nu_m = 10.0, 0.3
-    svk = st_venant_kirchhoff(F, E_m, nu_m)
+    svk = st_venant_kirchhoff(E_m, nu_m)
+    svk([F])
 
     mu0, m0, lmbda0, ro0, cv, theta0 = 1, 2, 3, 4, 5, 6
     theta = Function(FS)
-    sp = simo_pister(F.T*F, theta, mu0, m0, lmbda0, ro0, cv, theta0)
+    sp = simo_pister(mu0, m0, lmbda0, ro0, cv, theta0)
+    sp([F.T*F, theta,])
 
     C = Function(TFS)
     M = Function(VFS)
     N = Constant((1., 1.))
     a, b, c = 1., 2., 3.
-    mre = magneto_mechano(C, M, N, a, b, c)
+    mre = magneto_mechano(N, a, b, c)
+    mre([C, M,])
 
     print mre.psi
