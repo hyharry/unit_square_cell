@@ -12,7 +12,7 @@ ffc_options = {"optimize": True,
 
 class MicroComputation(object):
     """
-
+    unit cell computation for multi field porblem
     """
     def __init__(self, cell, bc, function_space):
         self.domain_mesh = cell.mesh
