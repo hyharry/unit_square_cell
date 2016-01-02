@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
     # Initialize MicroComputation
     # if multi field bc should match
-    F_bar = [0.9, 0., 0., 1.]
+    F_bar = [[0.9, 0., 0., 1.]]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, bc, mat_li, [cauchy_green_with_macro],
