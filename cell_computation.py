@@ -2,6 +2,7 @@
 
 from dolfin import *
 import numpy as np
+from cell_geom import PeriodicBoundary_no_corner
 
 parameters["form_compiler"]["cpp_optimize"] = True
 ffc_options = {"optimize": True,
@@ -45,14 +46,14 @@ class MicroComputation(object):
         self.FF = None
 
         # __Helping class member__
-        # Geometery Dimension 2D
+        # Geometry Dimension 2D
         self.geom_dim = 2
-        self.w_composed = None
+        self.w_merge = None
         # Test function
-        self.v_composed = None
+        self.v_merge = None
         # Trial function
-        self.dw_composed = None
-        self.w_composed_tuple = None
+        self.dw_merge = None
+        self.w_split = None
         self.multi_field_label = multi_field_label
         self.material_num = len(material_li)
 
@@ -66,7 +67,8 @@ class MicroComputation(object):
         """
         self._F_bar_init(F_bar_li)
         self.w = w_li
-        self._field_compose()
+        self._field_merge()
+        self._field_split()
         self._strain_init()
 
     def _F_bar_init(self, F_bar_li):
@@ -77,6 +79,8 @@ class MicroComputation(object):
         :param F_bar_li: !! only constant macro field input are support !!
         :return self.F_bar: [Function for F, Function for M, Function for T,...]
         """
+        # self.F_bar = [self._li_to_func(F_bar_field_i)
+        #               for F_bar_field_i in F_bar_li]
         if self.multi_field_label:
             self.F_bar = [self._li_to_func(F_bar_field_i)
                           for F_bar_field_i in F_bar_li]
@@ -96,39 +100,65 @@ class MicroComputation(object):
             return project(F_ex, VFS)
         elif F_dim == dim**2:
             TFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-            F_ex = Expression((("F11", "F12"), ("F21", "F22")),
-                              F11=F_li[0],
-                              F12=F_li[1],
-                              F21=F_li[2],
-                              F22=F_li[3])
+            F_ex = Expression((("F11", "F12"),
+                               ("F21", "F22")),
+                              F11=F_li[0], F12=F_li[1],
+                              F21=F_li[2], F22=F_li[3])
             return project(F_ex, TFS)
         else:
             raise Exception('Please Input Right Dimension')
 
-    # ==== Pre-Processing Stage ====
-    def _field_compose(self):
+    def _field_merge(self):
+        # VFS = VectorFunctionSpace(self.cell.mesh, "CG", 1,
+        #                     constrained_domain=PeriodicBoundary_no_corner())
+        # FS_li = [VFS for wi in self.w]
+        # MFS = VFS
+
+        # FS_li = [wi.function_space() for wi in self.w]
+        # MFS = MixedFunctionSpace(FS_li)
+        #
+        # self.w_merge = Function(MFS)
+        # self.v_merge = TestFunction(MFS)
+        # self.dw_merge = TrialFunction(MFS)
+
         if self.multi_field_label:
             FS_li = [wi.function_space() for wi in self.w]
             MFS = MixedFunctionSpace(FS_li)
-            self.w_composed = Function(MFS)
-            self.v_composed = TestFunction(MFS)
-            self.dw_composed = TrialFunction(MFS)
-            self.w_composed_tuple = self.w_composed.split()
+            self.w_merge = Function(MFS)
+            self.v_merge = TestFunction(MFS)
+            self.dw_merge = TrialFunction(MFS)
+            # self.w_merge_tuple = self.w_merge.split()
+            # FIXME using split method of function is questionable,
+            # split(Function) should be used
         else:
             FS = self.w[0].function_space()
-            self.w_composed = Function(FS)
-            self.v_composed = TestFunction(FS)
-            self.dw_composed = TrialFunction(FS)
-            # TODO no w_composed_tuple for one field case, is it correct??
+            self.w_merge = Function(FS)
+            self.v_merge = TestFunction(FS)
+            self.dw_merge = TrialFunction(FS)
+            # TODO no w_merge_tuple for one field case, is it correct??
+        self._field_split()
+
+    def _field_split(self):
+        # self.w_split = split(self.w_merge)
+
+        if self.multi_field_label:
+            self.w_split = split(self.w_merge)
+        else:
+            self.w_split = self.w_merge
 
     def _strain_init(self):
+        # generator_li = self.strain_gen
+        # self.F = [gen(self.F_bar[i], self.w_split[i])
+        #           for i, gen in enumerate(generator_li)]
+
         generator_li = self.strain_gen
         if self.multi_field_label:
-            self.F = [gen(self.F_bar[i], self.w_composed_tuple[i])
+            self.F = [gen(self.F_bar[i], self.w_split[i])
                       for i, gen in enumerate(generator_li)]
         else:
-            self.F = [generator_li[0](self.F_bar, self.w_composed)]
+            self.F = [generator_li[0](self.F_bar, self.w_merge)]
 
+    # ==== Pre-Processing Stage ====
     def _material_assem(self):
         for i in range(self.material_num):
             self.material[i](self.F)
@@ -148,10 +178,10 @@ class MicroComputation(object):
     def _fem_formulation_composite(self):
         Pi = self._total_energy()
 
-        F_w = derivative(Pi, self.w_composed, self.v_composed)
+        F_w = derivative(Pi, self.w_merge, self.v_merge)
 
         # Compute Jacobian of F
-        J = derivative(F_w, self.w_composed, self.dw_composed)
+        J = derivative(F_w, self.w_merge, self.dw_merge)
 
         self.F_w = F_w
         self.J = J
@@ -160,15 +190,16 @@ class MicroComputation(object):
     def comp_fluctuation(self):
         self._fem_formulation_composite()
 
-        solve(self.F_w == 0, self.w_composed, self.bc, J=self.J,
+        solve(self.F_w == 0, self.w_merge, self.bc, J=self.J,
               form_compiler_parameters=ffc_options)
 
-        plot(self.w_composed, mode='displacement', interactive=True)
+        plot(self.w_merge, mode='displacement', interactive=True)
 
         print 'fluctuation computation finished'
 
     # ==== Post-Processing Stage ====
-    def compute_strain(self):
+    def comp_strain(self):
+
         F_space = TensorFunctionSpace(self.cell.mesh, 'DG', 0)
         self.FF = project(self.F_bar + grad(self.w), F_space)
 
@@ -300,9 +331,11 @@ if __name__ == '__main__':
     cell.inclusion(inc)
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
-                              constrained_domain=ce.PeriodicBoundary_no_corner())
+                            constrained_domain=ce.PeriodicBoundary_no_corner())
 
     # Set boundary conditions
+    # if multi field bc should match
+    #
     corners = cell.mark_corner_bc()
     fixed_corner = Constant((0.0, 0.0))
     bc = []
@@ -310,20 +343,23 @@ if __name__ == '__main__':
         bc.append(DirichletBC(VFS, fixed_corner, c, method='pointwise'))
 
     # Set materials
-    w = Function(VFS)
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
     mat_m = ma.st_venant_kirchhoff(E_m, nu_m)
     mat_i = ma.st_venant_kirchhoff(E_i, nu_i)
     mat_li = [mat_m, mat_i]
 
     # Initialize MicroComputation
+    # if multi field bc should match
     F_bar = [0.9, 0., 0., 1.]
+    w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, bc, mat_li, [cauchy_green_with_macro],
                             strain_space, 0)
 
     comp.input(F_bar, [w])
     comp.comp_fluctuation()
+
+    # Post-Processing
 
     # comp.compute_strain()
     # psi_m = comp.material_energy(E_m, nu_m)
