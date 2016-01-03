@@ -17,7 +17,7 @@ class MicroComputation(object):
     !! 3D should be extended !!
     """
 
-    def __init__(self, cell, bc, material_li,
+    def __init__(self, cell, material_li,
                  strain_gen_li, strain_FS_li,
                  multi_field_label):
         """
@@ -31,7 +31,6 @@ class MicroComputation(object):
         :param multi_field_label: 1: multi, 2: uni
         """
         self.cell = cell
-        self.bc = bc
         self.w = None
         self.material = material_li
         self.strain_gen = strain_gen_li
@@ -54,6 +53,9 @@ class MicroComputation(object):
         # Trial function
         self.dw_merge = None
         self.w_split = None
+        # Boundary Condition
+        self.bc = None
+        self.w_dim = None
         self.multi_field_label = multi_field_label
         self.material_num = len(material_li)
 
@@ -67,6 +69,7 @@ class MicroComputation(object):
         """
         self._F_bar_init(F_bar_li)
         self.w = w_li
+        self.w_dim = [w_i.shape() for w_i in w_li]
         self._field_merge()
         self._field_split()
         self._strain_init()
@@ -77,15 +80,13 @@ class MicroComputation(object):
         Mind that if multiple field, multiple field input will require
 
         :param F_bar_li: !! only constant macro field input are support !!
+        F_bar_li should be a list of F_bar, each entry is furthermore a list
+        representing input from each field
         :return self.F_bar: [Function for F, Function for M, Function for T,...]
         """
-        # self.F_bar = [self._li_to_func(F_bar_field_i)
-        #               for F_bar_field_i in F_bar_li]
-        if self.multi_field_label:
-            self.F_bar = [self._li_to_func(F_bar_field_i)
-                          for F_bar_field_i in F_bar_li]
-        else:
-            self.F_bar = self._li_to_func(F_bar_li)
+        assert isinstance(F_bar_li[0], list)
+        self.F_bar = [self._li_to_func(F_bar_field_i)
+                      for F_bar_field_i in F_bar_li]
 
     def _li_to_func(self, F_li):
         dim = self.geom_dim
@@ -109,54 +110,43 @@ class MicroComputation(object):
             raise Exception('Please Input Right Dimension')
 
     def _field_merge(self):
-        # VFS = VectorFunctionSpace(self.cell.mesh, "CG", 1,
-        #                     constrained_domain=PeriodicBoundary_no_corner())
-        # FS_li = [VFS for wi in self.w]
-        # MFS = VFS
+        VFS = VectorFunctionSpace(self.cell.mesh, "CG", 1,
+                            constrained_domain=PeriodicBoundary_no_corner())
+        FS_li = [VFS for wi in self.w]
+        MFS = VFS
 
-        # FS_li = [wi.function_space() for wi in self.w]
-        # MFS = MixedFunctionSpace(FS_li)
-        #
-        # self.w_merge = Function(MFS)
-        # self.v_merge = TestFunction(MFS)
-        # self.dw_merge = TrialFunction(MFS)
+        FS_li = [wi.function_space() for wi in self.w]
+        MFS = MixedFunctionSpace(FS_li)
 
-        if self.multi_field_label:
-            FS_li = [wi.function_space() for wi in self.w]
-            MFS = MixedFunctionSpace(FS_li)
-            self.w_merge = Function(MFS)
-            self.v_merge = TestFunction(MFS)
-            self.dw_merge = TrialFunction(MFS)
-            # self.w_merge_tuple = self.w_merge.split()
-            # FIXME using split method of function is questionable,
-            # split(Function) should be used
-        else:
-            FS = self.w[0].function_space()
-            self.w_merge = Function(FS)
-            self.v_merge = TestFunction(FS)
-            self.dw_merge = TrialFunction(FS)
-            # TODO no w_merge_tuple for one field case, is it correct??
-        self._field_split()
+        self.w_merge = Function(MFS)
+        self.v_merge = TestFunction(MFS)
+        self.dw_merge = TrialFunction(MFS)
+
+        # if self.multi_field_label:
+        #     FS_li = [wi.function_space() for wi in self.w]
+        #     MFS = MixedFunctionSpace(FS_li)
+        #     self.w_merge = Function(MFS)
+        #     self.v_merge = TestFunction(MFS)
+        #     self.dw_merge = TrialFunction(MFS)
+        # else:
+        #     FS = self.w[0].function_space()
+        #     self.w_merge = Function(FS)
+        #     self.v_merge = TestFunction(FS)
+        #     self.dw_merge = TrialFunction(FS)
+        # self._field_split()
 
     def _field_split(self):
-        # self.w_split = split(self.w_merge)
+        self.w_split = split(self.w_merge)
 
-        if self.multi_field_label:
-            self.w_split = split(self.w_merge)
-        else:
-            self.w_split = self.w_merge
+        # if self.multi_field_label:
+        #     self.w_split = split(self.w_merge)
+        # else:
+        #     self.w_split = self.w_merge
 
     def _strain_init(self):
-        # generator_li = self.strain_gen
-        # self.F = [gen(self.F_bar[i], self.w_split[i])
-        #           for i, gen in enumerate(generator_li)]
-
         generator_li = self.strain_gen
-        if self.multi_field_label:
-            self.F = [gen(self.F_bar[i], self.w_split[i])
-                      for i, gen in enumerate(generator_li)]
-        else:
-            self.F = [generator_li[0](self.F_bar, self.w_merge)]
+        self.F = [gen(self.F_bar[i], self.w_split[i])
+                  for i, gen in enumerate(generator_li)]
 
     # ==== Pre-Processing Stage ====
     def _material_assem(self):
@@ -175,6 +165,19 @@ class MicroComputation(object):
         Pi = sum(int_i_li)
         return Pi
 
+    def _bc_fixed_corner(self):
+        bc = []
+        corners = self.cell.mark_corner_bc()
+        dim = self.w_merge.shape()
+        if dim:
+            fixed_corner = Constant((0,)*dim[0])
+        else:
+            fixed_corner = Constant(0.)
+        for c in corners:
+            bc.append(DirichletBC(self.w_merge.function_space(),
+                                  fixed_corner, c, method='pointwise'))
+        self.bc = bc
+
     def _fem_formulation_composite(self):
         Pi = self._total_energy()
 
@@ -185,6 +188,7 @@ class MicroComputation(object):
 
         self.F_w = F_w
         self.J = J
+        self._bc_fixed_corner()
 
     # ==== Solution ====
     def comp_fluctuation(self):
@@ -315,6 +319,9 @@ class MicroComputation(object):
         return LTKL
 
 
+
+
+
 def cauchy_green_with_macro(F_bar, w_component):
     return F_bar + grad(w_component)
 
@@ -333,15 +340,6 @@ if __name__ == '__main__':
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                             constrained_domain=ce.PeriodicBoundary_no_corner())
 
-    # Set boundary conditions
-    # if multi field bc should match
-    #
-    corners = cell.mark_corner_bc()
-    fixed_corner = Constant((0.0, 0.0))
-    bc = []
-    for c in corners:
-        bc.append(DirichletBC(VFS, fixed_corner, c, method='pointwise'))
-
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
     mat_m = ma.st_venant_kirchhoff(E_m, nu_m)
@@ -353,7 +351,7 @@ if __name__ == '__main__':
     F_bar = [[0.9, 0., 0., 1.]]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
-    comp = MicroComputation(cell, bc, mat_li, [cauchy_green_with_macro],
+    comp = MicroComputation(cell, mat_li, [cauchy_green_with_macro],
                             strain_space, 0)
 
     comp.input(F_bar, [w])
