@@ -110,38 +110,33 @@ class MicroComputation(object):
             raise Exception('Please Input Right Dimension')
 
     def _field_merge(self):
-        VFS = VectorFunctionSpace(self.cell.mesh, "CG", 1,
-                            constrained_domain=PeriodicBoundary_no_corner())
-        FS_li = [VFS for wi in self.w]
-        MFS = VFS
+        # FS_li = [wi.function_space() for wi in self.w]
+        # MFS = MixedFunctionSpace(FS_li)
+        #
+        # self.w_merge = Function(MFS)
+        # self.v_merge = TestFunction(MFS)
+        # self.dw_merge = TrialFunction(MFS)
 
-        FS_li = [wi.function_space() for wi in self.w]
-        MFS = MixedFunctionSpace(FS_li)
-
-        self.w_merge = Function(MFS)
-        self.v_merge = TestFunction(MFS)
-        self.dw_merge = TrialFunction(MFS)
-
-        # if self.multi_field_label:
-        #     FS_li = [wi.function_space() for wi in self.w]
-        #     MFS = MixedFunctionSpace(FS_li)
-        #     self.w_merge = Function(MFS)
-        #     self.v_merge = TestFunction(MFS)
-        #     self.dw_merge = TrialFunction(MFS)
-        # else:
-        #     FS = self.w[0].function_space()
-        #     self.w_merge = Function(FS)
-        #     self.v_merge = TestFunction(FS)
-        #     self.dw_merge = TrialFunction(FS)
-        # self._field_split()
+        if self.multi_field_label:
+            FS_li = [wi.function_space() for wi in self.w]
+            MFS = MixedFunctionSpace(FS_li)
+            self.w_merge = Function(MFS)
+            self.v_merge = TestFunction(MFS)
+            self.dw_merge = TrialFunction(MFS)
+        else:
+            FS = self.w[0].function_space()
+            self.w_merge = Function(FS)
+            self.v_merge = TestFunction(FS)
+            self.dw_merge = TrialFunction(FS)
+        self._field_split()
 
     def _field_split(self):
-        self.w_split = split(self.w_merge)
+        # self.w_split = split(self.w_merge)
 
-        # if self.multi_field_label:
-        #     self.w_split = split(self.w_merge)
-        # else:
-        #     self.w_split = self.w_merge
+        if self.multi_field_label:
+            self.w_split = split(self.w_merge)
+        else:
+            self.w_split = [self.w_merge]
 
     def _strain_init(self):
         generator_li = self.strain_gen
