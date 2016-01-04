@@ -243,7 +243,7 @@ class MicroComputation(object):
         self._field_merge(label)
         self._field_split(label)
         self._strain_init(label)
-        self._material_assem(self.F_split)
+        # self._material_assem(self.F_split)
         self._total_energy(self.F_split)
         # plot(self.F_merge[0,0], interactive=True)
         # plot(self.F[0][0,0], interactive=True)
@@ -259,7 +259,9 @@ class MicroComputation(object):
         print 'strain computation finished'
 
     def comp_stress(self):
-        # FIXME need careful look
+        # TODO can have a try on both "local diff and global assem" and
+        # "global diff and global assem", comparison with derivative is also
+        # worthful
         if not self.F_merge:
             self._energy_update()
 
@@ -290,7 +292,7 @@ class MicroComputation(object):
 
         print 'stress computation finished'
 
-        plot(self.P[0,0], interactive=True)
+        # plot(self.P[0,0], interactive=True)
 
     def avg_merge_strain(self):
         if not self.F_merge:
@@ -362,91 +364,108 @@ class MicroComputation(object):
 
         return P_merge_avg
 
-    def tangent_moduli(self, material_energy):
-        # todo calculate the tangent moduli from energy
-        pass
+    def avg_merge_moduli(self):
+        if not self.F_merge:
+            self._energy_update()
+
+        # Using derivative() direct on self.Pi is a more compact way!! and
+        # they yield the same result!! : integrate then derivative
+        TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
+        F_const_trial = TrialFunction(TFS_R)
+        F_const_test = TestFunction(TFS_R)
+
+        dPi_dF = derivative(self.Pi, self.F_merge, F_const_test)
+        ddPi_dF = derivative(dPi_dF, self.F_merge, F_const_trial)
+        C_avg = assemble(ddPi_dF)
+
+        print 'average merge moduli computation finished'
+
+        return C_avg.array()
 
     def effective_moduli_2(self):
         if not self.F_merge:
             self._energy_update()
 
-        FF = self.F_merge
-        psi_m_ = self.material[0].psi
-        psi_i_ = self.material[1].psi
+        C_avg = self.avg_merge_moduli()
 
-        # calculate the local moduli
-        P_i = diff(psi_i_, FF)
-        P_m = diff(psi_m_, FF)
+        # Old 2nd method more detailed and explicit calculation: diff locally
+        #  and integrate
+        # FF = self.F_merge
+        # psi_m_ = self.material[0].psi
+        # psi_i_ = self.material[1].psi
+        #
+        # # calculate the local moduli
+        # P_i = diff(psi_i_, FF)
+        # P_m = diff(psi_m_, FF)
+        #
+        # C_i_ = diff(P_i, FF)
+        # C_m_ = diff(P_m, FF)
+        #
+        # # trial and test function for the L matrix
+        # TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
+        # FF_bar_trial = TrialFunction(TFS_R)
+        # FF_bar_test = TestFunction(TFS_R)
+        #
+        # # generate the constant form of C and assemble C
+        # dx = Measure('dx', domain=self.cell.mesh,
+        #              subdomain_data=self.cell.domain)
+        # i, j, k, l = indices(4)
+        # c = FF_bar_test[i, j]*C_i_[i, j, k, l]*FF_bar_trial[k, l]*dx(1) + \
+        #     FF_bar_test[i, j]*C_m_[i, j, k, l]*FF_bar_trial[k, l]*dx(0)
+        # cc = assemble(c)
+        # CC = cc.array()
 
-        C_i_ = diff(P_i, FF)
-        C_m_ = diff(P_m, FF)
+        print C_avg
 
-        # trial and test function for the L matrix
         TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-        FF_bar_trial = TrialFunction(TFS_R)
-        FF_bar_test = TestFunction(TFS_R)
-
-        # generate the constant form of C and assemble C
-        dx = Measure('dx', domain=self.cell.mesh,
-                     subdomain_data=self.cell.domain)
-        i, j, k, l = indices(4)
-        c = FF_bar_test[i, j]*C_i_[i, j, k, l]*FF_bar_trial[k, l]*dx(1) + \
-            FF_bar_test[i, j]*C_m_[i, j, k, l]*FF_bar_trial[k, l]*dx(0)
-        cc = assemble(c)
-        CC = cc.array()
-
-        print CC
-
-        TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-        F_bar_2_trial = TrialFunction(TFS_R)
-        L2_der = derivative(self.F_w, self.F_bar, F_bar_2_trial)
-        B2 = assemble(L2_der)
+        F_bar_trial = TrialFunction(TFS_R)
+        L2 = derivative(self.F_w, self.F_bar, F_bar_trial)
+        B2 = assemble(L2)
 
         LTKL2 = self.sensitivity(B2)
 
         print LTKL2
 
-        print CC - LTKL2
-        return CC - LTKL2
+        print C_avg - LTKL2
+        return C_avg - LTKL2
 
     def sensitivity(self, B):
         w_test = self.v_merge
         J = self.J
         bc = self.bc
-        f = Constant((0.0, 0.0))
-        b = inner(w_test, f) * dx
-        K_a, L1_a = assemble_system(J, b, bc)
+        vec_dim = (w_test.ufl_shape[0] if w_test.ufl_shape else 1)
 
+        # Assemble K symmetrically
+        f = Constant((0.,)*vec_dim)
+        b = inner(w_test, f) * dx
+        K_a, L_a = assemble_system(J, b, bc)
+
+        # Assemble L
+        F_merge_len = sum(self.F_merge.ufl_shape)
         rows = []
         for bc_i in bc:
             rows.extend(bc_i.get_boundary_values().keys())
-
-        cols = [0, 1, 2, 3]
-        vals = [0, 0, 0, 0]
-
+        cols = range(F_merge_len)
+        vals = [0.]*F_merge_len
         rs = np.array(rows, dtype=np.uintp)
         cs = np.array(cols, dtype=np.uintp)
         vs = np.array(vals, dtype=np.float_)
         for i in rs:
             B.setrow(i, cs, vs)
-        B.setrow(1, cs, vs)
-        # print B.array()
         B.apply('insert')
         L = B.array()
+
         # use the matrix from 1st method
-        LTKL = np.zeros((4, 4))
+        LTKL = np.zeros((F_merge_len, F_merge_len))
 
         L_assign = Function(self.w_merge.function_space())
         x = Vector()
 
         # compute four columns
-        for i in range(4):
-            L_assign.vector().set_local(L[:,
-                                        i])  # set the coefficient of Function as a column of L matrix
-            solve(K_a, x,
-                  L_assign.vector())  # solve the system and store it in x (all arguments should be dolfin.Vector or Matrix)
-            LTKL[:, i] = L.T.dot(
-                    x.array())  # set the answer to the column of LTKL3
+        for i in range(F_merge_len):
+            L_assign.vector().set_local(L[:, i])
+            solve(K_a, x, L_assign.vector())
+            LTKL[:, i] = L.T.dot(x.array())
         return LTKL
 
 
@@ -488,7 +507,7 @@ if __name__ == '__main__':
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
-    # comp.comp_stress()
+    comp.comp_stress()
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     comp.effective_moduli_2()
