@@ -28,7 +28,10 @@ class MicroComputation(object):
         :param bc: boundary conditions
         :param material_li: [mat1, mat2, ...]
         :param strain_FS_li: post processing spaces
-        :param multi_field_label: 1: multi, 2: uni
+        :param multi_field_label: 1: multi, 0: uni
+
+        ** Attention: multi_field_label should be set currently, when uni
+        field, assign in merge method does not work **
         """
         self.cell = cell
         self.w = None
@@ -39,13 +42,13 @@ class MicroComputation(object):
 
         self.F = None
 
+        self.Pi = None
         self.F_w = None
         self.J = None
 
-        self.FF = None
-
         # __Helping class member__
         # Geometry Dimension 2D
+        self.field_num = None
         self.geom_dim = 2
         self.w_merge = None
         # Test function
@@ -59,6 +62,14 @@ class MicroComputation(object):
         self.multi_field_label = multi_field_label
         self.material_num = len(material_li)
 
+        # F for Post Processing
+        self.F_merge = None
+        self.F_merge_test = None
+        self.F_merge_trial = None
+        self.F_split = None
+
+        self.P = None
+
     def input(self, F_bar_li, w_li):
         """
         Internal vars F_bar_li and w_li should be updated for each cell and
@@ -67,12 +78,15 @@ class MicroComputation(object):
         :param F_bar_li: macro F, written as list
         :param w_li: field list
         """
+        assert isinstance(F_bar_li, list) and isinstance(w_li, list)
         self._F_bar_init(F_bar_li)
         self.w = w_li
         self.w_dim = [w_i.shape() for w_i in w_li]
-        self._field_merge()
-        self._field_split()
-        self._strain_init()
+        self.field_num = len(w_li)
+        label = 'w'
+        self._field_merge(label)
+        self._field_split(label)
+        self._strain_init(label)
 
     def _F_bar_init(self, F_bar_li):
         """
@@ -109,56 +123,82 @@ class MicroComputation(object):
         else:
             raise Exception('Please Input Right Dimension')
 
-    def _field_merge(self):
-        # FS_li = [wi.function_space() for wi in self.w]
-        # MFS = MixedFunctionSpace(FS_li)
-        #
-        # self.w_merge = Function(MFS)
-        # self.v_merge = TestFunction(MFS)
-        # self.dw_merge = TrialFunction(MFS)
-
-        if self.multi_field_label:
-            FS_li = [wi.function_space() for wi in self.w]
-            MFS = MixedFunctionSpace(FS_li)
-            self.w_merge = Function(MFS)
-            self.v_merge = TestFunction(MFS)
-            self.dw_merge = TrialFunction(MFS)
+    def _field_merge(self, label):
+        if label is 'w':
+            if self.multi_field_label:
+                FS_li = [wi.function_space() for wi in self.w]
+                MFS = MixedFunctionSpace(FS_li)
+                self.w_merge = Function(MFS)
+                self.v_merge = TestFunction(MFS)
+                self.dw_merge = TrialFunction(MFS)
+                for i, wi in enumerate(self.w):
+                    assign(self.w_merge.sub(i), wi)
+            else:
+                FS = self.w[0].function_space()
+                self.w_merge = Function(FS)
+                self.v_merge = TestFunction(FS)
+                self.dw_merge = TrialFunction(FS)
+                assign(self.w_merge, self.w[0])
+        elif label is 'F':
+            if self.multi_field_label:
+                FS_li = [Fi.function_space() for Fi in self.F]
+                MFS = MixedFunctionSpace(FS_li)
+                self.F_merge = Function(MFS)
+                self.F_merge_test = TestFunction(MFS)
+                self.F_merge_trial = TrialFunction(MFS)
+                for i, Fi in enumerate(self.F):
+                    assign(self.F_merge.sub(i), Fi)
+            else:
+                FS = self.F[0].function_space()
+                self.F_merge = Function(FS)
+                self.F_merge_test = TestFunction(FS)
+                self.F_merge_trial = TrialFunction(FS)
+                assign(self.F_merge, self.F[0])
         else:
-            FS = self.w[0].function_space()
-            self.w_merge = Function(FS)
-            self.v_merge = TestFunction(FS)
-            self.dw_merge = TrialFunction(FS)
-        self._field_split()
+            raise Exception('wrong label for merge!')
 
-    def _field_split(self):
-        # self.w_split = split(self.w_merge)
-
-        if self.multi_field_label:
-            self.w_split = split(self.w_merge)
+    def _field_split(self, label):
+        if label is 'w':
+            if self.multi_field_label:
+                self.w_split = list(split(self.w_merge))
+            else:
+                self.w_split = [self.w_merge]
+        elif label is 'F':
+            if self.multi_field_label:
+                self.F_split = list(split(self.F_merge))
+            else:
+                self.F_split = [self.F_merge]
         else:
-            self.w_split = [self.w_merge]
+            raise Exception('wrong label for split!')
 
-    def _strain_init(self):
+    def _strain_init(self, label):
         generator_li = self.strain_gen
-        self.F = [gen(self.F_bar[i], self.w_split[i])
-                  for i, gen in enumerate(generator_li)]
+        if label is 'w':
+            self.F = [gen(self.F_bar[i], self.w_split[i])
+                      for i, gen in enumerate(generator_li)]
+        elif label is 'F':
+            self.F = [self.F_bar[i] + self.F_split[i]
+                      for i in range(self.field_num)]
+        else:
+            raise Exception('wrong label for strain init!')
 
     # ==== Pre-Processing Stage ====
-    def _material_assem(self):
+    def _material_assem(self, F):
         for i in range(self.material_num):
-            self.material[i](self.F)
+            self.material[i](F)
 
-    def _total_energy(self):
+        # print id(self.material[0].invar[0])
+
+    def _total_energy(self, F):
         # Please be careful about the ordering dx(0) -> matrix
         dx = Measure('dx', domain=self.cell.mesh,
                      subdomain_data=self.cell.domain)
 
-        self._material_assem()
+        self._material_assem(F)
 
-        int_i_li = [mat.psi * dx(i)
+        int_i_li = [mat.psi*dx(i)
                     for i, mat in enumerate(self.material)]
-        Pi = sum(int_i_li)
-        return Pi
+        self.Pi = sum(int_i_li)
 
     def _bc_fixed_corner(self):
         bc = []
@@ -174,9 +214,9 @@ class MicroComputation(object):
         self.bc = bc
 
     def _fem_formulation_composite(self):
-        Pi = self._total_energy()
+        self._total_energy(self.F)
 
-        F_w = derivative(Pi, self.w_merge, self.v_merge)
+        F_w = derivative(self.Pi, self.w_merge, self.v_merge)
 
         # Compute Jacobian of F
         J = derivative(F_w, self.w_merge, self.dw_merge)
@@ -192,53 +232,147 @@ class MicroComputation(object):
         solve(self.F_w == 0, self.w_merge, self.bc, J=self.J,
               form_compiler_parameters=ffc_options)
 
-        plot(self.w_merge, mode='displacement', interactive=True)
+        # plot(self.w_merge, mode='displacement', interactive=True)
 
         print 'fluctuation computation finished'
 
     # ==== Post-Processing Stage ====
-    def comp_strain(self):
+    def _energy_update(self):
+        label = 'F'
+        self.comp_strain()
+        self._field_merge(label)
+        self._field_split(label)
+        self._strain_init(label)
+        self._material_assem(self.F_split)
+        self._total_energy(self.F_split)
+        # plot(self.F_merge[0,0], interactive=True)
+        # plot(self.F[0][0,0], interactive=True)
 
-        F_space = TensorFunctionSpace(self.cell.mesh, 'DG', 0)
-        self.FF = project(self.F_bar + grad(self.w), F_space)
+    def comp_strain(self):
+        F_space = self.strain_FS
+        self._strain_init('w')
+        self.F = [project(self.F[i], F_space_i)
+                  for i, F_space_i in enumerate(F_space)]
+
+        # plot(self.F[0][0,0], interactive=True)
 
         print 'strain computation finished'
 
-    def comp_stress(self, *psi_material):
-        # todo energy-like computation
-        TFS = TensorFunctionSpace(self.cell.mesh, 'DG', 0)
-        FF = self.FF
-        Pi = self.total_energy(*psi_material)
-        PP = derivative(Pi, FF)
-        PP_assem = assemble(PP)
-        print PP_assem
+    def comp_stress(self):
+        # FIXME need careful look
+        if not self.F_merge:
+            self._energy_update()
 
-    def avg_stress(self, *psi_material):
+        self.P = Function(self.F_merge.function_space())
+        L = derivative(self.Pi, self.F_merge, self.F_merge_test)
+        # Pi_der = diff(self.Pi, self.F_merge)
+        # self.P = project(Pi_der, self.F_merge.function_space())
+
         dx = Measure('dx', domain=self.cell.mesh,
                      subdomain_data=self.cell.domain)
-        FF = self.FF
-        d = self.w.geometric_dimension()
 
-        mat_num = len(psi_material)
-        PP_i = range(mat_num)
-        PP_avg = np.zeros((d, d))
+        # L = inner(Pi_der, self.F_merge_test)
+        a = inner(self.F_merge_test, self.F_merge_trial)
+        #
+        # int_L_li = [L*dx(i) for i in range(self.material_num)]
+        int_a_li = [a*dx(i) for i in range(self.material_num)]
+        #
+        # L = sum(int_L_li)
+        a = sum(int_a_li)
+        # self.P = project(Pi_der, self.F_merge.function_space())
+        solve(a == L, self.P)
+        # solve(L == 0, self.P, self.bc, J=a,
+        #       form_compiler_parameters=ffc_options)
+
+        # Pi_der = derivative(Pi, self.F[0], F_test)
+        # Pi_der = diff(Pi, self.F[0])
+        # self.P = project(Pi_der, F_space[0])
+
+        print 'stress computation finished'
+
+        plot(self.P[0,0], interactive=True)
+
+    def avg_merge_strain(self):
+        if not self.F_merge:
+            self._energy_update()
+
+        dx = Measure('dx', domain=self.cell.mesh,
+                     subdomain_data=self.cell.domain)
+        d = self.geom_dim
+        mat_num = self.material_num
+
+        if self.multi_field_label:
+            F_merge_dim = self.F_merge.shape()[0]
+            F_merge_avg = np.zeros((F_merge_dim, 1))
+            for i in range(F_merge_dim):
+                int_li = [self.F_merge[i]*dx(k) for k in range(mat_num)]
+                F_merge_avg[i, 0] = assemble(sum(int_li))
+        else:
+            F_merge_avg = np.zeros((d, d))
+            for i in range(d):
+                for j in range(d):
+                    int_li = [self.F_merge[i, j]*dx(k) for k in range(
+                            mat_num)]
+                    F_merge_avg[i, j] = assemble(sum(int_li))
+
+        print 'average merge strain computation finished'
+
+        print F_merge_avg
+        return F_merge_avg
+
+    def avg_merge_stress(self):
+        if not self.F_merge:
+            self._energy_update()
+
+        dx = Measure('dx', domain=self.cell.mesh,
+                     subdomain_data=self.cell.domain)
+        d = self.geom_dim
+        mat_num = self.material_num
+
+        P_i = range(mat_num)
+
         for i in range(mat_num):
-            PP_i[i] = diff(psi_material[i], FF)
-        for i in range(d):
-            for j in range(d):
-                li = [PP_i[k][i, j] * dx(k) for k in range(mat_num)]
-                PP_avg[i, j] = assemble(sum(li))
+            P_i[i] = diff(self.material[i].psi, self.F_merge)
+            # P_i[i] = diff(self.material[i].psi, self.F_split[0])
+            # P_i[i] = diff(self.material[i].psi, self.F_bar[0])
+            # P_i[i] = derivative(self.material[i].psi, self.F_merge, self.F_merge_test)
 
-        return PP_avg
+        # int_li = [P_i[k]*dx(k) for k in range(mat_num)]
+        # P_merge_avg = assemble(sum(int_li))
+
+        if self.multi_field_label:
+            F_merge_dim = self.F_merge.shape()[0]
+            P_merge_avg = np.zeros((F_merge_dim, 1))
+            for i in range(F_merge_dim):
+                int_li = [P_i[k][i]*dx(k) for k in range(mat_num)]
+                P_merge_avg[i, 0] = assemble(sum(int_li))
+        else:
+            P_merge_avg = np.zeros((d, d))
+            for i in range(d):
+                for j in range(d):
+                    int_li = [P_i[k][i, j]*dx(k) for k in range(mat_num)]
+                    P_merge_avg[i, j] = assemble(sum(int_li))
+
+        # Pi_der = derivative(self.Pi, self.F_split[0], FF_bar_trial)
+        # P_merge_avg = assemble(Pi_der)
+
+        print 'average merge stress computation finished'
+
+        print P_merge_avg
+
+        return P_merge_avg
 
     def tangent_moduli(self, material_energy):
         # todo calculate the tangent moduli from energy
         pass
 
-    def effective_moduli_2(self, E_m, nu_m, E_i, nu_i):
-        FF = self.FF
-        psi_m_ = self.material_energy(E_m, nu_m)
-        psi_i_ = self.material_energy(E_i, nu_i)
+    def effective_moduli_2(self):
+        if not self.F_merge:
+            self._energy_update()
+
+        FF = self.F_merge
+        psi_m_ = self.material[0].psi
+        psi_i_ = self.material[1].psi
 
         # calculate the local moduli
         P_i = diff(psi_i_, FF)
@@ -256,11 +390,12 @@ class MicroComputation(object):
         dx = Measure('dx', domain=self.cell.mesh,
                      subdomain_data=self.cell.domain)
         i, j, k, l = indices(4)
-        c = FF_bar_test[i, j] * C_i_[i, j, k, l] * FF_bar_trial[k, l] * dx(1) \
-            + \
-            FF_bar_test[i, j] * C_m_[i, j, k, l] * FF_bar_trial[k, l] * dx(0)
+        c = FF_bar_test[i, j]*C_i_[i, j, k, l]*FF_bar_trial[k, l]*dx(1) + \
+            FF_bar_test[i, j]*C_m_[i, j, k, l]*FF_bar_trial[k, l]*dx(0)
         cc = assemble(c)
         CC = cc.array()
+
+        print CC
 
         TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
         F_bar_2_trial = TrialFunction(TFS_R)
@@ -269,12 +404,13 @@ class MicroComputation(object):
 
         LTKL2 = self.sensitivity(B2)
 
-        # print CC-LTKL2
+        print LTKL2
 
+        print CC - LTKL2
         return CC - LTKL2
 
     def sensitivity(self, B):
-        w_test = self.v
+        w_test = self.v_merge
         J = self.J
         bc = self.bc
         f = Constant((0.0, 0.0))
@@ -300,7 +436,7 @@ class MicroComputation(object):
         # use the matrix from 1st method
         LTKL = np.zeros((4, 4))
 
-        L_assign = Function(self.function_space)
+        L_assign = Function(self.w_merge.function_space())
         x = Vector()
 
         # compute four columns
@@ -312,9 +448,6 @@ class MicroComputation(object):
             LTKL[:, i] = L.T.dot(
                     x.array())  # set the answer to the column of LTKL3
         return LTKL
-
-
-
 
 
 def cauchy_green_with_macro(F_bar, w_component):
@@ -343,22 +476,20 @@ if __name__ == '__main__':
 
     # Initialize MicroComputation
     # if multi field bc should match
-    F_bar = [[0.9, 0., 0., 1.]]
+    F_bar = [0.9, 0., 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [cauchy_green_with_macro],
-                            strain_space, 0)
+                            [strain_space], 0)
 
-    comp.input(F_bar, [w])
+    comp.input([F_bar], [w])
     comp.comp_fluctuation()
 
     # Post-Processing
+    # comp._energy_update()
+    # comp.comp_strain()
+    # comp.comp_stress()
+    # comp.avg_merge_strain()
+    # comp.avg_merge_stress()
+    comp.effective_moduli_2()
 
-    # comp.compute_strain()
-    # psi_m = comp.material_energy(E_m, nu_m)
-    # psi_i = comp.material_energy(E_i, nu_i)
-    # print comp.avg_stress(psi_m, psi_i)
-
-    # comp.effective_moduli_2(E_m, nu_m, E_i, nu_i)
-
-    # print comp.w.vector().array()

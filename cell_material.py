@@ -45,6 +45,7 @@ class Material(object):
 
     def _invariant(self):
         invariant_generator = self.invar_gen_li
+        self.invar = []
         for fields_label in invariant_generator:
             for generator in invariant_generator[fields_label]:
                 fields = [self.F[i] for i in fields_label]
