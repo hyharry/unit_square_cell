@@ -449,7 +449,7 @@ class MicroComputation(object):
 def deform_grad_with_macro(F_bar, w_component):
     return F_bar + grad(w_component)
 
-if __name__ == '__main__':
+def uni_fiel_test():
     print 'this is for testing'
     import cell_geom as ce
     import cell_material as ma
@@ -489,3 +489,54 @@ if __name__ == '__main__':
     # comp.avg_merge_stress()
     comp.effective_moduli_2()
 
+def multi_feild_test():
+    print 'this is for testing'
+    import cell_geom as ce
+    import cell_material as ma
+
+    # Set geometry
+    mesh = Mesh(r"m.xml")
+    cell = ce.unit_cell(mesh)
+    inc = ce.Inclusion_Circle()
+    inc = [inc]
+    cell.inclusion(inc)
+
+    VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
+                            constrained_domain=ce.PeriodicBoundary_no_corner())
+
+    # Set materials
+    E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
+    n = 1000
+    E_i, nu_i, Kappa_i = 1000*E_m, 0.3, n*Kappa_m
+
+    mat_m = ma.neo_hook_mre(E_m, nu_m, Kappa_m)
+    mat_i = ma.neo_hook_mre(E_i, nu_i, Kappa_i)
+    mat_li = [mat_m, mat_i]
+
+    # Macro Field Boundary
+    F_bar = [0.9, 0., 0., 1.]
+    E_bar = [1., 1]
+
+    # Solution Field
+    w = Function(VFS)
+    E = Function(VFS)
+    strain_space_w = TensorFunctionSpace(mesh, 'DG', 0)
+    strain_space_E = VectorFunctionSpace(mesh, 'CG', 1)
+
+    def deform_grad_with_macro(F_bar, w_component):
+        return F_bar + grad(w_component)
+
+    def e_field_with_macro(E_bar, E):
+        return E_bar + E
+
+    # Computation Initialization
+    comp = MicroComputation(cell, mat_li,
+                            [deform_grad_with_macro, e_field_with_macro],
+                            [strain_space_w, strain_space_E], 1)
+
+    comp.input([F_bar, E_bar], [w, E])
+    comp.comp_fluctuation()
+
+if __name__ == '__main__':
+    # uni_fiel_test()
+    multi_feild_test()

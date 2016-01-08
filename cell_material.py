@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from dolfin import Identity, tr, inner, outer, inv, sqrt, det, ln
+from dolfin import Identity, tr, inner, outer, inv, sqrt, det, ln, transpose
 
 
 class Material(object):
@@ -234,7 +234,7 @@ def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
     """
     Neo-Hookean-type MRE from 'Keip, Steinmann, Schroeder, 2014, CMAME'
 
-    :param C:
+    :param F:
     :param E:
     :param miu:
     :param lmbda:
@@ -254,10 +254,10 @@ def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
 
     nh_mre = Material(psi, [miu, lmbda, kappa, epsi0])
 
-    def sqrt_det(C):
-        return sqrt(det(C))
-    nh_mre.invariant_generator_append((0,), [tr, sqrt_det])
-    couple_invar_gen = lambda C, E: inner(inv(C), outer(E, E))
+    def sqr_tr(F):
+        return tr(F.T*F)
+    nh_mre.invariant_generator_append((0,), [sqr_tr, det])
+    couple_invar_gen = lambda F, E: inner(inv(F.T*F), outer(E, E))
     nh_mre.invariant_generator_append((0, 1), [couple_invar_gen])
 
     return nh_mre
