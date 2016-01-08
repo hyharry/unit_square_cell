@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from dolfin import Identity, tr
+from dolfin import Identity, tr, inner, outer, inv, sqrt, det, ln
 
 
 class Material(object):
@@ -39,6 +39,7 @@ class Material(object):
         if not isinstance(func_list, list):
             raise Exception('please input a list')
         self.F = func_list
+        # print len(self.F)
         self._material_energy()
 
     def invariant_generator_append(self, field_label_tuple,
@@ -229,6 +230,38 @@ def magneto_mechano(N, a, b, c):
 
     return mre
 
+def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
+    """
+    Neo-Hookean-type MRE from 'Keip, Steinmann, Schroeder, 2014, CMAME'
+
+    :param C:
+    :param E:
+    :param miu:
+    :param lmbda:
+    :param epsi0:
+    :param kappa:
+
+    :return:
+    """
+    miu = E_m / (2 * (1 + nu_m))
+    lmbda = E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m))
+
+    def psi(inva, miu, lmbda, kappa, epsi0):
+        mech_term = 0.5*miu*(inva[0] - 3) + lmbda/4*(inva[1]**2 - 1) - \
+                    (lmbda/2+miu)*ln(inva[1])
+        couple_term = -1/2*epsi0*(1+kappa/inva[1])*inva[1]*inva[2]
+        return mech_term+couple_term
+
+    nh_mre = Material(psi, [miu, lmbda, kappa, epsi0])
+
+    def sqrt_det(C):
+        return sqrt(det(C))
+    nh_mre.invariant_generator_append((0,), [tr, sqrt_det])
+    couple_invar_gen = lambda C, E: inner(inv(C), outer(E, E))
+    nh_mre.invariant_generator_append((0, 1), [couple_invar_gen])
+
+    return nh_mre
+
 
 if __name__ == '__main__':
     print 'this is for testing'
@@ -249,8 +282,8 @@ if __name__ == '__main__':
     svk = st_venant_kirchhoff(E_m, nu_m)
     svk2 = st_venant_kirchhoff(E_m, nu_m)
 
-    print id(svk)
-    print id(svk2)
+    # print id(svk)
+    # print id(svk2)
 
     svk([F])
     mesh2 = UnitSquareMesh(1, 1)
@@ -259,8 +292,8 @@ if __name__ == '__main__':
     F2 = grad(w2)
     svk2([F2])
 
-    print id(svk)
-    print id(svk2)
+    # print id(svk)
+    # print id(svk2)
 
     mu0, m0, lmbda0, ro0, cv, theta0 = 1, 2, 3, 4, 5, 6
     theta = Function(FS)
@@ -273,6 +306,14 @@ if __name__ == '__main__':
     a, b, c = 1., 2., 3.
     mre = magneto_mechano(N, a, b, c)
     mre([C, M, ])
+
+    E_m, nu_m, kappa = 10.0, 0.3, 2
+    C = Function(TFS)
+    E = Function(VFS)
+    nh_mre = neo_hook_mre(E_m, nu_m, kappa)
+    nh_mre([C, E, ])
+
+    print nh_mre.psi
 
     # print mre
     # print mre.psi

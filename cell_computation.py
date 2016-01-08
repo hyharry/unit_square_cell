@@ -2,7 +2,6 @@
 
 from dolfin import *
 import numpy as np
-from cell_geom import PeriodicBoundary_no_corner
 from cell_material import Material
 
 parameters["form_compiler"]["cpp_optimize"] = True
@@ -281,7 +280,7 @@ class MicroComputation(object):
 
         print 'stress computation finished'
 
-        plot(P[0,0], interactive=True)
+        # plot(P[0,0], interactive=True)
 
     def avg_merge_strain(self):
         if not self.F_merge:
@@ -308,7 +307,7 @@ class MicroComputation(object):
 
         print 'average merge strain computation finished'
 
-        print F_merge_avg
+        # print F_merge_avg
         return F_merge_avg
 
     def avg_merge_stress(self):
@@ -370,7 +369,7 @@ class MicroComputation(object):
 
         print 'average merge stress computation finished'
 
-        print P_merge_avg
+        # print P_merge_avg
 
         return P_merge_avg
 
@@ -407,7 +406,7 @@ class MicroComputation(object):
 
         # print LTKL2
 
-        print C_avg - LTKL2
+        # print C_avg - LTKL2
         return C_avg - LTKL2
 
     def sensitivity(self, B):
