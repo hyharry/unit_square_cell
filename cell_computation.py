@@ -16,21 +16,16 @@ class MicroComputation(object):
     unit cell computation for 2D multi field problem
     !! 3D should be extended !!
     """
+
     def __init__(self, cell, material_li,
-                 strain_gen_li, strain_FS_li,
-                 multi_field_flag):
+                 strain_gen_li, strain_FS_li):
         """
         Initialize cell properties such as geometry, material, boundary,
         post processing space, and switch of multi field
 
         :param cell: geometry
-        :param bc: boundary conditions
         :param material_li: [mat1, mat2, ...]
         :param strain_FS_li: post processing spaces
-        :param multi_field_flag: 1: multi, 0: uni
-
-        ** Attention: multi_field_flag should be set currently, when uni
-        field, assign in merge method does not work **
         """
         self.cell = cell
         self.w = None
@@ -45,8 +40,6 @@ class MicroComputation(object):
         self.F_w = None
         self.J = None
 
-        self.comp_state = None
-
         # __Helping class member__
         # Geometry Dimension 2D
         self.field_num = None
@@ -59,18 +52,24 @@ class MicroComputation(object):
         self.w_split = None
         # Boundary Condition
         self.bc = None
-        self.multi_field_flag = multi_field_flag
-        self.material_num = len(material_li)
 
-        # F for Post Processing
+        self.material_num = len(material_li)
         self.material_post = [Material(mat_i.energy_func, mat_i.para_list,
                                        mat_i.invar_gen_li.keys(),
                                        mat_i.invar_gen_li.values())
                               for mat_i in material_li]
+        # F for Problem Formulation
         self.F_merge = None
         self.F_merge_test = None
         self.F_merge_trial = None
         self.F_split = None
+
+        self.F_bar_merge = None
+        self.F_bar_merge_test = None
+        self.F_bar_merge_trial = None
+        self.F_bar_split = None
+
+        self.strain_const_FS = None
 
         self.P = None
 
@@ -86,11 +85,11 @@ class MicroComputation(object):
         self._F_bar_init(F_bar_li)
         self.w = w_li
         self.field_num = len(w_li)
-
-        self.comp_state = 'pre'
-        self._field_merge(self.comp_state)
-        self._field_split(self.comp_state)
-        self._strain_init(self.comp_state)
+        (self.w_merge, self.v_merge, self.dw_merge, self.w_split) \
+            = set_field(w_li)
+        (self.F_bar_merge, self.F_bar_merge_test, self.F_bar_merge_trial,
+         self.F_bar_split) = set_field(self.F_bar)
+        self.F = extend_strain(self.F_bar_split, self.w_split, self.strain_gen)
 
     def _F_bar_init(self, F_bar_li):
         """
@@ -118,7 +117,7 @@ class MicroComputation(object):
             VFS = VectorFunctionSpace(self.cell.mesh, 'R', 0)
             F_ex = Expression(('F1', 'F2'), F1=F_li[0], F2=F_li[1])
             return project(F_ex, VFS)
-        elif F_dim == dim**2:
+        elif F_dim == dim ** 2:
             TFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
             F_ex = Expression((("F11", "F12"),
                                ("F21", "F22")),
@@ -128,80 +127,15 @@ class MicroComputation(object):
         else:
             raise Exception('Please Input Right Dimension')
 
-    def _field_merge(self, state):
-        if state is 'pre':
-            if self.multi_field_flag:
-                FS_li = [wi.function_space() for wi in self.w]
-                MFS = MixedFunctionSpace(FS_li)
-                self.w_merge = Function(MFS)
-                self.v_merge = TestFunction(MFS)
-                self.dw_merge = TrialFunction(MFS)
-                for i, wi in enumerate(self.w):
-                    assign(self.w_merge.sub(i), wi)
-            else:
-                FS = self.w[0].function_space()
-                self.w_merge = Function(FS)
-                self.v_merge = TestFunction(FS)
-                self.dw_merge = TrialFunction(FS)
-                assign(self.w_merge, self.w[0])
-        elif state is 'post':
-            if self.multi_field_flag:
-                FS_li = [Fi.function_space() for Fi in self.F]
-                MFS = MixedFunctionSpace(FS_li)
-                self.F_merge = Function(MFS)
-                self.F_merge_test = TestFunction(MFS)
-                self.F_merge_trial = TrialFunction(MFS)
-                for i, Fi in enumerate(self.F):
-                    assign(self.F_merge.sub(i), Fi)
-            else:
-                FS = self.F[0].function_space()
-                self.F_merge = Function(FS)
-                self.F_merge_test = TestFunction(FS)
-                self.F_merge_trial = TrialFunction(FS)
-                assign(self.F_merge, self.F[0])
-        else:
-            raise Exception('wrong state for merge!')
-
-    def _field_split(self, state):
-        if state is 'pre':
-            if self.multi_field_flag:
-                self.w_split = list(split(self.w_merge))
-            else:
-                self.w_split = [self.w_merge]
-        elif state is 'post':
-            if self.multi_field_flag:
-                self.F_split = list(split(self.F_merge))
-            else:
-                self.F_split = [self.F_merge]
-        else:
-            raise Exception('wrong state for split!')
-
-    def _strain_init(self, state):
-        generator_li = self.strain_gen
-        if state is 'pre':
-            self.F = [gen(self.F_bar[i], self.w_split[i])
-                      for i, gen in enumerate(generator_li)]
-        elif state is 'post':
-            self.F = [self.F_bar[i] + self.F_split[i]
-                      for i in range(self.field_num)]
-        else:
-            raise Exception('wrong state for strain init!')
-
     # ==== Pre-Processing Stage ====
-    def _material_assem(self, F, material_list):
-        for i in range(self.material_num):
-            material_list[i](F)
-
-        # print id(self.material[0].invar[0])
-
     def _total_energy(self, F, material_list):
         # Please be careful about the ordering dx(0) -> matrix
         dx = Measure('dx', domain=self.cell.mesh,
                      subdomain_data=self.cell.domain)
 
-        self._material_assem(F, material_list)
+        material_assem(F, material_list)
 
-        int_i_li = [mat.psi*dx(i)
+        int_i_li = [mat.psi * dx(i)
                     for i, mat in enumerate(material_list)]
         self.Pi = sum(int_i_li)
 
@@ -210,7 +144,7 @@ class MicroComputation(object):
         corners = self.cell.mark_corner_bc()
         dim = self.w_merge.shape()
         if dim:
-            fixed_corner = Constant((0,)*dim[0])
+            fixed_corner = Constant((0,) * dim[0])
         else:
             fixed_corner = Constant(0.)
         for c in corners:
@@ -238,25 +172,41 @@ class MicroComputation(object):
               form_compiler_parameters=ffc_options)
 
         # plot(self.w_merge, mode='displacement', interactive=True)
+        # plot(self.w_merge[1], interactive=True)
 
         print 'fluctuation computation finished'
 
     # ==== Post-Processing Stage ====
     def _energy_update(self):
         self.comp_strain()
-        self._field_merge(self.comp_state)
-        self._field_split(self.comp_state)
-        self._strain_init(self.comp_state)
+        (self.F_merge, self.F_merge_test, self.F_merge_trial, self.F_split) = \
+            set_field(self.F)
         self._total_energy(self.F_split, self.material_post)
         # plot(self.F_merge[0,0], interactive=True)
         # plot(self.F[0][0,0], interactive=True)
+
+    def _const_strain_FS_init(self):
+        """
+        Generate constant strain FunctionSpace for Post-Processing
+        multi field: FS.shape = (n,)
+        uni field: FS.shape = (2,2)
+
+        :return: self.strain_const_FS
+        """
+        # TODO introspection when constructing const FuncSp
+        if self.field_num > 1:
+            dim = self.F_merge.shape()[0]
+            FS = FunctionSpace(self.cell.mesh, 'R', 0)
+            RFS = MixedFunctionSpace([FS] * dim)
+        else:
+            RFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
+
+        self.strain_const_FS = RFS
 
     def comp_strain(self):
         F_space = self.strain_FS
         self.F = [project(self.F[i], F_space_i)
                   for i, F_space_i in enumerate(F_space)]
-
-        self.comp_state = 'post'
 
         # plot(self.F[0][0,0], interactive=True)
 
@@ -273,7 +223,7 @@ class MicroComputation(object):
         dx = Measure('dx', domain=self.cell.mesh,
                      subdomain_data=self.cell.domain)
         a = inner(self.F_merge_test, self.F_merge_trial)
-        int_a_li = [a*dx(i) for i in range(self.material_num)]
+        int_a_li = [a * dx(i) for i in range(self.material_num)]
         a = sum(int_a_li)
 
         solve(a == L, P)
@@ -291,17 +241,17 @@ class MicroComputation(object):
         d = self.geom_dim
         mat_num = self.material_num
 
-        if self.multi_field_flag:
+        if self.field_num > 1:
             F_merge_dim = self.F_merge.shape()[0]
             F_merge_avg = np.zeros((F_merge_dim, 1))
             for i in range(F_merge_dim):
-                int_li = [self.F_merge[i]*dx(k) for k in range(mat_num)]
+                int_li = [self.F_merge[i] * dx(k) for k in range(mat_num)]
                 F_merge_avg[i, 0] = assemble(sum(int_li))
         else:
             F_merge_avg = np.zeros((d, d))
             for i in range(d):
                 for j in range(d):
-                    int_li = [self.F_merge[i, j]*dx(k) for k in range(
+                    int_li = [self.F_merge[i, j] * dx(k) for k in range(
                             mat_num)]
                     F_merge_avg[i, j] = assemble(sum(int_li))
 
@@ -313,12 +263,13 @@ class MicroComputation(object):
     def avg_merge_stress(self):
         if not self.F_merge:
             self._energy_update()
+        if not self.strain_const_FS:
+            self._const_strain_FS_init()
 
         # 1. Method: direct make derivative to global energy and use Constant
         # Function as TestFunction. Result is a Vector. No use of mat_num
         # explicitly
-        TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-        F_const_test = TestFunction(TFS_R)
+        F_const_test = TestFunction(self.strain_const_FS)
 
         L = derivative(self.Pi, self.F_merge, F_const_test)
 
@@ -333,8 +284,7 @@ class MicroComputation(object):
         #
         # P_i = range(mat_num)
         #
-        # TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-        # F_const_test = TestFunction(TFS_R)
+        # F_const_test = TestFunction(self.strain_const_FS)
         # for i in range(mat_num):
         #     P_i[i] = derivative(self.material[i].psi, self.F_merge, F_const_test)
         #
@@ -354,7 +304,7 @@ class MicroComputation(object):
         # for i in range(mat_num):
         #     P_i[i] = diff(self.material[i].psi, self.F_merge)
         #
-        # if self.multi_field_flag:
+        # if self.field_num > 1:
         #     F_merge_dim = self.F_merge.shape()[0]
         #     P_merge_avg = np.zeros((F_merge_dim, 1))
         #     for i in range(F_merge_dim):
@@ -376,12 +326,11 @@ class MicroComputation(object):
     def avg_merge_moduli(self):
         if not self.F_merge:
             self._energy_update()
+        if not self.strain_const_FS:
+            self._const_strain_FS_init()
 
-        # Using derivative() direct on self.Pi is a more compact way!! and
-        # they yield the same result!! : integrate then derivative
-        TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-        F_const_trial = TrialFunction(TFS_R)
-        F_const_test = TestFunction(TFS_R)
+        F_const_trial = TrialFunction(self.strain_const_FS)
+        F_const_test = TestFunction(self.strain_const_FS)
 
         dPi_dF = derivative(self.Pi, self.F_merge, F_const_test)
         ddPi_dF = derivative(dPi_dF, self.F_merge, F_const_trial)
@@ -394,19 +343,20 @@ class MicroComputation(object):
     def effective_moduli_2(self):
         if not self.F_merge:
             self._energy_update()
+        if not self.strain_const_FS:
+            self._const_strain_FS_init()
 
         C_avg = self.avg_merge_moduli()
 
-        TFS_R = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-        F_bar_trial = TrialFunction(TFS_R)
-        L2 = derivative(self.F_w, self.F_bar, F_bar_trial)
+        F_bar_trial = TrialFunction(self.strain_const_FS)
+        L2 = derivative(self.F_w, self.F_bar_merge, F_bar_trial)
         B2 = assemble(L2)
 
         LTKL2 = self.sensitivity(B2)
 
         # print LTKL2
 
-        # print C_avg - LTKL2
+        print C_avg - LTKL2
         return C_avg - LTKL2
 
     def sensitivity(self, B):
@@ -416,7 +366,7 @@ class MicroComputation(object):
         vec_dim = (w_test.ufl_shape[0] if w_test.ufl_shape else 1)
 
         # Assemble K symmetrically
-        f = Constant((0.,)*vec_dim)
+        f = Constant((0.,) * vec_dim)
         b = inner(w_test, f) * dx
         K_a, L_a = assemble_system(J, b, bc)
 
@@ -426,7 +376,7 @@ class MicroComputation(object):
         for bc_i in bc:
             rows.extend(bc_i.get_boundary_values().keys())
         cols = range(F_merge_len)
-        vals = [0.]*F_merge_len
+        vals = [0.] * F_merge_len
         rs = np.array(rows, dtype=np.uintp)
         cs = np.array(cols, dtype=np.uintp)
         vs = np.array(vals, dtype=np.float_)
@@ -446,11 +396,65 @@ class MicroComputation(object):
         return LTKL
 
 
+def field_merge(func_li):
+    # Determine Function Space
+    if len(func_li) > 1:
+        FS_li = [func_i.function_space() for func_i in func_li]
+        MFS = MixedFunctionSpace(FS_li)
+        FS = MFS
+        func_merge = Function(FS)
+        for i, func_i in enumerate(func_li):
+            assign(func_merge.sub(i), func_i)
+    else:
+        FS = func_li[0].function_space()
+        func_merge = func_li[0]
+
+    # Generate Functions
+    func_merge_test = TestFunction(FS)
+    func_merge_trial = TrialFunction(FS)
+
+    return func_merge, func_merge_test, func_merge_trial
+
+
+def field_split(merged_func, field_num):
+    if field_num > 1:
+        return list(split(merged_func))
+    else:
+        return [merged_func]
+
+
+def set_field(func_li):
+    """
+    One-stand Function dependency setting (merge and split in one step)
+
+    :param func_li: w of F to merge and split
+
+    :return:
+    """
+    f_merge, f_merge_test, f_merge_trial = field_merge(func_li)
+    f_split = field_split(f_merge, len(func_li))
+    return f_merge, f_merge_test, f_merge_trial, f_split
+
+
+def extend_strain(macro_li, func_li, generator_li=None):
+    if generator_li:
+        F = [gen(macro_li[i], func_li[i]) for i, gen in enumerate(generator_li)]
+    else:
+        F = [macro_i + func_li[i] for i, macro_i in enumerate(macro_li)]
+    return F
+
+
+def material_assem(F, material_list):
+    for mat_i in material_list:
+        mat_i(F)
+
+
 def deform_grad_with_macro(F_bar, w_component):
     return F_bar + grad(w_component)
 
-def uni_fiel_test():
-    print 'this is for testing'
+
+def uni_field_test():
+    print 'St-Venant Kirchhoff Material Test'
     import cell_geom as ce
     import cell_material as ma
 
@@ -462,7 +466,7 @@ def uni_fiel_test():
     cell.inclusion(inc)
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
-                            constrained_domain=ce.PeriodicBoundary_no_corner())
+                              constrained_domain=ce.PeriodicBoundary_no_corner())
 
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
@@ -476,7 +480,7 @@ def uni_fiel_test():
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
-                            [strain_space], 0)
+                            [strain_space])
 
     comp.input([F_bar], [w])
     comp.comp_fluctuation()
@@ -487,10 +491,12 @@ def uni_fiel_test():
     # comp.comp_stress()
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
+    # comp.avg_merge_moduli()
     comp.effective_moduli_2()
 
+
 def multi_feild_test():
-    print 'this is for testing'
+    print 'Neo-Hookean Material Test'
     import cell_geom as ce
     import cell_material as ma
 
@@ -502,20 +508,20 @@ def multi_feild_test():
     cell.inclusion(inc)
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
-                            constrained_domain=ce.PeriodicBoundary_no_corner())
+                              constrained_domain=ce.PeriodicBoundary_no_corner())
 
     # Set materials
     E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
     n = 1000
-    E_i, nu_i, Kappa_i = 1000*E_m, 0.3, n*Kappa_m
+    E_i, nu_i, Kappa_i = 1000 * E_m, 0.3, n * Kappa_m
 
     mat_m = ma.neo_hook_mre(E_m, nu_m, Kappa_m)
     mat_i = ma.neo_hook_mre(E_i, nu_i, Kappa_i)
     mat_li = [mat_m, mat_i]
 
     # Macro Field Boundary
-    F_bar = [0.9, 0., 0., 1.]
-    E_bar = [1., 1]
+    F_bar = [1, 0., 0., 1.]
+    E_bar = [0., 0.1]
 
     # Solution Field
     w = Function(VFS)
@@ -532,11 +538,20 @@ def multi_feild_test():
     # Computation Initialization
     comp = MicroComputation(cell, mat_li,
                             [deform_grad_with_macro, e_field_with_macro],
-                            [strain_space_w, strain_space_E], 1)
+                            [strain_space_w, strain_space_E])
 
     comp.input([F_bar, E_bar], [w, E])
     comp.comp_fluctuation()
+    # Post-Processing
+    # comp._energy_update()
+    # comp.comp_strain()
+    # comp.comp_stress()
+    # comp.avg_merge_strain()
+    # comp.avg_merge_stress()
+    # comp.avg_merge_moduli()
+    comp.effective_moduli_2()
+
 
 if __name__ == '__main__':
-    # uni_fiel_test()
+    # uni_field_test()
     multi_feild_test()
