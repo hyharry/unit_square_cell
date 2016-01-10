@@ -460,10 +460,10 @@ def uni_field_test():
 
     # Set geometry
     mesh = Mesh(r"m.xml")
-    cell = ce.unit_cell(mesh)
-    inc = ce.Inclusion_Circle()
-    inc = [inc]
-    cell.inclusion(inc)
+    cell = ce.UnitCell(mesh)
+    inc = ce.InclusionCircle((0.5, 0.5), 0.25)
+    inc_di = {'circle_inc': inc}
+    cell.set_append_inclusion(inc_di)
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner())
@@ -502,10 +502,10 @@ def multi_feild_test():
 
     # Set geometry
     mesh = Mesh(r"m.xml")
-    cell = ce.unit_cell(mesh)
-    inc = ce.Inclusion_Circle()
-    inc = [inc]
-    cell.inclusion(inc)
+    cell = ce.UnitCell(mesh)
+    inc = ce.InclusionCircle((0.5, 0.5), 0.25)
+    inc_di = {'circle_inc': inc}
+    cell.set_append_inclusion(inc_di)
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner())
@@ -553,5 +553,5 @@ def multi_feild_test():
 
 
 if __name__ == '__main__':
-    # uni_field_test()
-    multi_feild_test()
+    uni_field_test()
+    # multi_feild_test()
