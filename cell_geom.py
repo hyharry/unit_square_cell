@@ -36,7 +36,7 @@ class UnitCell(object):
 
     def set_append_inclusion(self, incl_di):
         exist_incl_num = len(self.incl_di)
-        k = exist_incl_num+1
+        k = exist_incl_num + 1
         for inc in incl_di.values():
             inc.mark(self.domain, k)
             k += 1
@@ -134,8 +134,10 @@ class TopBoundary(SubDomain):
         return on_boundary and near(x[1], 1)
 
 
-# periodic boudary both directions (no corner)
 class PeriodicBoundary_no_corner(SubDomain):
+    """
+    Periodic boundary both directions (no corner)
+    """
     # Left boundary is "target domain" G
     def inside(self, x, on_boundary):
         # return True if on left or bottom boundary
@@ -154,26 +156,57 @@ class PeriodicBoundary_no_corner(SubDomain):
             y[1] = x[1] - 1.
 
 
-if __name__ == "__main__":
-    print 'this is for testing'
-    # mesh = Mesh(r"m.xml")
-    mesh = UnitSquareMesh(10, 10, 'crossed')
-    # cell = UnitCell(mesh)
-    # inc1 = InclusionCircle(0.5)
-    inc2 = InclusionCircle((0.1,0.1),0.5)
-    inc3 = InclusionCircle((0.9,0.9),0.5)
-    inc4 = InclusionRectangle(0.2, 0.6, 0.3, 0.8)
-    # inc_group = {'circle_inc1': inc1}
-    # inc_group = {'circle_inc1': inc2}
-    # inc_group = {'circle_inc1': inc2, 'circle_inc2': inc3}
-    inc_group = {'rect': inc4}
+def gmsh_with_incl_test():
+    print 'gmsh with inclusion test'
+    mesh = Mesh(r"m.xml")
+    mesh = Mesh(r"m_fine.xml")
+    # Generate Inclusion
+    inc1 = InclusionCircle((0.5, 0.5), 0.25)
+    inc_group = {'circle_inc1': inc1}
+    # Initiate UnitCell Instance with Inclusion
     cell = UnitCell(mesh, inc_group)
-    # domains = CellFunction('size_t',mesh)
-    # domains.set_all(0)
-    # inc1.mark(domains,1)
-    cell.set_append_inclusion(inc_group)
+    cell.view_domain()
+
+
+def init_cell_with_inclusion_and_add_test():
+    print 'inclusion add test'
+    mesh = UnitSquareMesh(40, 40, 'crossed')
+    inc1 = InclusionCircle((0.1, 0.1), 0.5)
+    inc2 = InclusionCircle((0.9, 0.9), 0.5)
+    # inc3 = InclusionRectangle(0.2, 0.6, 0.3, 0.8)
+    inc_group = {'circle_inc1': inc1}
+    add_inc_group = {'circle_inc2': inc2}
+    # inc_group = {'rect': inc4}
+    cell = UnitCell(mesh, inc_group)
+    cell.set_append_inclusion(add_inc_group)
     cell.add_boundary()
     bc = cell.mark_corner_bc()
     bc2 = cell.mark_side_bc()
     cell.view_domain()
     print type(bc2)
+    print cell.incl_di.keys()
+
+
+def multiple_inclusion_test():
+    print 'multiple inclusions test'
+    mesh = UnitSquareMesh(40, 40, 'crossed')
+    inc1 = InclusionCircle((0.1, 0.1), 0.5)
+    inc2 = InclusionCircle((0.9, 0.9), 0.5)
+    inc3 = InclusionRectangle(0.1, 0.3, 0.7, 0.9)
+    inc4 = InclusionRectangle(0.7, 0.9, 0.1, 0.3)
+    inc_group = {'circle_inc1': inc1, 'circle_inc2': inc2,
+                 'rect_inc3': inc3, 'rect_inc4': inc4}
+    cell = UnitCell(mesh, inc_group)
+    cell.add_boundary()
+    bc = cell.mark_corner_bc()
+    bc2 = cell.mark_side_bc()
+    cell.view_domain()
+    print type(bc2)
+    print cell.incl_di.keys()
+
+
+if __name__ == "__main__":
+    print 'this is for testing'
+    # gmsh_with_incl_test()
+    # init_cell_with_inclusion_and_add_test()
+    multiple_inclusion_test()

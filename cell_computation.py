@@ -427,7 +427,7 @@ def set_field(func_li):
     """
     One-stand Function dependency setting (merge and split in one step)
 
-    :param func_li: w of F to merge and split
+    :param func_li: w or F to merge and split, or other Function_list
 
     :return:
     """
@@ -496,7 +496,7 @@ def uni_field_test():
 
 
 def multi_feild_test():
-    print 'Neo-Hookean Material Test'
+    print 'Neo-Hookean MRE Material Test'
     import cell_geom as ce
     import cell_material as ma
 
@@ -509,6 +509,8 @@ def multi_feild_test():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner())
+    FS = FunctionSpace(cell.mesh, "CG", 1,
+                       constrained_domain=ce.PeriodicBoundary_no_corner())
 
     # Set materials
     E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
@@ -525,22 +527,22 @@ def multi_feild_test():
 
     # Solution Field
     w = Function(VFS)
-    E = Function(VFS)
+    el_pot_phi = Function(FS)
     strain_space_w = TensorFunctionSpace(mesh, 'DG', 0)
     strain_space_E = VectorFunctionSpace(mesh, 'CG', 1)
 
     def deform_grad_with_macro(F_bar, w_component):
         return F_bar + grad(w_component)
 
-    def e_field_with_macro(E_bar, E):
-        return E_bar + E
+    def e_field_with_macro(E_bar, phi):
+        return E_bar + grad(el_pot_phi)
 
     # Computation Initialization
     comp = MicroComputation(cell, mat_li,
                             [deform_grad_with_macro, e_field_with_macro],
                             [strain_space_w, strain_space_E])
 
-    comp.input([F_bar, E_bar], [w, E])
+    comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
     # Post-Processing
     # comp._energy_update()
@@ -553,5 +555,5 @@ def multi_feild_test():
 
 
 if __name__ == '__main__':
-    uni_field_test()
-    # multi_feild_test()
+    # uni_field_test()
+    multi_feild_test()
