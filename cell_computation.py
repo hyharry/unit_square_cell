@@ -71,7 +71,7 @@ class MicroComputation(object):
 
         self.strain_const_FS = None
 
-        self.P = None
+        self.P_merge = None
 
     def input(self, F_bar_li, w_li):
         """
@@ -227,6 +227,8 @@ class MicroComputation(object):
         a = sum(int_a_li)
 
         solve(a == L, P)
+
+        self.P_merge = P
 
         print 'stress computation finished'
 
@@ -395,6 +397,42 @@ class MicroComputation(object):
             LTKL[:, i] = L.T.dot(x.array())
         return LTKL
 
+    def view_fluctuation(self, field_label=1):
+        if field_label is 1:
+            plot(self.w_split[0], mode='displacement', interactive=True)
+        else:
+            label = field_label-1
+            w = self.w_split[label]
+            if not w.shape():
+                plot(w, mode='color', interactive=True)
+            elif len(w.shape()) is 1:
+                if w.shape()[0] != self.geom_dim:
+                    print 'plot dimension does not match'
+                    return
+                plot(w, mode='displacement', interactive=True)
+            else:
+                print 'this is a tensor field'
+
+    def view_post_processing(self, label, component):
+        """
+        Plot strain or stress from Post-Processing
+
+        :param label: 'stress' or 'strain'
+        :param component: component label should be label for the merged field
+
+        :return:
+        """
+        if label is 'strain':
+            if not self.F_merge:
+                self._energy_update()
+            plot(self.F_merge[component], mode='color', interactive=True)
+        elif label is 'stress':
+            if not self.P_merge:
+                self.comp_stress()
+            plot(self.P_merge[component], mode='color', interactive=True)
+        else:
+            raise Exception('invalid output name')
+
 
 def field_merge(func_li):
     # Determine Function Space
@@ -484,6 +522,7 @@ def uni_field_test():
 
     comp.input([F_bar], [w])
     comp.comp_fluctuation()
+    comp.view_fluctuation()
 
     # Post-Processing
     # comp._energy_update()
@@ -492,7 +531,7 @@ def uni_field_test():
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
-    comp.effective_moduli_2()
+    # comp.effective_moduli_2()
 
 
 def multi_feild_test():
@@ -522,20 +561,20 @@ def multi_feild_test():
     mat_li = [mat_m, mat_i]
 
     # Macro Field Boundary
-    F_bar = [1, 0., 0., 1.]
+    F_bar = [1., 0., 0., 1.]
     E_bar = [0., 0.1]
 
     # Solution Field
     w = Function(VFS)
     el_pot_phi = Function(FS)
     strain_space_w = TensorFunctionSpace(mesh, 'DG', 0)
-    strain_space_E = VectorFunctionSpace(mesh, 'CG', 1)
+    strain_space_E = VectorFunctionSpace(mesh, 'DG', 0)
 
     def deform_grad_with_macro(F_bar, w_component):
         return F_bar + grad(w_component)
 
     def e_field_with_macro(E_bar, phi):
-        return E_bar + grad(el_pot_phi)
+        return E_bar + grad(phi)
 
     # Computation Initialization
     comp = MicroComputation(cell, mat_li,
@@ -544,6 +583,8 @@ def multi_feild_test():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
+    comp.view_fluctuation(2)
+    # comp.view_post_processing('stress', 4)
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -551,7 +592,7 @@ def multi_feild_test():
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
-    comp.effective_moduli_2()
+    # comp.effective_moduli_2()
 
 
 if __name__ == '__main__':

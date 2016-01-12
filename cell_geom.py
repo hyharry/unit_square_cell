@@ -207,6 +207,6 @@ def multiple_inclusion_test():
 
 if __name__ == "__main__":
     print 'this is for testing'
-    # gmsh_with_incl_test()
+    gmsh_with_incl_test()
     # init_cell_with_inclusion_and_add_test()
-    multiple_inclusion_test()
+    # multiple_inclusion_test()
