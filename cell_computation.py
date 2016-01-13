@@ -90,6 +90,8 @@ class MicroComputation(object):
         (self.F_bar_merge, self.F_bar_merge_test, self.F_bar_merge_trial,
          self.F_bar_split) = set_field(self.F_bar)
         self.F = extend_strain(self.F_bar_split, self.w_split, self.strain_gen)
+        # Clear self.F_merge for Post-Processing
+        self.F_merge = None
 
     def _F_bar_init(self, F_bar_li):
         """
@@ -497,7 +499,8 @@ def uni_field_test():
     import cell_material as ma
 
     # Set geometry
-    mesh = Mesh(r"m.xml")
+    # mesh = Mesh(r"m.xml")
+    mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     inc = ce.InclusionCircle((0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
@@ -514,7 +517,8 @@ def uni_field_test():
 
     # Initialize MicroComputation
     # if multi field bc should match
-    F_bar = [0.9, 0., 0., 1.]
+    # F_bar = [1.2, 0., 0., 1.]
+    F_bar = [1., 0.5, 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
@@ -534,13 +538,14 @@ def uni_field_test():
     # comp.effective_moduli_2()
 
 
-def multi_feild_test():
+def multi_field_test():
     print 'Neo-Hookean MRE Material Test'
     import cell_geom as ce
     import cell_material as ma
 
     # Set geometry
-    mesh = Mesh(r"m.xml")
+    # mesh = Mesh(r"m.xml")
+    mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     inc = ce.InclusionCircle((0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
@@ -553,7 +558,8 @@ def multi_feild_test():
 
     # Set materials
     E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
-    n = 1000
+    # n = 1000
+    n = 10  # 13.Jan
     E_i, nu_i, Kappa_i = 1000 * E_m, 0.3, n * Kappa_m
 
     mat_m = ma.neo_hook_mre(E_m, nu_m, Kappa_m)
@@ -562,7 +568,7 @@ def multi_feild_test():
 
     # Macro Field Boundary
     F_bar = [1., 0., 0., 1.]
-    E_bar = [0., 0.1]
+    E_bar = [0., -0.35]
 
     # Solution Field
     w = Function(VFS)
@@ -583,8 +589,8 @@ def multi_feild_test():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
-    comp.view_fluctuation(2)
-    # comp.view_post_processing('stress', 4)
+    # comp.view_fluctuation(1)
+    comp.view_post_processing('stress', 5)
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -597,4 +603,4 @@ def multi_feild_test():
 
 if __name__ == '__main__':
     # uni_field_test()
-    multi_feild_test()
+    multi_field_test()
