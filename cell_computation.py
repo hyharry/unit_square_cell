@@ -3,12 +3,60 @@
 from dolfin import *
 import numpy as np
 from cell_material import Material
+import cell_geom as geom
 
 parameters["form_compiler"]["cpp_optimize"] = True
 ffc_options = {"optimize": True,
                "eliminate_zeros": True,
                "precompute_basis_const": True,
                "precompute_ip_const": True}
+# parameters["linear_solver"] = "krylov"
+
+# parameters["form_compiler"]["quadrature_degree"] = 2
+
+# Define the solver parameters
+snes_solver_parameters = {"nonlinear_solver": "snes",
+                          "snes_solver": {"linear_solver": "lu",
+                                          "line_search": "bt",
+                                          "maximum_iterations": 50,
+                                          "report": True,
+                                          "error_on_nonconvergence": False,
+                                          }}
+
+newton_nonlin_solver_parameters = {"nonlinear_solver": "newton",
+                                   "newton_solver": {"absolute_tolerance": 1E-8,
+                                                     "relative_tolerance": 2E-7,
+                                                     "maximum_iterations": 25,
+                                                     "relaxation_parameter": 1.,
+                                                     }}
+
+# TODO is gmres linear solver? how to set it to solve nonlinear?
+gmres_solver_parameters = {"linear_solver": "gmres",
+                           "preconditioner": "ilu",
+                           "krylov_solver": {"absolute_tolerance": 1E-9,
+                                             "relative_tolerance": 1E-7,
+                                             "maximum_iterations": 1000,
+                                             "gmres": {"restart": 30},
+                                             "preconditioner": {"ilu": {
+                                                 "fill_level": 0}}
+                                             }
+                           }
+
+gmres_solver_parameters = {"nonlinear_solver": "newton",
+                           "newton_solver": gmres_solver_parameters}
+
+krylov_solver_parameters = {"nonlinear_solver": "newton",
+                            "newton_solver": {"linear_solver": "cg"}}
+
+solver_parameters = newton_nonlin_solver_parameters
+
+
+# solver_parameters = snes_solver_parameters
+# solver_parameters = gmres_solver_parameters
+# solver_parameters = krylov_solver_parameters
+
+# PROGRESS = 1
+# set_log_level(PROGRESS)
 
 
 class MicroComputation(object):
@@ -43,7 +91,7 @@ class MicroComputation(object):
         # __Helping class member__
         # Geometry Dimension 2D
         self.field_num = None
-        self.geom_dim = 2
+        self.geom_dim = cell.dim
         self.w_merge = None
         # Test function
         self.v_merge = None
@@ -117,14 +165,26 @@ class MicroComputation(object):
             return project(F_ex, FS)
         elif F_dim == dim:
             VFS = VectorFunctionSpace(self.cell.mesh, 'R', 0)
-            F_ex = Expression(('F1', 'F2'), F1=F_li[0], F2=F_li[1])
+            if dim == 2:
+                F_ex = Expression(('F1', 'F2'), F1=F_li[0], F2=F_li[1])
+            else:
+                F_ex = Expression(('F1', 'F2', 'F3'), F1=F_li[0], F2=F_li[1],
+                                  F3=F_li[2])
             return project(F_ex, VFS)
         elif F_dim == dim ** 2:
             TFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
-            F_ex = Expression((("F11", "F12"),
-                               ("F21", "F22")),
-                              F11=F_li[0], F12=F_li[1],
-                              F21=F_li[2], F22=F_li[3])
+            if dim == 2:
+                F_ex = Expression((("F11", "F12"),
+                                   ("F21", "F22")),
+                                  F11=F_li[0], F12=F_li[1],
+                                  F21=F_li[2], F22=F_li[3])
+            else:
+                F_ex = Expression((("F11", "F12", "F13"),
+                                   ("F21", "F22", "F23"),
+                                   ("F31", "F32", "F33")),
+                                  F11=F_li[0], F12=F_li[1], F13=F_li[2],
+                                  F21=F_li[3], F22=F_li[4], F23=F_li[5],
+                                  F31=F_li[6], F32=F_li[7], F33=F_li[8])
             return project(F_ex, TFS)
         else:
             raise Exception('Please Input Right Dimension')
@@ -143,7 +203,7 @@ class MicroComputation(object):
 
     def _bc_fixed_corner(self):
         bc = []
-        corners = self.cell.mark_corner_bc()
+        corners = geom.compiled_corner_subdom(self.geom_dim)
         dim = self.w_merge.shape()
         if dim:
             fixed_corner = Constant((0,) * dim[0])
@@ -164,17 +224,27 @@ class MicroComputation(object):
 
         self.F_w = F_w
         self.J = J
-        self._bc_fixed_corner()
+        if self.bc is None:
+            self._bc_fixed_corner()
 
     # ==== Solution ====
     def comp_fluctuation(self):
         self._fem_formulation_composite()
 
-        solve(self.F_w == 0, self.w_merge, self.bc, J=self.J,
-              form_compiler_parameters=ffc_options)
+        # 1.Method of defining solution: direct set solver_parameters
+        # solve(self.F_w == 0, self.w_merge, self.bc, J=self.J,
+        #       solver_parameters=solver_parameters,
+        #       form_compiler_parameters=ffc_options)
 
-        # plot(self.w_merge, mode='displacement', interactive=True)
-        # plot(self.w_merge[1], interactive=True)
+        # 2.Method of defining solution: define variational prob, and update,
+        #  and solve
+        problem = NonlinearVariationalProblem(self.F_w, self.w_merge, self.bc,
+                                              self.J)
+        solver = NonlinearVariationalSolver(problem)
+        # info(solver.parameters, True)
+        solver.parameters.update(solver_parameters)
+        # set_log_level(PROGRESS)
+        solver.solve()
 
         print 'fluctuation computation finished'
 
@@ -403,7 +473,7 @@ class MicroComputation(object):
         if field_label is 1:
             plot(self.w_split[0], mode='displacement', interactive=True)
         else:
-            label = field_label-1
+            label = field_label - 1
             w = self.w_split[label]
             if not w.shape():
                 plot(w, mode='color', interactive=True)
@@ -499,15 +569,17 @@ def uni_field_test():
     import cell_material as ma
 
     # Set geometry
-    # mesh = Mesh(r"m.xml")
-    mesh = Mesh(r"m_fine.xml")
+    mesh = Mesh(r"m.xml")
+    # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
-    inc = ce.InclusionCircle((0.5, 0.5), 0.25)
+    inc = ce.InclusionCircle(2, (0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
     cell.set_append_inclusion(inc_di)
+    # cell.view_domain()
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
-                              constrained_domain=ce.PeriodicBoundary_no_corner())
+                              constrained_domain=ce.PeriodicBoundary_no_corner(
+                                  2))
 
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
@@ -517,8 +589,8 @@ def uni_field_test():
 
     # Initialize MicroComputation
     # if multi field bc should match
-    # F_bar = [1.2, 0., 0., 1.]
-    F_bar = [1., 0.5, 0., 1.]
+    F_bar = [.9, 0., 0., 1.]
+    # F_bar = [1., 0.5, 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
@@ -544,17 +616,18 @@ def multi_field_test():
     import cell_material as ma
 
     # Set geometry
-    # mesh = Mesh(r"m.xml")
-    mesh = Mesh(r"m_fine.xml")
+    mesh = Mesh(r"m.xml")
+    # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
-    inc = ce.InclusionCircle((0.5, 0.5), 0.25)
+    inc = ce.InclusionCircle(2, (0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
     cell.set_append_inclusion(inc_di)
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
-                              constrained_domain=ce.PeriodicBoundary_no_corner())
+                              constrained_domain=ce.PeriodicBoundary_no_corner(
+                                  2))
     FS = FunctionSpace(cell.mesh, "CG", 1,
-                       constrained_domain=ce.PeriodicBoundary_no_corner())
+                       constrained_domain=ce.PeriodicBoundary_no_corner(2))
 
     # Set materials
     E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
@@ -568,7 +641,7 @@ def multi_field_test():
 
     # Macro Field Boundary
     F_bar = [1., 0., 0., 1.]
-    E_bar = [0., -0.35]
+    E_bar = [0., -0.2]
 
     # Solution Field
     w = Function(VFS)
@@ -589,8 +662,55 @@ def multi_field_test():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
-    # comp.view_fluctuation(1)
-    comp.view_post_processing('stress', 5)
+    comp.view_fluctuation(1)
+    # comp.view_post_processing('stress', 5)
+    # Post-Processing
+    # comp._energy_update()
+    # comp.comp_strain()
+    # comp.comp_stress()
+    # comp.avg_merge_strain()
+    # comp.avg_merge_stress()
+    # comp.avg_merge_moduli()
+    # comp.effective_moduli_2()
+
+
+def uni_field_3d_test():
+    print 'St-Venant Kirchhoff Material Test'
+    import cell_geom as ce
+    import cell_material as ma
+
+    # Set geometry
+    mesh = UnitCubeMesh(4, 4, 4)
+    # mesh = Mesh(r"m_fine.xml")
+    cell = ce.UnitCell(mesh)
+    # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
+    inc = ce.InclusionRectangle(3, 0., 1., .25, .75, .25, .75)
+    inc_di = {'box': inc}
+    cell.set_append_inclusion(inc_di)
+    # cell.view_domain()
+
+    VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
+                              constrained_domain=ce.PeriodicBoundary_no_corner(
+                                  3))
+
+    # Set materials
+    E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
+    mat_m = ma.st_venant_kirchhoff(E_m, nu_m)
+    mat_i = ma.st_venant_kirchhoff(E_i, nu_i)
+    mat_li = [mat_m, mat_i]
+
+    # Initialize MicroComputation
+    # if multi field bc should match
+    F_bar = [.9, 0., 0., 0., 1., 0., 0., 0., 1.]
+    w = Function(VFS)
+    strain_space = TensorFunctionSpace(mesh, 'DG', 0)
+    comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
+                            [strain_space])
+
+    comp.input([F_bar], [w])
+    comp.comp_fluctuation()
+    comp.view_fluctuation()
+
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -603,4 +723,5 @@ def multi_field_test():
 
 if __name__ == '__main__':
     # uni_field_test()
-    multi_field_test()
+    # multi_field_test()
+    uni_field_3d_test()

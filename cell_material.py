@@ -15,8 +15,8 @@ class Material(object):
         self.para_list = para_list
 
         self.F = None
-        self.num_field = 0
         self.field_dim = []
+        self.num_field = 0
         self.prob_dim = 0
 
         if not field_label_tuple_list:
@@ -105,35 +105,36 @@ class Material(object):
             else:
                 print 'vector field: %d' % field_shape[0]
 
-    def green_lagrange(self, F):
-        if not self.prob_dim:
-            self._problem_setting()
-        I = Identity(self.prob_dim)
-        C = F.T * F
-        E = 0.5 * (C - I)
-        return E
 
-    # Assistant method to make invariants
-    @staticmethod
-    def tensor_invar(label_tuple):
-        generator_list = []
-        if 1 in label_tuple:
-            I1 = tr
-            generator_list.append(I1)
-        if 2 in label_tuple:
-            def I2(tensor_function):
-                return 0.5 * (tr(tensor_function) ** 2 -
-                              tr(tensor_function.T * tensor_function))
+# Tensor measure
+def green_lagrange(F):
+    dim = F.geometric_dimension()
+    I = Identity(dim)
+    C = F.T*F
+    E = 0.5*(C - I)
+    return E
 
-            generator_list.append(I2)
-        if 3 in label_tuple:
-            I3 = det
-            generator_list.append(I3)
-        return generator_list
 
-    @staticmethod
-    def compose(f_list, g):
-        return [lambda x: fi(g(x)) for fi in f_list]
+# Assistant method to make invariants
+def tensor_invar(label_tuple):
+    generator_list = []
+    if 1 in label_tuple:
+        I1 = tr
+        generator_list.append(I1)
+    if 2 in label_tuple:
+        def I2(tensor_function):
+            return 0.5 * (tr(tensor_function)**2 -
+                          tr(tensor_function.T*tensor_function))
+
+        generator_list.append(I2)
+    if 3 in label_tuple:
+        I3 = det
+        generator_list.append(I3)
+    return generator_list
+
+
+def compose(f_list, g):
+    return [lambda x: fi(g(x)) for fi in f_list]
 
 
 def st_venant_kirchhoff(E_m, nu_m):
@@ -149,19 +150,21 @@ def st_venant_kirchhoff(E_m, nu_m):
     svk = Material(psi, [lmbda, mu])
 
     def invariant1(F):
-        I = Identity(2)
+        dim = F.geometric_dimension()
+        I = Identity(dim)
         C = F.T * F
         E = 0.5 * (C - I)
         return tr(E)
 
     def invariant2(F):
-        I = Identity(2)
+        dim = F.geometric_dimension()
+        I = Identity(dim)
         C = F.T * F
         E = 0.5 * (C - I)
         return tr(E.T * E)
 
     # Method 1: Use compose to generate invar_func
-    # gen_li = svk.compose(svk.tensor_invar((1,2)),svk.green_lagrange)
+    # gen_li = compose()(tensor_invar((1,2)), green_lagrange)
     # svk.invariant_generator_append((0,), gen_li)
 
     # Method 2: Direct generate using functions
@@ -190,7 +193,7 @@ def simo_pister(mu0, m0, lmbda0, ro0, cv, theta0):
 
     sp = Material(psi, [mu0, m0, lmbda0, ro0, cv, theta0])
 
-    C_invar_gen = sp.compose(sp.tensor_invar((1,)), sp.green_lagrange)
+    C_invar_gen = compose(tensor_invar((1,)), green_lagrange)
 
     def invariant3(C):
         return det(C) ** 0.5
@@ -222,13 +225,14 @@ def magneto_mechano(N, a, b, c):
 
     mre = Material(psi, [a, b, c])
 
-    C_invar_gen = mre.tensor_invar((1, 2, 3))
+    C_invar_gen = tensor_invar((1, 2, 3))
     C_invar_gen.append(lambda x: inner(N, x * N))
     mre.invariant_generator_append((0,), C_invar_gen)
     mre.invariant_generator_append((1,), [lambda x: inner(x, x), ])
     mre.invariant_generator_append((0, 1), [lambda x, y: inner(y, x * y), ])
 
     return mre
+
 
 def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
     """
@@ -247,17 +251,18 @@ def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
     lmbda = E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m))
 
     def psi(inva, miu, lmbda, kappa, epsi0):
-        mech_term = 0.5*miu*(inva[0] - 3) + lmbda/4*(inva[1]**2 - 1) - \
-                    (lmbda/2+miu)*ln(inva[1])
-        couple_term = -1/2*epsi0*(1+kappa/inva[1])*inva[1]*inva[2]
-        return mech_term+couple_term
+        mech_term = 0.5 * miu * (inva[0] - 3) + lmbda / 4 * (inva[1] ** 2 - 1) - \
+                    (lmbda / 2 + miu) * ln(inva[1])
+        couple_term = -1 / 2 * epsi0 * (1 + kappa / inva[1]) * inva[1] * inva[2]
+        return mech_term + couple_term
 
     nh_mre = Material(psi, [miu, lmbda, kappa, epsi0])
 
     def sqr_tr(F):
-        return tr(F.T*F)
+        return tr(F.T * F)
+
     nh_mre.invariant_generator_append((0,), [sqr_tr, det])
-    couple_invar_gen = lambda F, E: inner(inv(F.T*F), outer(E, E))
+    couple_invar_gen = lambda F, E: inner(inv(F.T * F), outer(E, E))
     nh_mre.invariant_generator_append((0, 1), [couple_invar_gen])
 
     return nh_mre
@@ -270,30 +275,20 @@ if __name__ == '__main__':
     mesh = UnitSquareMesh(2, 2)
     FS = FunctionSpace(mesh, 'CG', 1)
     TFS = TensorFunctionSpace(mesh, 'CG', 1)
-    # F = Function(TFS)
 
     VFS = VectorFunctionSpace(mesh, 'CG', 1)
     w = Function(VFS)
+    # F = Function(TFS)
     F = grad(w)
 
     FS = FunctionSpace(mesh, 'CG', 1)
 
     E_m, nu_m = 10.0, 0.3
     svk = st_venant_kirchhoff(E_m, nu_m)
-    svk2 = st_venant_kirchhoff(E_m, nu_m)
 
     # print id(svk)
-    # print id(svk2)
-
     svk([F])
-    mesh2 = UnitSquareMesh(1, 1)
-    VFS2 = VectorFunctionSpace(mesh2, 'CG', 2)
-    w2 = Function(VFS2)
-    F2 = grad(w2)
-    svk2([F2])
-
     # print id(svk)
-    # print id(svk2)
 
     mu0, m0, lmbda0, ro0, cv, theta0 = 1, 2, 3, 4, 5, 6
     theta = Function(FS)
@@ -313,7 +308,7 @@ if __name__ == '__main__':
     nh_mre = neo_hook_mre(E_m, nu_m, kappa)
     nh_mre([C, E, ])
 
-    print nh_mre.psi
-
-    # print mre
+    # print nh_mre.psi
     # print mre.psi
+    print sp.psi
+    # print svk.psi
