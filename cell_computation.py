@@ -640,7 +640,8 @@ def multi_field_test():
     mat_li = [mat_m, mat_i]
 
     # Macro Field Boundary
-    F_bar = [1., 0., 0., 1.]
+    F_bar = [1., 0.,
+             0., 1.]
     E_bar = [0., -0.2]
 
     # Solution Field
@@ -680,7 +681,7 @@ def uni_field_3d_test():
     import cell_material as ma
 
     # Set geometry
-    mesh = UnitCubeMesh(4, 4, 4)
+    mesh = UnitCubeMesh(16, 16, 16)
     # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
@@ -701,7 +702,9 @@ def uni_field_3d_test():
 
     # Initialize MicroComputation
     # if multi field bc should match
-    F_bar = [.9, 0., 0., 0., 1., 0., 0., 0., 1.]
+    F_bar = [.9, 0., 0.,
+             0., 1., 0.,
+             0., 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
