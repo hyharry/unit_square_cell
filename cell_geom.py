@@ -431,75 +431,75 @@ class PeriodicBoundary_no_corner(SubDomain):
                             y[1] = x[1]
                             y[2] = x[2] - k_coord[0]
 
-            #
-            # # Map faces
+                            #
+                            # # Map faces
 
-            # for k_coord, on_face in face_str_li_1.items():
-            #     if eval(on_face):
-            #         y[0] = x[0] - k_coord[0]
-            #         y[1] = x[1]
-            #         y[2] = x[2]
-            # for k_coord, on_face in face_str_li_2.items():
-            #     if eval(on_face):
-            #         y[0] = x[0]
-            #         y[1] = x[1] - k_coord[0]
-            #         y[2] = x[2]
-            # for k_coord, on_face in face_str_li_3.items():
-            #     if eval(on_face):
-            #         y[0] = x[0]
-            #         y[1] = x[1]
-            #         y[2] = x[2] - k_coord[0]
+                            # for k_coord, on_face in face_str_li_1.items():
+                            #     if eval(on_face):
+                            #         y[0] = x[0] - k_coord[0]
+                            #         y[1] = x[1]
+                            #         y[2] = x[2]
+                            # for k_coord, on_face in face_str_li_2.items():
+                            #     if eval(on_face):
+                            #         y[0] = x[0]
+                            #         y[1] = x[1] - k_coord[0]
+                            #         y[2] = x[2]
+                            # for k_coord, on_face in face_str_li_3.items():
+                            #     if eval(on_face):
+                            #         y[0] = x[0]
+                            #         y[1] = x[1]
+                            #         y[2] = x[2] - k_coord[0]
 
-                    # if near(x[0], 1.) and near(x[2], 1.):
-                    #     y[0] = x[0] - 1.
-                    #     y[1] = x[1]
-                    #     y[2] = x[2] - 1.
-                    # elif near(x[0], 1.):
-                    #     y[0] = x[0] - 1.
-                    #     y[1] = x[1]
-                    #     y[2] = x[2]
-                    # elif near(x[2], 1.):
-                    #     y[0] = x[0]
-                    #     y[1] = x[1]
-                    #     y[2] = x[2] - 1.
-                    # else:
-                    # #     y[0] = -1000
-                    # #     y[1] = -1000
-                    # #     y[2] = -1000
-                    #
-                    #     if near(x[0], 1.) and near(x[1], 1.):
-                    #         y[0] = x[0] - 1.
-                    #         y[2] = x[2]
-                    #         y[1] = x[1] - 1.
-                    #     elif near(x[0], 1.):
-                    #         y[0] = x[0] - 1.
-                    #         y[1] = x[1]
-                    #         y[2] = x[2]
-                    #     elif near(x[1], 1.):
-                    #         y[0] = x[0]
-                    #         y[2] = x[2]
-                    #         y[1] = x[1] - 1.
-                    #     else:
-                    #     #     y[0] = -1000
-                    #     #     y[1] = -1000
-                    #     #     y[2] = -1000
-                    #
-                    #         if near(x[1], 1.) and near(x[2], 1.):
-                    #             y[1] = x[1] - 1.
-                    #             y[0] = x[0]
-                    #             y[2] = x[2] - 1.
-                    #         elif near(x[1], 1.):
-                    #             y[1] = x[1] - 1.
-                    #             y[0] = x[0]
-                    #             y[2] = x[2]
-                    #         elif near(x[2], 1.):
-                    #             y[1] = x[1]
-                    #             y[0] = x[0]
-                    #             y[2] = x[2] - 1.
-                    #         else:
-                    #             y[0] = -1000
-                    #             y[1] = -1000
-                    #             y[2] = -1000
+                            # if near(x[0], 1.) and near(x[2], 1.):
+                            #     y[0] = x[0] - 1.
+                            #     y[1] = x[1]
+                            #     y[2] = x[2] - 1.
+                            # elif near(x[0], 1.):
+                            #     y[0] = x[0] - 1.
+                            #     y[1] = x[1]
+                            #     y[2] = x[2]
+                            # elif near(x[2], 1.):
+                            #     y[0] = x[0]
+                            #     y[1] = x[1]
+                            #     y[2] = x[2] - 1.
+                            # else:
+                            # #     y[0] = -1000
+                            # #     y[1] = -1000
+                            # #     y[2] = -1000
+                            #
+                            #     if near(x[0], 1.) and near(x[1], 1.):
+                            #         y[0] = x[0] - 1.
+                            #         y[2] = x[2]
+                            #         y[1] = x[1] - 1.
+                            #     elif near(x[0], 1.):
+                            #         y[0] = x[0] - 1.
+                            #         y[1] = x[1]
+                            #         y[2] = x[2]
+                            #     elif near(x[1], 1.):
+                            #         y[0] = x[0]
+                            #         y[2] = x[2]
+                            #         y[1] = x[1] - 1.
+                            #     else:
+                            #     #     y[0] = -1000
+                            #     #     y[1] = -1000
+                            #     #     y[2] = -1000
+                            #
+                            #         if near(x[1], 1.) and near(x[2], 1.):
+                            #             y[1] = x[1] - 1.
+                            #             y[0] = x[0]
+                            #             y[2] = x[2] - 1.
+                            #         elif near(x[1], 1.):
+                            #             y[1] = x[1] - 1.
+                            #             y[0] = x[0]
+                            #             y[2] = x[2]
+                            #         elif near(x[2], 1.):
+                            #             y[1] = x[1]
+                            #             y[0] = x[0]
+                            #             y[2] = x[2] - 1.
+                            #         else:
+                            #             y[0] = -1000
+                            #             y[1] = -1000
+                            #             y[2] = -1000
 
 
 def gmsh_with_incl_test():
@@ -585,7 +585,8 @@ def test_string_template():
     print string_template(3)
 
     print "TRIM TEST"
-    print string_template(1, joint_sym='or', with_boundary=True, coord_label=[7],
+    print string_template(1, joint_sym='or', with_boundary=True,
+                          coord_label=[7],
                           in_colon=True)
 
     print "DICT TEST"
@@ -609,6 +610,17 @@ def test_period_3d():
     print (a + 1) * (b + 1) * (c + 1)
 
 
+def test_period_2d():
+    a, b = 6, 3
+    mesh_2d = UnitSquareMesh(a, b)
+    FS_2d = FunctionSpace(mesh_2d, 'CG', 1,
+                          constrained_domain=PeriodicBoundary_no_corner(2))
+    f = Function(FS_2d)
+
+    print "dof number should be", (a + 1) * (b + 1) - (a - 1 + b - 1)
+    print f.vector().size()
+
+
 if __name__ == "__main__":
     print 'this is for testing'
 
@@ -629,6 +641,8 @@ if __name__ == "__main__":
 
     # inclusion_test_3d_2()
 
+    test_period_2d()
+
     # test_period_3d()
 
-    test_string_template()
+    # test_string_template()
