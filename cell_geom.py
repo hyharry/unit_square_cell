@@ -334,26 +334,21 @@ class PeriodicBoundary_no_corner(SubDomain):
             comp_str_li = string_template(3, joint_sym='and', in_colon=True)
             # print len(comp_str_li)
             comp_str_joint = ' or '.join(comp_str_li)
+
             # comp_edge_li_1 = string_template(2, joint_sym='and',
             #                                  coord_label=[0, 1], in_colon=True)
             # comp_edge_li_2 = string_template(2, joint_sym='and',
             #                                  coord_label=[1, 2], in_colon=True)
             # comp_edge_li_3 = string_template(2, joint_sym='and',
             #                                  coord_label=[0, 2], in_colon=True)
-            # st_j_1 = ' or '.join(comp_edge_li_1)
-            # st_j_2 = ' or '.join(comp_edge_li_2)
-            # st_j_3 = ' or '.join(comp_edge_li_3)
+            # comp_str_joint = ' or '.join(comp_edge_li_1 +
+            #                              comp_edge_li_2 +
+            #                              comp_edge_li_3)
 
             # print comp_str_joint
             in_or_not = bool((near(x[0], 0) or near(x[1], 0) or
                               near(x[2], 0)) and
                              (not eval(comp_str_joint)) and on_boundary)
-            # in_or_not = bool((near(x[0], 0) or near(x[1], 0) or
-            #                   near(x[2], 0)) and
-            #                  (not eval(comp_str_joint)) and
-            #                  (not eval(st_j_1)) and
-            #                  (not eval(st_j_2)) and
-            #                  (not eval(st_j_3)) and on_boundary)
         return in_or_not
 
     def map(self, x, y):
@@ -365,13 +360,12 @@ class PeriodicBoundary_no_corner(SubDomain):
                 y[0] = x[0]
                 y[1] = x[1] - 1.
         else:
-            # Map edges
             edge_str_li_1 = string_template(2, coord_label=[0, 1],
-                                            joint_sym='and', dict_output=True)
+                                            joint_sym='or', dict_output=True)
             edge_str_li_2 = string_template(2, coord_label=[1, 2],
-                                            joint_sym='and', dict_output=True)
+                                            joint_sym='|', dict_output=True)
             edge_str_li_3 = string_template(2, coord_label=[0, 2],
-                                            joint_sym='and', dict_output=True)
+                                            joint_sym='&', dict_output=True)
 
             face_str_li_1 = string_template(1, coord_label=[0],
                                             joint_sym='and', dict_output=True)
@@ -380,126 +374,182 @@ class PeriodicBoundary_no_corner(SubDomain):
             face_str_li_3 = string_template(1, coord_label=[2],
                                             joint_sym='and', dict_output=True)
 
-            for k_coord, on_edge in edge_str_li_1.items():
-                if eval(on_edge):
-                    y[0] = x[0] - k_coord[0]
-                    y[1] = x[1] - k_coord[1]
-                    y[2] = x[2]
-                else:
-                    for k_coord, on_face in face_str_li_1.items():
-                        if eval(on_face):
-                            y[0] = x[0] - k_coord[0]
-                            y[1] = x[1]
-                            y[2] = x[2]
-                    for k_coord, on_face in face_str_li_2.items():
-                        if eval(on_face):
-                            y[0] = x[0]
-                            y[1] = x[1] - k_coord[0]
-                            y[2] = x[2]
+            # Periodic for edges, alternating mapping in one direction
+            # Parallel in z direction
+            if near(x[0], 1.) and near(x[1], 0.):
+                y[0] = x[0]
+                y[1] = x[1] + 1.
+                y[2] = x[2]
+            elif near(x[0], 1.) and near(x[1], 1.):
+                y[0] = x[0] - 1.
+                y[1] = x[1]
+                y[2] = x[2]
+            elif near(x[0], 0.) and near(x[1], 1.):
+                y[0] = x[0]
+                y[1] = x[1] - 1.
+                y[2] = x[2]
+            # Parallel in x direction
+            elif near(x[2], 1.) and near(x[1], 0.):
+                y[0] = x[0]
+                y[1] = x[1] + 1.
+                y[2] = x[2]
+            elif near(x[2], 1.) and near(x[1], 1.):
+                y[0] = x[0]
+                y[1] = x[1]
+                y[2] = x[2] - 1.
+            elif near(x[2], 0.) and near(x[1], 1.):
+                y[0] = x[0]
+                y[1] = x[1] - 1.
+                y[2] = x[2]
+            # Parallel in y direction
+            elif near(x[2], 1.) and near(x[0], 0.):
+                y[0] = x[0] + 1.
+                y[1] = x[1]
+                y[2] = x[2]
+            elif near(x[2], 1.) and near(x[0], 1.):
+                y[0] = x[0]
+                y[1] = x[1]
+                y[2] = x[2] - 1.
+            elif near(x[2], 0.) and near(x[0], 1.):
+                y[0] = x[0] - 1.
+                y[1] = x[1]
+                y[2] = x[2]
+            # Face Mapping
+            elif near(x[2], 1.):
+                y[0] = x[0]
+                y[1] = x[1]
+                y[2] = x[2] - 1.
+            elif near(x[1], 1.):
+                y[0] = x[0]
+                y[1] = x[1] - 1.
+                y[2] = x[2]
+            elif near(x[0], 1.):
+                y[0] = x[0] - 1.
+                y[1] = x[1]
+                y[2] = x[2]
+            else:
+                y[0] = 100
+                y[1] = 100
+                y[2] = 100
 
-            for k_coord, on_edge in edge_str_li_2.items():
-                if eval(on_edge):
-                    y[0] = x[0]
-                    y[1] = x[1] - k_coord[0]
-                    y[2] = x[2] - k_coord[1]
-                else:
-                    for k_coord, on_face in face_str_li_2.items():
-                        if eval(on_face):
-                            y[0] = x[0]
-                            y[1] = x[1] - k_coord[0]
-                            y[2] = x[2]
-                    for k_coord, on_face in face_str_li_3.items():
-                        if eval(on_face):
-                            y[0] = x[0]
-                            y[1] = x[1]
-                            y[2] = x[2] - k_coord[0]
+            # if near(x[0], 1.) and near(x[1], 0.):
+            #     y[0] = x[1]
+            #     y[1] = x[0]
+            #     y[2] = x[2]
+            # else:
+            #     y[0] = 100
+            #     y[1] = 100
+            #     y[2] = 100
 
-            for k_coord, on_edge in edge_str_li_3.items():
-                if eval(on_edge):
-                    y[0] = x[0] - k_coord[0]
-                    y[1] = x[1]
-                    y[2] = x[2] - k_coord[1]
-                else:
-                    for k_coord, on_face in face_str_li_1.items():
-                        if eval(on_face):
-                            y[0] = x[0] - k_coord[0]
-                            y[1] = x[1]
-                            y[2] = x[2]
-                    for k_coord, on_face in face_str_li_3.items():
-                        if eval(on_face):
-                            y[0] = x[0]
-                            y[1] = x[1]
-                            y[2] = x[2] - k_coord[0]
 
-                            #
-                            # # Map faces
 
-                            # for k_coord, on_face in face_str_li_1.items():
-                            #     if eval(on_face):
-                            #         y[0] = x[0] - k_coord[0]
-                            #         y[1] = x[1]
-                            #         y[2] = x[2]
-                            # for k_coord, on_face in face_str_li_2.items():
-                            #     if eval(on_face):
-                            #         y[0] = x[0]
-                            #         y[1] = x[1] - k_coord[0]
-                            #         y[2] = x[2]
-                            # for k_coord, on_face in face_str_li_3.items():
-                            #     if eval(on_face):
-                            #         y[0] = x[0]
-                            #         y[1] = x[1]
-                            #         y[2] = x[2] - k_coord[0]
+            # Map edges
+            # for k_coord, on_edge in edge_str_li_1.items():
+            #     if (k_coord != (0., 0.)) and eval(on_edge):
+            #         y[0] = x[0] - k_coord[0]
+            #         y[1] = x[1] - k_coord[1]
+            #         y[2] = x[2]
+            #
+            # for k_coord, on_edge in edge_str_li_2.items():
+            #     if (k_coord != (0., 0.)) and eval(on_edge):
+            #         y[0] = x[0]
+            #         y[1] = x[1] - k_coord[0]
+            #         y[2] = x[2] - k_coord[1]
+            #
+            # for k_coord, on_edge in edge_str_li_3.items():
+            #     if (k_coord != (0., 0.)) and eval(on_edge):
+            #         y[0] = x[0] - k_coord[0]
+            #         y[1] = x[1]
+            #         y[2] = x[2] - k_coord[1]
 
-                            # if near(x[0], 1.) and near(x[2], 1.):
-                            #     y[0] = x[0] - 1.
-                            #     y[1] = x[1]
-                            #     y[2] = x[2] - 1.
-                            # elif near(x[0], 1.):
-                            #     y[0] = x[0] - 1.
-                            #     y[1] = x[1]
-                            #     y[2] = x[2]
-                            # elif near(x[2], 1.):
-                            #     y[0] = x[0]
-                            #     y[1] = x[1]
-                            #     y[2] = x[2] - 1.
-                            # else:
-                            # #     y[0] = -1000
-                            # #     y[1] = -1000
-                            # #     y[2] = -1000
-                            #
-                            #     if near(x[0], 1.) and near(x[1], 1.):
-                            #         y[0] = x[0] - 1.
-                            #         y[2] = x[2]
-                            #         y[1] = x[1] - 1.
-                            #     elif near(x[0], 1.):
-                            #         y[0] = x[0] - 1.
-                            #         y[1] = x[1]
-                            #         y[2] = x[2]
-                            #     elif near(x[1], 1.):
-                            #         y[0] = x[0]
-                            #         y[2] = x[2]
-                            #         y[1] = x[1] - 1.
-                            #     else:
-                            #     #     y[0] = -1000
-                            #     #     y[1] = -1000
-                            #     #     y[2] = -1000
-                            #
-                            #         if near(x[1], 1.) and near(x[2], 1.):
-                            #             y[1] = x[1] - 1.
-                            #             y[0] = x[0]
-                            #             y[2] = x[2] - 1.
-                            #         elif near(x[1], 1.):
-                            #             y[1] = x[1] - 1.
-                            #             y[0] = x[0]
-                            #             y[2] = x[2]
-                            #         elif near(x[2], 1.):
-                            #             y[1] = x[1]
-                            #             y[0] = x[0]
-                            #             y[2] = x[2] - 1.
-                            #         else:
-                            #             y[0] = -1000
-                            #             y[1] = -1000
-                            #             y[2] = -1000
+            # Map faces
+            # for k_coord, on_face in face_str_li_1.items():
+            #     if eval(on_face):
+            #         y[0] = x[0] - k_coord[0]
+            #         y[1] = x[1]
+            #         y[2] = x[2]
+            # for k_coord, on_face in face_str_li_2.items():
+            #     if eval(on_face):
+            #         y[0] = x[0]
+            #         y[1] = x[1] - k_coord[0]
+            #         y[2] = x[2]
+            # for k_coord, on_face in face_str_li_3.items():
+            #     if eval(on_face):
+            #         y[0] = x[0]
+            #         y[1] = x[1]
+            #         y[2] = x[2] - k_coord[0]
+
+            # if near(x[0], 1.) and not (near(x[1], 1.) or near(x[1], 0.) or
+            #                                near(x[2], 1.) or near(x[2], 0.)):
+            #     y[0] = x[0] - 1.
+            #     y[1] = x[1]
+            #     y[2] = x[2]
+            # elif near(x[1], 1.) and not (near(x[2], 1.) or near(x[2], 0.) or
+            #                                  near(x[0], 1.) or near(x[0], 0.)):
+            #     y[0] = x[0]
+            #     y[1] = x[1] - 1.
+            #     y[2] = x[2]
+            # elif near(x[2], 1.) and not (near(x[0], 1.) or near(x[0], 0.) or
+            #                                  near(x[2], 1.) or near(x[2], 0.)):
+            #     y[0] = x[0]
+            #     y[1] = x[1]
+            #     y[2] = x[2] - 1.
+            # else:
+            #     y[0] = -1000
+            #     y[1] = -1000
+            #     y[2] = -1000
+
+
+                # if near(x[0], 1.) and near(x[2], 1.):
+                #     y[0] = x[0] - 1.
+                #     y[1] = x[1]
+                #     y[2] = x[2] - 1.
+                # elif near(x[0], 1.):
+                #     y[0] = x[0] - 1.
+                #     y[1] = x[1]
+                #     y[2] = x[2]
+                # elif near(x[2], 1.):
+                #     y[0] = x[0]
+                #     y[1] = x[1]
+                #     y[2] = x[2] - 1.
+                # else:
+                #     y[0] = -1000
+                #     y[1] = -1000
+                #     y[2] = -1000
+                #
+                #     if near(x[0], 1.) and near(x[1], 1.):
+                #         y[0] = x[0] - 1.
+                #         y[2] = x[2]
+                #         y[1] = x[1] - 1.
+                #     elif near(x[0], 1.):
+                #         y[0] = x[0] - 1.
+                #         y[1] = x[1]
+                #         y[2] = x[2]
+                #     elif near(x[1], 1.):
+                #         y[0] = x[0]
+                #         y[2] = x[2]
+                #         y[1] = x[1] - 1.
+                #     else:
+                #     #     y[0] = -1000
+                #     #     y[1] = -1000
+                #     #     y[2] = -1000
+                #
+                #         if near(x[1], 1.) and near(x[2], 1.):
+                #             y[1] = x[1] - 1.
+                #             y[0] = x[0]
+                #             y[2] = x[2] - 1.
+                #         elif near(x[1], 1.):
+                #             y[1] = x[1] - 1.
+                #             y[0] = x[0]
+                #             y[2] = x[2]
+                #         elif near(x[2], 1.):
+                #             y[1] = x[1]
+                #             y[0] = x[0]
+                #             y[2] = x[2] - 1.
+                #         else:
+                #             y[0] = -1000
+                #             y[1] = -1000
+                #             y[2] = -1000
 
 
 def gmsh_with_incl_test():
@@ -596,7 +646,7 @@ def test_string_template():
 
 
 def test_period_3d():
-    a, b, c = 2, 3, 4
+    a, b, c = 2, 2, 2
     mesh_3d = UnitCubeMesh(a, b, c)
     FS_3d = FunctionSpace(mesh_3d, 'CG', 1,
                           constrained_domain=PeriodicBoundary_no_corner(3))
@@ -606,8 +656,8 @@ def test_period_3d():
         (a + 1) * (b + 1) * (c + 1) - (a - 1 + b - 1 + c - 1) * 3 -
         (a - 1) * (b - 1) - (a - 1) * (c - 1) - (b - 1) * (c - 1))
     print f.vector().size()
-    print -(a - 1) * (b - 1) - (a - 1) * (c - 1) - (b - 1) * (c - 1)
-    print (a + 1) * (b + 1) * (c + 1)
+    # print -(a - 1) * (b - 1) - (a - 1) * (c - 1) - (b - 1) * (c - 1)
+    # print (a + 1) * (b + 1) * (c + 1)
 
 
 def test_period_2d():
@@ -641,8 +691,17 @@ if __name__ == "__main__":
 
     # inclusion_test_3d_2()
 
-    test_period_2d()
+    # test_period_2d()
 
-    # test_period_3d()
+    test_period_3d()
 
     # test_string_template()
+
+    edge_str_li_3 = string_template(2, coord_label=[0, 2],
+                                    joint_sym='and', dict_output=True)
+
+    print edge_str_li_3[(0., 0.)]
+
+    # comp_str_li = string_template(3, joint_sym='and', in_colon=True)
+    #
+    # print comp_str_li
