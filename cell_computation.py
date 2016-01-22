@@ -563,7 +563,7 @@ def deform_grad_with_macro(F_bar, w_component):
     return F_bar + grad(w_component)
 
 
-def uni_field_test():
+def test_uni_field():
     print 'St-Venant Kirchhoff Material Test'
     import cell_geom as ce
     import cell_material as ma
@@ -610,7 +610,7 @@ def uni_field_test():
     # comp.effective_moduli_2()
 
 
-def multi_field_test():
+def test_multi_field():
     print 'Neo-Hookean MRE Material Test'
     import cell_geom as ce
     import cell_material as ma
@@ -675,7 +675,7 @@ def multi_field_test():
     # comp.effective_moduli_2()
 
 
-def uni_field_3d_test():
+def test_uni_field_3d():
     print 'St-Venant Kirchhoff Material Test'
     import cell_geom as ce
     import cell_material as ma
@@ -725,6 +725,6 @@ def uni_field_3d_test():
 
 
 if __name__ == '__main__':
-    # uni_field_test()
-    # multi_field_test()
-    uni_field_3d_test()
+    # test_uni_field()
+    # test_multi_field()
+    test_uni_field_3d()
