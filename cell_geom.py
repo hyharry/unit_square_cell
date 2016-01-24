@@ -1,6 +1,16 @@
 # coding=utf-8
+# Copyright (C) 2016 Yi Hu
+# python 2.7, FEniCS 1.6.0
 """
-2D Unit Cell. 3D problem should be reformulated
+2D or 3D Unit Cell Geometry setting, Periodic Boundary condition, Inclusion
+Library
+
+Class: UnitCell (view_mesh, view_domain, set_append_inclusion,
+                add_mark_boundary)
+Function: string_template, trim_str_template, compiled_corner_subdom,
+        compiled_line_subdom, InclusionCircle, InclusionRectangle，
+        PeriodicBoundary_no_corner
+
 """
 
 from dolfin import *
@@ -11,13 +21,16 @@ logging.getLogger('FFC').setLevel(logging.WARNING)
 
 
 class UnitCell(object):
+    """
+    2D: Unit Square, 3D: Unit Cube
+    """
     def __init__(self, mesh, incl_di=None):
         """
         Generate Unit Cell for Micro Computation
 
         :param mesh: Mesh entity from dolfin
         :param incl_di: {'inclusion_name': inclusion, ...}
-        :return:
+
         """
         self.mesh = mesh
         self.dim = mesh.geometry().dim()
@@ -36,6 +49,15 @@ class UnitCell(object):
         plot(self.domain, interactive=True)
 
     def set_append_inclusion(self, incl_di):
+        """
+        Inclusion append
+
+        :param incl_di: (dict) keys:(string), incl name, values:(
+                        InclusionCircle)
+
+        :return: updated inclu_di
+
+        """
         exist_incl_num = len(self.incl_di)
         k = exist_incl_num + 1
         for inc in incl_di.values():
@@ -50,6 +72,7 @@ class UnitCell(object):
 
         in fact it is needed when Neumann Boundary is required to impose
         :param bound_dim: dimension of boundary entity
+
         """
         dim = self.dim
         if bound_dim >= dim:
@@ -68,9 +91,10 @@ class UnitCell(object):
 
 
 def string_template(dim, with_boundary=False, coord_label=None,
-                    joint_sym="&&", in_colon=False, dict_output=False):
+                    joint_sym="&&", in_colon=False, dict_output=False,
+                    no_origin=False):
     """
-    String generator
+    String Expression generator
 
     PURPOSE:
     Generate a list of string for method compiled_corner_subdom or alike.
@@ -82,18 +106,21 @@ def string_template(dim, with_boundary=False, coord_label=None,
     used in: compiled_corner_subdom, compiled_line_subdom, compiled_face_subdom
     PeriodicBoundary_no_corner
 
-    :param dim: Int in (1,2,3) ... dimension of the problem
-    :param with_boundary: in (True, False) ... add "on_boundary" at the end
+    :param no_origin: (bool) if True, return no expression at (0.,), (0.,0.),
+                        it works only with dict_output=True
+    :param dim: (int) in (1,2,3) - dimension of the problem
+    :param with_boundary: (bool) - add "on_boundary" at the end
                             of each string
-    :param coord_label: List [i,j,k, ..]
-                        ... change the coordinate label from 0,1,2 to i,j,k
+    :param coord_label: (list) [i,j,k, ..]
+                        - change the coordinate label from 0,1,2 to i,j,k
                         e.g. x[i], x[j], x[k]
-    :param joint_sym: String 'or' 'and' '&' '&&' ..
-                        ... substitute '&&' in 'near() && near()' as the given
-    :param in_colon: (True, False) ... 'near()' -> '(near())'
-    :param dict_output: (True, False) ... extract out the coord and set it as key
+    :param joint_sym: (string) 'or' 'and' '&' '&&' ..
+                        - substitute '&&' in 'near() && near()' as the given
+    :param in_colon: (bool) - 'near()' -> '(near())'
+    :param dict_output: (bool) - extract out the coord and set it as key
 
-    :return: string list, directly to compile, eval, or, CompiledSubDomain(), etc.
+    :return: (list of strings), directly to compile, eval, or,
+                CompiledSubDomain(), etc.
 
     USAGE:
     string_template(1) -> ['near(x[0], 0.)', 'near(x[0], 1.)']
@@ -107,6 +134,7 @@ def string_template(dim, with_boundary=False, coord_label=None,
     (1.0, 0.0): 'near(x[0], 1.) or near(x[1], 0.)',
     (0.0, 0.0): 'near(x[0], 0.) or near(x[1], 0.)',
     (1.0, 1.0): 'near(x[0], 1.) or near(x[1], 1.)'}
+
     """
     val = [0., 1.]
     str_template = dict()
@@ -133,6 +161,8 @@ def string_template(dim, with_boundary=False, coord_label=None,
             comp_str_val = trim_str_template(str_template_3.values(),
                                              joint_sym, with_boundary, in_colon)
             comp_str = dict(zip(str_template_3.keys(), comp_str_val))
+            if no_origin:
+                comp_str.pop((0.,))
         else:
             str_template_3 = [i
                               for i in str_template_2[ke[0]]]
@@ -149,6 +179,8 @@ def string_template(dim, with_boundary=False, coord_label=None,
             comp_str_val = trim_str_template(str_template_3.values(),
                                              joint_sym, with_boundary, in_colon)
             comp_str = dict(zip(str_template_3.keys(), comp_str_val))
+            if no_origin:
+                comp_str.pop((0., 0.))
         else:
             str_template_3 = [' '.join((i, j))
                               for i in str_template_2[ke[0]]
@@ -166,6 +198,8 @@ def string_template(dim, with_boundary=False, coord_label=None,
             comp_str_val = trim_str_template(str_template_3.values(),
                                              joint_sym, with_boundary, in_colon)
             comp_str = dict(zip(str_template_3.keys(), comp_str_val))
+            if no_origin:
+                comp_str.pop((0., 0., 0.))
         else:
             str_template_3 = [' '.join((i, j, k))
                               for i in str_template_2[ke[0]]
@@ -185,12 +219,13 @@ def trim_str_template(str_temp_li, joint_sym, with_boundary=False,
     """
     Assistance function for string_template
 
-    :param str_temp_li: String List ... input
-    :param joint_sym: String ... trim joint_sym at the end
-    :param with_boundary: True, False ... add 'on_boundary'
-    :param in_colon: (True, False) ... put each string in a colon
+    :param str_temp_li: (list of strings) - input
+    :param joint_sym: (string) - trim joint_sym at the end
+    :param with_boundary: (bool) - add 'on_boundary'
+    :param in_colon: (bool) - put each string in a colon
 
-    :return: trimmed String List
+    :return: trimmed String Expression List
+
     """
     comp_str = str_temp_li
     if with_boundary:
@@ -207,12 +242,26 @@ def trim_str_template(str_temp_li, joint_sym, with_boundary=False,
 
 
 def compiled_corner_subdom(dim):
+    """
+    Return compiled subdomain for corners
+
+    :param dim: dimension
+    :return: (list of SubDomains)
+
+    """
     comp_str = string_template(dim)
     comp_corner_sub = [CompiledSubDomain(stri) for stri in comp_str]
     return comp_corner_sub
 
 
 def compiled_line_subdom(dim):
+    """
+    Return compiled subdomain for edges
+
+    :param dim: dimension
+    :return: (list of SubDomains)
+
+    """
     comp_str = []
     if dim == 2:
         comp_str.extend(string_template(1, with_boundary=True, coord_label=[0]))
@@ -232,6 +281,13 @@ def compiled_line_subdom(dim):
 
 
 def compiled_face_subdom(dim):
+    """
+    Return compiled subdomain for faces
+
+    :param dim: dimension
+    :return: (list of SubDomains)
+
+    """
     comp_str = []
     if dim == 3:
         comp_str.extend(string_template(1, with_boundary=True, coord_label=[0]))
@@ -245,6 +301,9 @@ def compiled_face_subdom(dim):
 
 
 class InclusionCircle(SubDomain):
+    """
+    Subclass of SubDomain for circle inclusion ((2D and 3D)
+    """
     def __init__(self, dim, *args):
         """
         Two ways to generate Circle Inclusion
@@ -270,15 +329,17 @@ class InclusionCircle(SubDomain):
         if self.dim == 2:
             d = sqrt((x[0] - c[0]) ** 2 + (x[1] - c[1]) ** 2)
         elif self.dim == 3:
-            d = sqrt(
-                    (x[0] - c[0]) ** 2 + (x[1] - c[1]) ** 2 + (
-                        x[2] - c[2]) ** 2)
+            d = sqrt((x[0] - c[0]) ** 2 + (x[1] - c[1]) ** 2 + (
+                    x[2] - c[2]) ** 2)
         else:
             raise Exception("only 2d or 3d circle inclusion are supported")
         return d < r or near(d, r)
 
 
 class InclusionRectangle(SubDomain):
+    """
+    Subclass of SubDomain for rectangle inclusion (2D and 3D)
+    """
     def __init__(self, dim, *args):
         """
         Generate Rectangle Inclusion
@@ -311,9 +372,8 @@ class InclusionRectangle(SubDomain):
 
 class PeriodicBoundary_no_corner(SubDomain):
     """
-    Periodic boundary both directions (no corner)
+    Periodic boundary both directions (no corner) for 2D and 3D
     """
-
     def __init__(self, dim):
         super(PeriodicBoundary_no_corner, self).__init__()
         if dim in (2, 3):
@@ -331,30 +391,32 @@ class PeriodicBoundary_no_corner(SubDomain):
                                    (near(x[0], 0) and near(x[1], 0)))) and
                              on_boundary)
         else:
+            # String Expression list for corners
             comp_corner_li = string_template(3, joint_sym='and', in_colon=True)
-            # print len(comp_str_li)
-            # comp_str_joint = ' or '.join(comp_corner_li)
 
+            # String Expression dict without origin crossing ones
             comp_edge_li_1 = string_template(2, joint_sym='and',
                                              coord_label=[0, 1],
-                                             in_colon=True, dict_output=True)
+                                             in_colon=True, dict_output=True,
+                                             no_origin=True)
             comp_edge_li_2 = string_template(2, joint_sym='and',
                                              coord_label=[1, 2],
-                                             in_colon=True, dict_output=True)
+                                             in_colon=True, dict_output=True,
+                                             no_origin=True)
             comp_edge_li_3 = string_template(2, joint_sym='and',
                                              coord_label=[0, 2],
-                                             in_colon=True, dict_output=True)
-
-            comp_edge_li_1.pop((0., 0.))
-            comp_edge_li_2.pop((0., 0.))
-            comp_edge_li_3.pop((0., 0.))
+                                             in_colon=True, dict_output=True,
+                                             no_origin=True)
 
             comp_str_joint = ' or '.join(comp_corner_li +
                                          comp_edge_li_1.values() +
                                          comp_edge_li_2.values() +
                                          comp_edge_li_3.values())
 
-            # print comp_str_joint
+            # Mark main facets and edges on the axis, filter out all corners,
+            #  filter out edges not on the main axis
+            # Points on 3 facets and 3 edges are like ref points,
+            # other points are to be mapped into these points
             in_or_not = bool((near(x[0], 0.) or
                               near(x[1], 0.) or
                               near(x[2], 0.)) and
@@ -370,21 +432,7 @@ class PeriodicBoundary_no_corner(SubDomain):
                 y[0] = x[0]
                 y[1] = x[1] - 1.
         else:
-            edge_str_li_1 = string_template(2, coord_label=[0, 1],
-                                            joint_sym='and', dict_output=True)
-            edge_str_li_2 = string_template(2, coord_label=[1, 2],
-                                            joint_sym='and', dict_output=True)
-            edge_str_li_3 = string_template(2, coord_label=[0, 2],
-                                            joint_sym='and', dict_output=True)
-
-            face_str_li_1 = string_template(1, coord_label=[0],
-                                            joint_sym='and', dict_output=True)
-            face_str_li_2 = string_template(1, coord_label=[1],
-                                            joint_sym='and', dict_output=True)
-            face_str_li_3 = string_template(1, coord_label=[2],
-                                            joint_sym='and', dict_output=True)
-
-            # Periodic for edges, mapping in one direction
+            # Periodic for edges, map 3 edges to 1 edge
             # Parallel in z direction
             if near(x[0], 1.) and near(x[1], 1.):
                 y[0] = x[0] - 1.
@@ -442,45 +490,58 @@ class PeriodicBoundary_no_corner(SubDomain):
                 y[1] = 100
                 y[2] = 100
 
-            # # Map edges
-            # for k_coord, on_edge in edge_str_li_1.items():
-            #     if k_coord != (0., 0.) and eval(on_edge):
-            #         y[0] = x[0] - k_coord[0]
-            #         y[1] = x[1] - k_coord[1]
-            #         y[2] = x[2]
-            #
-            # for k_coord, on_edge in edge_str_li_2.items():
-            #     if k_coord != (0., 0.) and eval(on_edge):
-            #         y[0] = x[0]
-            #         y[1] = x[1] - k_coord[0]
-            #         y[2] = x[2] - k_coord[1]
-            #
-            # for k_coord, on_edge in edge_str_li_3.items():
-            #     if k_coord != (0., 0.) and eval(on_edge):
-            #         y[0] = x[0] - k_coord[0]
-            #         y[1] = x[1]
-            #         y[2] = x[2] - k_coord[1]
-            #
-            # # Map faces
-            # for k_coord, on_face in face_str_li_1.items():
-            #     if k_coord != (0., ) and eval(on_face):
-            #         y[0] = x[0] - k_coord[0]
-            #         y[1] = x[1]
-            #         y[2] = x[2]
-            # for k_coord, on_face in face_str_li_2.items():
-            #     if k_coord != (0., ) and eval(on_face):
-            #         y[0] = x[0]
-            #         y[1] = x[1] - k_coord[0]
-            #         y[2] = x[2]
-            # for k_coord, on_face in face_str_li_3.items():
-            #     if k_coord != (0., ) and eval(on_face):
-            #         y[0] = x[0]
-            #         y[1] = x[1]
-            #         y[2] = x[2] - k_coord[0]
-            #     else:
-            #         y[0] = 100
-            #         y[1] = 100
-            #         y[2] = 100
+        # edge_str_li_1 = string_template(2, coord_label=[0, 1],
+        #                                 joint_sym='and',
+        #                                 dict_output=True, no_origin=True)
+        # edge_str_li_2 = string_template(2, coord_label=[1, 2],
+        #                                 joint_sym='and',
+        #                                 dict_output=True, no_origin=True)
+        # edge_str_li_3 = string_template(2, coord_label=[0, 2],
+        #                                 joint_sym='and',
+        #                                 dict_output=True, no_origin=True)
+        #
+        # face_str_li_1 = string_template(1, coord_label=[0],
+        #                                 joint_sym='and', dict_output=True)
+        # face_str_li_2 = string_template(1, coord_label=[1],
+        #                                 joint_sym='and', dict_output=True)
+        # face_str_li_3 = string_template(1, coord_label=[2],
+        #                                 joint_sym='and', dict_output=True)
+        #
+        # # Map edges
+        # for k_coord, on_edge in edge_str_li_1.items():
+        #     if eval(on_edge):
+        #         y[0] = x[0] - k_coord[0]
+        #         y[1] = x[1] - k_coord[1]
+        #         y[2] = x[2]
+        #
+        # for k_coord, on_edge in edge_str_li_2.items():
+        #     if eval(on_edge):
+        #         y[0] = x[0]
+        #         y[1] = x[1] - k_coord[0]
+        #         y[2] = x[2] - k_coord[1]
+        #
+        # for k_coord, on_edge in edge_str_li_3.items():
+        #     if eval(on_edge):
+        #         y[0] = x[0] - k_coord[0]
+        #         y[1] = x[1]
+        #         y[2] = x[2] - k_coord[1]
+        #
+        # # Map faces
+        # for k_coord, on_face in face_str_li_1.items():
+        #     if eval(on_face):
+        #         y[0] = x[0] - k_coord[0]
+        #         y[1] = x[1]
+        #         y[2] = x[2]
+        # for k_coord, on_face in face_str_li_2.items():
+        #     if eval(on_face):
+        #         y[0] = x[0]
+        #         y[1] = x[1] - k_coord[0]
+        #         y[2] = x[2]
+        # for k_coord, on_face in face_str_li_3.items():
+        #     if eval(on_face):
+        #         y[0] = x[0]
+        #         y[1] = x[1]
+        #         y[2] = x[2] - k_coord[0]
 
 
 def test_gmsh_with_incl():
@@ -575,6 +636,10 @@ def test_string_template():
     print string_template(3, dict_output=True)
     print string_template(2, dict_output=True, joint_sym='or')
 
+    print "NO ORIGIN TEST"
+    print string_template(1, coord_label=[2], joint_sym='and',
+                          dict_output=True, no_origin=True)
+
 
 def test_period_3d():
     a, b, c = 3, 6, 9
@@ -625,18 +690,3 @@ if __name__ == "__main__":
     test_period_3d()
 
     # test_string_template()
-
-    # edge_str_li_3 = string_template(2, coord_label=[0, 2],
-    #                                 joint_sym='and',
-    #                                 in_colon=True,
-    #                                 dict_output=True)
-    #
-    # edge_str_li_3.pop((0., 0.))
-    #
-    # print edge_str_li_3.values()
-
-    # print edge_str_li_3[(0., 0.)]
-
-    # comp_str_li = string_template(3, joint_sym='and', in_colon=True)
-    #
-    # print comp_str_li

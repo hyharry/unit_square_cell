@@ -1,4 +1,15 @@
 # coding=utf-8
+# Copyright (C) 2016 Yi Hu
+# python 2.7, FEniCS 1.6.0
+"""
+Micro scale computation for composite material under multi fields
+
+Class: MicroComputation (pre-processing, fe formulation,
+        solution, post-processing, view results, write and output results)
+Function: field_merge, field_split, set_field, extend_strain,
+        deformation_grad_with_macro
+
+"""
 
 from dolfin import *
 import numpy as np
@@ -58,11 +69,26 @@ solver_parameters = newton_nonlin_solver_parameters
 # PROGRESS = 1
 # set_log_level(PROGRESS)
 
+def set_solver_parameters(non_lin_method, lin_method):
+    """
+    Assistance function to set solver parameters
+
+    Some parameters should be tuned inside this method
+
+    :param non_lin_method: (string) name of non linear solver
+    :param lin_method: (string) name of linear solver
+
+    :return: (dict) global nested dictionary of parameters setting
+
+    """
+    # TODO: easy use global parameters setter
+    pass
+
 
 class MicroComputation(object):
     """
-    unit cell computation for 2D multi field problem
-    !! 3D should be extended !!
+    Unit Cell Computation both 2d and 3d, solve fluctuation, averaged strain
+    stress, moduli, homogenized moduli, view results
     """
 
     def __init__(self, cell, material_li,
@@ -71,41 +97,47 @@ class MicroComputation(object):
         Initialize cell properties such as geometry, material, boundary,
         post processing space, and switch of multi field
 
-        :param cell: geometry
-        :param material_li: [mat1, mat2, ...]
-        :param strain_FS_li: post processing spaces
+        :param cell: (UnitCell) geometry
+        :param material_li: (list of Materials) [mat1, mat2, ...]
+        :param strain_gen_li: (list of Functions) [deform_grad_with_macro, ...]
+        :param strain_FS_li: (list of FunctionSpaces) strain post processing
+        spaces
+
         """
         self.cell = cell
-        self.w = None
         self.material = material_li
         self.strain_gen = strain_gen_li
         self.strain_FS = strain_FS_li
-        self.F_bar = None
 
+        self.w = None
+        self.F_bar = None
         self.F = None
 
         self.Pi = None
         self.F_w = None
         self.J = None
 
-        # __Helping class member__
         # Geometry Dimension 2D
         self.field_num = None
         self.geom_dim = cell.dim
+
         self.w_merge = None
+        self.w_split = None
         # Test function
         self.v_merge = None
         # Trial function
         self.dw_merge = None
-        self.w_split = None
         # Boundary Condition
         self.bc = None
 
         self.material_num = len(material_li)
+        # Duplicated Material for post processing, save time and manipulation
+        # for post processing
         self.material_post = [Material(mat_i.energy_func, mat_i.para_list,
                                        mat_i.invar_gen_li.keys(),
                                        mat_i.invar_gen_li.values())
                               for mat_i in material_li]
+
         # F for Problem Formulation
         self.F_merge = None
         self.F_merge_test = None
@@ -123,11 +155,17 @@ class MicroComputation(object):
 
     def input(self, F_bar_li, w_li):
         """
-        Internal vars F_bar_li and w_li should be updated for each cell and
-        each time step
+        Input FunctionSpace for F and w to complete initialization, update
+        instance members
 
-        :param F_bar_li: macro F, written as list
-        :param w_li: field list
+        F_bar_li and w_li should be updated for each cell and each time step
+        values from the previous step is inherited
+
+        :param F_bar_li: (list of lists) macro F, each term in list is written
+                        as list, [F_bar, E_bar, T_bar, ...],
+                        F_bar = [F11,F12,F21,F22]
+        :param w_li: (list of dolfin Functions) field list, [w, e, ...]
+
         """
         assert isinstance(F_bar_li, list) and isinstance(w_li, list)
         self._F_bar_init(F_bar_li)
@@ -143,20 +181,27 @@ class MicroComputation(object):
 
     def _F_bar_init(self, F_bar_li):
         """
-        Macro field input, initialize F_bar
-        Mind that if multiple field, multiple field input will require
+        Macro field input, initialize F_bar, called by input()
 
-        :param F_bar_li: !! only constant macro field input are supported !!
-        F_bar_li should be a list of F_bar, each entry is furthermore a list
-        representing input from each field
+        :param F_bar_li: F_bar_li should be a list of F_bar, each entry is
+                        furthermore a list representing input from each field
 
         :return self.F_bar: [Function for F, Function for M, Function for T,...]
+
         """
         assert isinstance(F_bar_li[0], list)
         self.F_bar = [self._li_to_func(F_bar_field_i)
                       for F_bar_field_i in F_bar_li]
 
     def _li_to_func(self, F_li):
+        """
+        Transform list into Constant Function, called by _F_bar_init()
+
+        :param F_li: (list) F_li = [F11,F12,F21,F22]
+
+        :return: (dolfin Function) constant value over mesh
+
+        """
         dim = self.geom_dim
         F_dim = len(F_li)
         if F_dim == 1:
@@ -191,7 +236,18 @@ class MicroComputation(object):
 
     # ==== Pre-Processing Stage ====
     def _total_energy(self, F, material_list):
-        # Please be careful about the ordering dx(0) -> matrix
+        """
+        Energy over the whole cell, called by _fem_formulation_composite()
+
+        integrate and sum up for composites， ordering should be considered,
+        dx(0) -> composite matrix
+
+        :param F: (list of dolfin Functions) extended strain, [F,E,...]
+        :param material_list: (list of Materials) [matrix,component1,...]
+
+        :return: self.Pi (energy) is updated
+
+        """
         dx = Measure('dx', domain=self.cell.mesh,
                      subdomain_data=self.cell.domain)
 
@@ -202,6 +258,13 @@ class MicroComputation(object):
         self.Pi = sum(int_i_li)
 
     def _bc_fixed_corner(self):
+        """
+        Generate dirichlet boundary condition for fe problem, all the corners
+        are fixed, invoked by _fem_formulation_composite()
+
+        :return: updated self.bc
+
+        """
         bc = []
         corners = geom.compiled_corner_subdom(self.geom_dim)
         dim = self.w_merge.shape()
@@ -215,6 +278,14 @@ class MicroComputation(object):
         self.bc = bc
 
     def _fem_formulation_composite(self):
+        """
+        Formulate FE problem, using derivative() to energy
+
+        :return: updated self.F_w -> linear form
+                         self.J -> bilinear form
+                         self.bc -> fixed corner bc
+
+        """
         self._total_energy(self.F, self.material)
 
         F_w = derivative(self.Pi, self.w_merge, self.v_merge)
@@ -229,6 +300,12 @@ class MicroComputation(object):
 
     # ==== Solution ====
     def comp_fluctuation(self):
+        """
+        Solve fluctuation, solver parameters are set before solving
+
+        :return: updated self.w_merge
+
+        """
         self._fem_formulation_composite()
 
         # 1.Method of defining solution: direct set solver_parameters
@@ -250,6 +327,13 @@ class MicroComputation(object):
 
     # ==== Post-Processing Stage ====
     def _energy_update(self):
+        """
+        Post-processing stage, update self.Pi using computed strain, invoked
+        for all other post processing methods
+
+        :return: updated self.Pi
+
+        """
         self.comp_strain()
         (self.F_merge, self.F_merge_test, self.F_merge_trial, self.F_split) = \
             set_field(self.F)
@@ -260,12 +344,13 @@ class MicroComputation(object):
     def _const_strain_FS_init(self):
         """
         Generate constant strain FunctionSpace for Post-Processing
+
         multi field: FS.shape = (n,)
         uni field: FS.shape = (2,2)
 
-        :return: self.strain_const_FS
+        :return: updated self.strain_const_FS
+
         """
-        # TODO introspection when constructing const FuncSp
         if self.field_num > 1:
             dim = self.F_merge.shape()[0]
             FS = FunctionSpace(self.cell.mesh, 'R', 0)
@@ -276,15 +361,29 @@ class MicroComputation(object):
         self.strain_const_FS = RFS
 
     def comp_strain(self):
+        """
+        Compute strain using project()
+
+        :return: updated self.F
+
+        """
         F_space = self.strain_FS
         self.F = [project(self.F[i], F_space_i)
                   for i, F_space_i in enumerate(F_space)]
 
-        # plot(self.F[0][0,0], interactive=True)
-
         print 'strain computation finished'
 
     def comp_stress(self):
+        """
+        Compute stress at each node.
+
+        use derivative() w.r.t self.F_merge in self.Pi -> linear form
+        integrate F_merge_test*F_merge_trial over domain -> bili form
+        solve use default FEniCS linear solver
+
+        :return: updated self.P_merge
+
+        """
         if not self.F_merge:
             self._energy_update()
 
@@ -304,9 +403,14 @@ class MicroComputation(object):
 
         print 'stress computation finished'
 
-        # plot(P[0,0], interactive=True)
-
     def avg_merge_strain(self):
+        """
+        Average merged strain with explicit integration
+
+        :return: F_merge_avg
+        :rtype: dolfin Function
+
+        """
         if not self.F_merge:
             self._energy_update()
 
@@ -335,6 +439,15 @@ class MicroComputation(object):
         return F_merge_avg
 
     def avg_merge_stress(self):
+        """
+        Average merged stress, 3 methods.
+
+        here the consistent one with derivative() is used
+
+        :return: P_merge_avg
+        :rtype: numpy array
+
+        """
         if not self.F_merge:
             self._energy_update()
         if not self.strain_const_FS:
@@ -394,10 +507,17 @@ class MicroComputation(object):
         print 'average merge stress computation finished'
 
         # print P_merge_avg
-
         return P_merge_avg
 
     def avg_merge_moduli(self):
+        """
+        Average merged moduli, derivative() of self.Pi w.r.t. self.F_merge,
+        and assemble
+
+        :return: C_avg
+        :rtype: numpy array
+
+        """
         if not self.F_merge:
             self._energy_update()
         if not self.strain_const_FS:
@@ -415,6 +535,13 @@ class MicroComputation(object):
         return C_avg.array()
 
     def effective_moduli_2(self):
+        """
+        Effective moduli calculation according to homogenization method
+
+        :return: C_avg-LTKL2 <=> C_eff
+        :rtype: numpy array
+
+        """
         if not self.F_merge:
             self._energy_update()
         if not self.strain_const_FS:
@@ -434,6 +561,17 @@ class MicroComputation(object):
         return C_avg - LTKL2
 
     def sensitivity(self, B):
+        """
+        Sensitivity matrix calculation. Assemble linear and bilinear form
+        symetrically. Solve use the default FEniCS linear solver
+
+        :param B: (numpy array) linear form w.r.t fluctuation as well as
+                                linear form w.r.t macro deformation
+
+        :return: LTKL
+        :rtype: numpy array
+
+        """
         w_test = self.v_merge
         J = self.J
         bc = self.bc
@@ -465,11 +603,20 @@ class MicroComputation(object):
 
         for i in range(F_merge_len):
             L_assign.vector().set_local(L[:, i])
+            # Default solver for equation system
             solve(K_a, x, L_assign.vector())
             LTKL[:, i] = L.T.dot(x.array())
         return LTKL
 
     def view_fluctuation(self, field_label=1):
+        """
+        View fluctuation of different field
+
+        :param field_label: (int) field_label 1->displacement
+
+        :return: plot
+
+        """
         if field_label is 1:
             plot(self.w_split[0], mode='displacement', interactive=True)
         else:
@@ -485,12 +632,52 @@ class MicroComputation(object):
             else:
                 print 'this is a tensor field'
 
+    def view_displacement(self, field_label=1):
+        """
+        View displacement of different field
+
+        :param field_label: (int) field_label 1->displacement
+
+        :return: plot
+
+        """
+        if field_label is 1:
+            F_bar = self.F_bar[0]
+            if self.geom_dim == 2:
+                coord = Expression(('x[0]', 'x[1]'))
+            else:
+                coord = Expression(('x[0]', 'x[1]', 'x[2]'))
+            plot(self.w_split[0] + dot(F_bar, coord), mode='displacement',
+                 interactive=True)
+        else:
+            label = field_label - 1
+            w = self.w_split[label]
+            dim = w.geometric_dimension()
+            F_bar = self.F_bar[0]
+            if dim == 1:
+                coord = Expression('x[0]')
+            elif dim == 2:
+                coord = Expression(('x[0]', 'x[1]'))
+            else:
+                coord = Expression(('x[0]', 'x[1]', 'x[2]'))
+            if not w.shape():
+                plot(w + dot(F_bar, coord), mode='color', interactive=True)
+            elif len(w.shape()) is 1:
+                if w.shape()[0] != self.geom_dim:
+                    print 'plot dimension does not match'
+                    return
+                plot(w + dot(F_bar, coord), mode='displacement',
+                     interactive=True)
+            else:
+                print 'this is a tensor field'
+
     def view_post_processing(self, label, component):
         """
         Plot strain or stress from Post-Processing
 
-        :param label: 'stress' or 'strain'
-        :param component: component label should be label for the merged field
+        :param label: (int) 'stress' or 'strain'
+        :param component: (int) component label should be label for the merged
+        field
 
         :return:
         """
@@ -505,8 +692,27 @@ class MicroComputation(object):
         else:
             raise Exception('invalid output name')
 
+    def write_output(self, label):
+        """
+        Write output in a file for post processing of other kinds
+
+        :param label: field label for writing output
+        :return: file
+        """
+        # TODO output
+        pass
+
 
 def field_merge(func_li):
+    """
+    Merge field for derivation
+
+    :param func_li: (list of dolfin Functions) [Func1, Func2, ...]
+
+    :return: func_merge, func_merge_test, func_merge_trial
+    :rtype: (tuple of dolfin Functions)
+
+    """
     # Determine Function Space
     if len(func_li) > 1:
         FS_li = [func_i.function_space() for func_i in func_li]
@@ -527,6 +733,15 @@ def field_merge(func_li):
 
 
 def field_split(merged_func, field_num):
+    """
+    Split the merged function to get dependency
+
+    :param merged_func: (dolfin Function)
+    :param field_num: if uni-field no need to split
+
+    :return: list of dolfin split Functions
+
+    """
     if field_num > 1:
         return list(split(merged_func))
     else:
@@ -537,9 +752,12 @@ def set_field(func_li):
     """
     One-stand Function dependency setting (merge and split in one step)
 
-    :param func_li: w or F to merge and split, or other Function_list
+    :param func_li: (list of dolfin Functions) w or F to merge and split,
+                    or other Function_list
 
-    :return:
+    :return: f_merge, f_merge_test, f_merge_trial, f_split
+    :type: tuple
+
     """
     f_merge, f_merge_test, f_merge_trial = field_merge(func_li)
     f_split = field_split(f_merge, len(func_li))
@@ -547,6 +765,19 @@ def set_field(func_li):
 
 
 def extend_strain(macro_li, func_li, generator_li=None):
+    """
+    Generate strain and extend strain into a list
+
+    :param macro_li: (list of dolfin Functions) list of macro fields
+    :param func_li: (list of dolfin Functions) displacement or other
+                    fluctuation variable to derive strain
+    :param generator_li: (list of functions) functions using macro field and
+                        fluctuation to generate strain
+
+    :return: F, extended strain list
+    :rtype: list of dolfin Functions
+
+    """
     if generator_li:
         F = [gen(macro_li[i], func_li[i]) for i, gen in enumerate(generator_li)]
     else:
@@ -555,15 +786,37 @@ def extend_strain(macro_li, func_li, generator_li=None):
 
 
 def material_assem(F, material_list):
+    """
+    Assemble material energy (psi)
+
+    :param F: (list of dolfin Functions) material energy variables
+    :param material_list: (list of Materials)
+
+    :return: updated Material with psi initialized
+
+    """
     for mat_i in material_list:
         mat_i(F)
 
 
 def deform_grad_with_macro(F_bar, w_component):
+    """
+    Basic strain generator
+
+    :param F_bar: (dolfin Function) Macro Strain
+    :param w_component: (dolfin Function) displacement fluctuation
+
+    :return: complete strain
+    :rtype: dolfin function
+
+    """
     return F_bar + grad(w_component)
 
 
 def test_uni_field():
+    """
+    Test for Uni Field Problems
+    """
     print 'St-Venant Kirchhoff Material Test'
     import cell_geom as ce
     import cell_material as ma
@@ -579,7 +832,7 @@ def test_uni_field():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner(
-                                  2))
+                                      2))
 
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
@@ -588,8 +841,7 @@ def test_uni_field():
     mat_li = [mat_m, mat_i]
 
     # Initialize MicroComputation
-    # if multi field bc should match
-    F_bar = [.9, 0., 0., 1.]
+    F_bar = [.9, 0.1, 0., 1.]
     # F_bar = [1., 0.5, 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
@@ -598,8 +850,8 @@ def test_uni_field():
 
     comp.input([F_bar], [w])
     comp.comp_fluctuation()
-    comp.view_fluctuation()
-
+    # comp.view_fluctuation()
+    comp.view_displacement()
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -611,7 +863,10 @@ def test_uni_field():
 
 
 def test_multi_field():
-    print 'Neo-Hookean MRE Material Test'
+    """
+    Test for Multi Field Problem
+    """
+    print 'Neo-Hookean EAP Material Test'
     import cell_geom as ce
     import cell_material as ma
 
@@ -625,7 +880,7 @@ def test_multi_field():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner(
-                                  2))
+                                      2))
     FS = FunctionSpace(cell.mesh, "CG", 1,
                        constrained_domain=ce.PeriodicBoundary_no_corner(2))
 
@@ -663,7 +918,8 @@ def test_multi_field():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
-    comp.view_fluctuation(1)
+    # comp.view_displacement()
+    # comp.view_fluctuation(1)
     # comp.view_post_processing('stress', 5)
     # Post-Processing
     # comp._energy_update()
@@ -676,6 +932,9 @@ def test_multi_field():
 
 
 def test_uni_field_3d():
+    """
+    Test for Uni Field 3d Problem
+    """
     print 'St-Venant Kirchhoff Material Test'
     import cell_geom as ce
     import cell_material as ma
@@ -692,7 +951,7 @@ def test_uni_field_3d():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner(
-                                  3))
+                                      3))
 
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
@@ -725,6 +984,6 @@ def test_uni_field_3d():
 
 
 if __name__ == '__main__':
-    # test_uni_field()
+    test_uni_field()
     # test_multi_field()
-    test_uni_field_3d()
+    # test_uni_field_3d()

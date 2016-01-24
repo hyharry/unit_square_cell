@@ -1,16 +1,39 @@
 # coding=utf-8
+# Copyright (C) 2016 Yi Hu
+# python 2.7, FEniCS 1.6.0
+"""
+Generic Material setting and Material Library
+
+Class: Material
+Function: green_lagrange, tensor_invar, compose
+Material Library: st_venant_kirchhoff, simo_pister, magneto_mechano, neo_hook_mre
+
+"""
 
 from dolfin import Identity, tr, inner, outer, inv, sqrt, det, ln, transpose
 
 
 class Material(object):
     """
-    Material Class for 2D problem
-    possible to extend it into 3D
+    Material Class for 2D and 3D problem
     """
 
     def __init__(self, energy_func, para_list, field_label_tuple_list=None,
                  invariant_generator_list_list=None):
+        """
+        Constructor for Material
+
+        :param energy_func: (function) energy function depending on invariants
+        :param para_list: （list) list of parameters for energy function
+        :param field_label_tuple_list: (list of tuples) invariant generator
+                                        dependency, (0,) <=> (F,)
+        :param invariant_generator_list_list: (list of lists) function list
+                                            to obtain invariants, e.g.
+                                            [[I1,I2], [I1], ...]
+
+        :return: updated Material instance
+
+        """
         self.energy_func = energy_func
         self.para_list = para_list
 
@@ -32,7 +55,8 @@ class Material(object):
         """
         Assemble material energy (psi) by calling instance
 
-        :param func_list: e.g. [F, M, E, T, ...] each is Function
+        :param func_list: (list of dolfin Functions)
+                            e.g. [F, M, E, T, ...] each is Function
 
         :return: complete instance
         """
@@ -45,21 +69,31 @@ class Material(object):
     def invariant_generator_append(self, field_label_tuple,
                                    invariant_generator_list):
         """
+        Initialize method for invariants generation for material energy
+
         Please be careful! When the keys are the same, it will override the
         initial one!
 
-        :param field_label_tuple: field dependency, e.g. (0,), (0,1)
-        :param invariant_generator_list: function list on the field, e.g. tr
+        :param field_label_tuple: (tuple) field dependency, e.g. (0,), (0,1)
+        :param invariant_generator_list: (list of functions) function list on
+                                        the field, e.g. tr
 
         :return: renewed or updated invar_gen_li
+
         """
         self.invar_gen_li[field_label_tuple] = invariant_generator_list
 
     def _invariant(self):
+        """
+        Generate invariants using invar_generator to update self.invar
+
+        :return: updated self.invar (list)
+        """
         if not self.invar_gen_li:
             raise Exception('Please initialize the invariant generator list '
                             'first')
         invariant_generator = self.invar_gen_li
+        # Clear self.invar before generation
         self.invar = []
         for fields_label in invariant_generator:
             for generator in invariant_generator[fields_label]:
@@ -77,8 +111,7 @@ class Material(object):
 
     def direction(self):
         """
-        :ivar
-        :return:
+        For heterogeneous material
         """
         pass
 
@@ -89,11 +122,17 @@ class Material(object):
                                                       self.num_field)
 
     def _problem_setting(self):
+        """
+        Obtain general problem information
+        """
         func_list = self.F
         self.num_field = len(func_list)
         self.prob_dim = func_list[0].geometric_dimension()
 
     def get_field_dim(self):
+        """
+        Obtain field information
+        """
         for i, field in enumerate(self.F):
             field_shape = field.shape()
             self.field_dim[i] = field_shape
@@ -108,6 +147,14 @@ class Material(object):
 
 # Tensor measure
 def green_lagrange(F):
+    """
+    Generate green_lagrange tensor
+
+    :param F: (dolfin function) right cauchy green
+
+    :return: (dolfin function) green lagrange tensor
+
+    """
     dim = F.geometric_dimension()
     I = Identity(dim)
     C = F.T*F
@@ -117,6 +164,14 @@ def green_lagrange(F):
 
 # Assistant method to make invariants
 def tensor_invar(label_tuple):
+    """
+    Tensor invariants generator
+
+    :param label_tuple: (tuple) label of invariants, I1, I2, I3
+
+    :return: (list of functions) list of functions
+
+    """
     generator_list = []
     if 1 in label_tuple:
         I1 = tr
@@ -134,10 +189,29 @@ def tensor_invar(label_tuple):
 
 
 def compose(f_list, g):
+    """
+    Compose every fi and g
+
+    :param f_list: (list of functions) [f1, f2, ...]
+    :param g: (function)
+
+    :return: composed function list
+    :rtype: list
+
+    """
     return [lambda x: fi(g(x)) for fi in f_list]
 
 
 def st_venant_kirchhoff(E_m, nu_m):
+    """
+    St Venant Kirchhoff Material
+
+    :param E_m: (float) Young's modulus
+    :param nu_m: (float) Poisson ratio
+
+    :return: Material svk
+
+    """
     mu = E_m / (2 * (1 + nu_m))
     lmbda = E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m))
 
@@ -234,18 +308,16 @@ def magneto_mechano(N, a, b, c):
     return mre
 
 
-def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
+def neo_hook_eap(E_m, nu_m, kappa, epsi0=8.85e-12):
     """
-    Neo-Hookean-type MRE from 'Keip, Steinmann, Schroeder, 2014, CMAME'
+    Neo-Hookean-type EAP from 'Keip, Steinmann, Schroeder, 2014, CMAME'
 
-    :param F:
-    :param E:
-    :param miu:
-    :param lmbda:
-    :param epsi0:
-    :param kappa:
+    :param E_m: Young's Modulus
+    :param nu_m: Poisson ratio
+    :param epsi0: Vacuum Permittivity
+    :param kappa: Electric Susceptivity
 
-    :return:
+    :return: Matrial nh_eap
     """
     miu = E_m / (2 * (1 + nu_m))
     lmbda = E_m * nu_m / ((1 + nu_m) * (1 - 2 * nu_m))
@@ -256,16 +328,16 @@ def neo_hook_mre(E_m, nu_m, kappa, epsi0=8.85e-12):
         couple_term = -1 / 2 * epsi0 * (1 + kappa / inva[1]) * inva[1] * inva[2]
         return mech_term + couple_term
 
-    nh_mre = Material(psi, [miu, lmbda, kappa, epsi0])
+    nh_eap = Material(psi, [miu, lmbda, kappa, epsi0])
 
     def sqr_tr(F):
         return tr(F.T * F)
 
-    nh_mre.invariant_generator_append((0,), [sqr_tr, det])
+    nh_eap.invariant_generator_append((0,), [sqr_tr, det])
     couple_invar_gen = lambda F, E: inner(inv(F.T * F), outer(E, E))
-    nh_mre.invariant_generator_append((0, 1), [couple_invar_gen])
+    nh_eap.invariant_generator_append((0, 1), [couple_invar_gen])
 
-    return nh_mre
+    return nh_eap
 
 
 def test_st_venant():
@@ -329,21 +401,23 @@ def test_neo_hookean_eap():
     E_m, nu_m, kappa = 10.0, 0.3, 2
     C = Function(TFS)
     E = Function(VFS)
-    nh_mre = neo_hook_mre(E_m, nu_m, kappa)
-    nh_mre([C, E, ])
-    assert nh_mre is not None
+    nh_eap = neo_hook_eap(E_m, nu_m, kappa)
+    nh_eap([C, E, ])
+    assert nh_eap is not None
 
 
 if __name__ == '__main__':
     print 'this is for testing'
     from dolfin import *
-    import unittest
+    # import unittest
+    #
+    # test_li = [test_st_venant, test_simo_pister,
+    #            test_magneto_mechano, test_neo_hookean_eap]
+    # test_case_li = [unittest.FunctionTestCase(test_i) for test_i in test_li]
 
-    test_li = [test_st_venant, test_simo_pister,
-               test_magneto_mechano, test_neo_hookean_eap]
-    test_case_li = [unittest.FunctionTestCase(test_i) for test_i in test_li]
+    test_neo_hookean_eap()
 
-    # print nh_mre.psi
+    # print nh_eap.psi
     # print mre.psi
     # print sp.psi
     # print svk.psi
