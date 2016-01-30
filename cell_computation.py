@@ -21,68 +21,18 @@ ffc_options = {"optimize": True,
                "eliminate_zeros": True,
                "precompute_basis_const": True,
                "precompute_ip_const": True}
-# parameters["linear_solver"] = "krylov"
 
-# parameters["form_compiler"]["quadrature_degree"] = 2
+# WARNING: Linear algebra backend setting should be done before any
+# computation and initialization, specific storage method according to the
+# backend will be used If not done, error of 'down_cast' will be raised
 
-# Define the solver parameters
-snes_solver_parameters = {"nonlinear_solver": "snes",
-                          "snes_solver": {"linear_solver": "lu",
-                                          "line_search": "bt",
-                                          "maximum_iterations": 50,
-                                          "report": True,
-                                          "error_on_nonconvergence": False,
-                                          }}
+# parameters['linear_algebra_backend'] = 'PETSc'
+parameters.update({'linear_algebra_backend': 'Eigen'})
 
-newton_nonlin_solver_parameters = {"nonlinear_solver": "newton",
-                                   "newton_solver": {"absolute_tolerance": 1E-8,
-                                                     "relative_tolerance": 2E-7,
-                                                     "maximum_iterations": 25,
-                                                     "relaxation_parameter": 1.,
-                                                     }}
-
-# TODO is gmres linear solver? how to set it to solve nonlinear?
-gmres_solver_parameters = {"linear_solver": "gmres",
-                           "preconditioner": "ilu",
-                           "krylov_solver": {"absolute_tolerance": 1E-9,
-                                             "relative_tolerance": 1E-7,
-                                             "maximum_iterations": 1000,
-                                             "gmres": {"restart": 30},
-                                             "preconditioner": {"ilu": {
-                                                 "fill_level": 0}}
-                                             }
-                           }
-
-gmres_solver_parameters = {"nonlinear_solver": "newton",
-                           "newton_solver": gmres_solver_parameters}
-
-krylov_solver_parameters = {"nonlinear_solver": "newton",
-                            "newton_solver": {"linear_solver": "cg"}}
-
-solver_parameters = newton_nonlin_solver_parameters
-
-
-# solver_parameters = snes_solver_parameters
-# solver_parameters = gmres_solver_parameters
-# solver_parameters = krylov_solver_parameters
-
-# PROGRESS = 1
-# set_log_level(PROGRESS)
-
-def set_solver_parameters(non_lin_method, lin_method):
-    """
-    Assistance function to set solver parameters
-
-    Some parameters should be tuned inside this method
-
-    :param non_lin_method: (string) name of non linear solver
-    :param lin_method: (string) name of linear solver
-
-    :return: (dict) global nested dictionary of parameters setting
-
-    """
-    # TODO: easy use global parameters setter
-    pass
+# Solver parameters for the fluctuation solving stage
+solver_parameters = {}
+# Solver parameters for post processing
+post_solver_parameters = {}
 
 
 class MicroComputation(object):
@@ -299,9 +249,12 @@ class MicroComputation(object):
             self._bc_fixed_corner()
 
     # ==== Solution ====
-    def comp_fluctuation(self):
+    def comp_fluctuation(self, print_progress=False, print_solver_info=False):
         """
         Solve fluctuation, solver parameters are set before solving
+
+        :param print_progress: (bool) print detailed solving progress
+        :param print_solver_info: (bool) print detailed solver info
 
         :return: updated self.w_merge
 
@@ -318,9 +271,9 @@ class MicroComputation(object):
         problem = NonlinearVariationalProblem(self.F_w, self.w_merge, self.bc,
                                               self.J)
         solver = NonlinearVariationalSolver(problem)
-        # info(solver.parameters, True)
-        solver.parameters.update(solver_parameters)
-        # set_log_level(PROGRESS)
+        solver_setting(solver, solver_parameters,
+                       print_progress=print_progress,
+                       print_solver_info=print_solver_info)
         solver.solve()
 
         print 'fluctuation computation finished'
@@ -430,7 +383,7 @@ class MicroComputation(object):
             for i in range(d):
                 for j in range(d):
                     int_li = [self.F_merge[i, j] * dx(k) for k in range(
-                            mat_num)]
+                        mat_num)]
                     F_merge_avg[i, j] = assemble(sum(int_li))
 
         print 'average merge strain computation finished'
@@ -703,6 +656,121 @@ class MicroComputation(object):
         pass
 
 
+def set_solver_parameters(non_lin_method, lin_method=None,
+                          linear_solver='default', preconditioner=False,
+                          para=None):
+    """
+    Assistance function to set global solver parameters
+
+    Some parameters should be tuned inside this method. Please keep in mind
+    that some parameters set could differ, when backend changes
+
+    :param non_lin_method: (string) name of non linear solver
+                            from ['snes', 'non_lin_newton]
+    :param lin_method: (string) name of linear solver
+                        from ['direct', 'iterative']
+                        if (None) default is used
+
+    :param linear_solver: (string) name of newton solver
+                            if 'direct', from ['default', 'mumps', 'petsc',
+                            'umfpack]
+                            if 'iterative', from ['biccgstab', 'cg',
+                            'default', 'gmres', 'minres', 'richardson', 'tfqmr']
+
+    :param preconditioner: (string) from ['amg', 'default', 'hypre_amg',
+                                        'hypre_euclid', 'hypre_parasails',
+                                        'icc', 'ilu', 'none', 'petsc_amg', 'sor']
+
+    :param para: (dict) parameters for the specific solver, e.g.
+                krylov_solver (iterative solver):
+                {"absolute_tolerance": 1E-9, "relative_tolerance": 1E-7,
+                "maximum_iterations": 1000,
+                "gmres": {"restart": 30},
+                "preconditioner": {"ilu": {"fill_level": 0}}}
+
+                newton_solver:
+                {"absolute_tolerance": 1E-8, "relative_tolerance": 2E-7,
+                "maximum_iterations": 25, "relaxation_parameter": 1.}
+
+                snes_solver:
+                {"linear_solver": "lu", "line_search": "bt",
+                "maximum_iterations": 50, "report": True,
+                "error_on_nonconvergence": False,}
+
+    :return: (dict) global nested dictionary of parameters setting
+
+    Reference: The formal list of linear solve can be viewed in the following
+    website of PETSc
+    `<http://www.mcs.anl.gov/petsc/documentation/linearsolvertable.html>`_
+
+    for Eigen3 see the following
+    `<http://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>`_
+
+    """
+    # Global solve_parameters parameters
+    global solver_parameters
+
+    # Set non lin solver and parameters
+    if non_lin_method == 'snes':
+        solver_parameters = {"nonlinear_solver": "snes",
+                             "snes_solver": {}}
+        if para:
+            solver_parameters['snes_solver'].update(para)
+        solver_type = 'snes_solver'
+    elif non_lin_method == 'non_lin_newton':
+        solver_parameters = {"nonlinear_solver": "newton",
+                             "newton_solver": {}}
+        if para:
+            solver_parameters["newton_solver"].update(para)
+        solver_type = 'newton_solver'
+    else:
+        raise Exception('Not Defined Nonlinear Variational Solver! Please')
+
+    # Set linear solver
+    lin_method_dict = {'direct': lu_solver_methods().keys(),
+                       'iterative': krylov_solver_methods().keys()}
+
+    if lin_method in lin_method_dict.keys():
+        print lin_method + ' method is used'
+    elif lin_method is None:
+        print 'Default Setting is used'
+    else:
+        raise Exception('Linear Solver Method Not Valid!')
+
+    if lin_method is not None:
+        if linear_solver in lin_method_dict[lin_method]:
+            solver_parameters[solver_type]["linear_solver"] = linear_solver
+        else:
+            raise Exception('Error in Newton Method Setup')
+
+        # Preconditioner for iterative solver
+        if preconditioner in krylov_solver_preconditioners().keys():
+            solver_parameters["newton_solver"]["preconditioner"] = \
+                preconditioner
+
+
+def solver_setting(solver, solver_para,
+                   print_solver_info=False, print_progress=False):
+    """
+    Solver Setter when a solver is at hand
+
+    :param solver: an instance of NonlinearVariationalSolver
+    :param solver_para: (nested dict) initialized from set_solver_parameters
+    :param print_solver_info: (bool) print all solver parameters possibilities
+    :param print_progress: (bool) print solver progress
+
+    :return: updated solver instance
+
+    """
+    if print_solver_info:
+        info(solver.parameters, True)
+
+    solver.parameters.update(solver_para)
+
+    if print_progress:
+        set_log_level(PROGRESS)
+
+
 def field_merge(func_li):
     """
     Merge field for derivation
@@ -832,7 +900,7 @@ def test_uni_field():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner(
-                                      2))
+                                  2))
 
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
@@ -841,7 +909,7 @@ def test_uni_field():
     mat_li = [mat_m, mat_i]
 
     # Initialize MicroComputation
-    F_bar = [.9, 0.1, 0., 1.]
+    F_bar = [1., 0.8, 0., 1.]
     # F_bar = [1., 0.5, 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
@@ -851,7 +919,7 @@ def test_uni_field():
     comp.input([F_bar], [w])
     comp.comp_fluctuation()
     # comp.view_fluctuation()
-    comp.view_displacement()
+    # comp.view_displacement()
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -880,7 +948,7 @@ def test_multi_field():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner(
-                                      2))
+                                  2))
     FS = FunctionSpace(cell.mesh, "CG", 1,
                        constrained_domain=ce.PeriodicBoundary_no_corner(2))
 
@@ -951,7 +1019,7 @@ def test_uni_field_3d():
 
     VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
                               constrained_domain=ce.PeriodicBoundary_no_corner(
-                                      3))
+                                  3))
 
     # Set materials
     E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
@@ -983,7 +1051,67 @@ def test_uni_field_3d():
     # comp.effective_moduli_2()
 
 
+def test_solver():
+    """
+    Test for Different Solvers
+    """
+    print 'Solver Test'
+    import cell_geom as ce
+    import cell_material as ma
+
+    # Set geometry
+    mesh = Mesh(r"m.xml")
+    # mesh = Mesh(r"m_fine.xml")
+    cell = ce.UnitCell(mesh)
+    inc = ce.InclusionCircle(2, (0.5, 0.5), 0.25)
+    inc_di = {'circle_inc': inc}
+    cell.set_append_inclusion(inc_di)
+    # cell.view_domain()
+
+    VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
+                              constrained_domain=ce.PeriodicBoundary_no_corner(
+                                  2))
+
+    # global parameters
+
+    # Set materials
+    E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
+    mat_m = ma.st_venant_kirchhoff(E_m, nu_m)
+    mat_i = ma.st_venant_kirchhoff(E_i, nu_i)
+    mat_li = [mat_m, mat_i]
+
+    # Initialize MicroComputation
+    F_bar = [1., 0.8, 0., 1.]
+    # F_bar = [1., 0.5, 0., 1.]
+    # parameters['linear_algebra_backend'] = 'Eigen'
+    w = Function(VFS)
+    strain_space = TensorFunctionSpace(mesh, 'DG', 0)
+    comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
+                            [strain_space])
+
+    comp.input([F_bar], [w])
+
+    # Test PETSc backend
+    # set_solver_parameters('snes', 'iterative', 'minres')
+    # set_solver_parameters('non_lin_newton', 'iterative', 'cg')
+    # set_solver_parameters('non_lin_newton', 'direct', 'default')
+    # set_solver_parameters('non_lin_newton')
+    # set_solver_parameters('snes')
+    # set_solver_parameters('non_lin_newton')
+
+    # Test Eigen backend, backend definition is to be defined before all the
+    # initialization (dolfin Function) and computation
+    set_solver_parameters('non_lin_newton', lin_method='direct',
+                          linear_solver='sparselu')
+    # set_solver_parameters('non_lin_newton')
+
+    # info(NonlinearVariationalSolver.default_parameters(), True)
+
+    comp.comp_fluctuation(print_progress=True, print_solver_info=False)
+
+
 if __name__ == '__main__':
-    test_uni_field()
+    # test_uni_field()
     # test_multi_field()
     # test_uni_field_3d()
+    test_solver()
