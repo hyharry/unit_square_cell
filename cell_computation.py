@@ -24,7 +24,7 @@ ffc_options = {"optimize": True,
 
 # WARNING: Linear algebra backend setting should be done before any
 # computation and initialization, specific storage method according to the
-# backend will be used If not done, error of 'down_cast' will be raised
+# backend will be used. If not done, error of 'down_cast' will be raised
 
 # parameters['linear_algebra_backend'] = 'PETSc'
 parameters.update({'linear_algebra_backend': 'Eigen'})
@@ -958,8 +958,8 @@ def test_multi_field():
     n = 10  # 13.Jan
     E_i, nu_i, Kappa_i = 1000 * E_m, 0.3, n * Kappa_m
 
-    mat_m = ma.neo_hook_mre(E_m, nu_m, Kappa_m)
-    mat_i = ma.neo_hook_mre(E_i, nu_i, Kappa_i)
+    mat_m = ma.neo_hook_eap(E_m, nu_m, Kappa_m)
+    mat_i = ma.neo_hook_eap(E_i, nu_i, Kappa_i)
     mat_li = [mat_m, mat_i]
 
     # Macro Field Boundary
