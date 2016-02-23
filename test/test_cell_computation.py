@@ -1,5 +1,33 @@
 # coding = utf-8
 # Copyright (C) Yi Hu
+# python 2.7, FEniCS 1.6.0
+"""
+Test for cell_computation, MicroComputation
+"""
+
+import sys
+sys.path.insert(0, '../')
+
+import unittest
+
+from dolfin import *
+import numpy as np
+from ..
+from cell_material import Material
+import cell_geom as geom
+
+parameters["form_compiler"]["cpp_optimize"] = True
+ffc_options = {"optimize": True,
+               "eliminate_zeros": True,
+               "precompute_basis_const": True,
+               "precompute_ip_const": True}
+
+# parameters['linear_algebra_backend'] = 'PETSc'
+parameters.update({'linear_algebra_backend': 'Eigen'})
+# Solver parameters for the fluctuation solving stage
+solver_parameters = {}
+# Solver parameters for post processing
+post_solver_parameters = {}
 
 
 def test_uni_field():
@@ -98,7 +126,7 @@ def test_multi_field():
         return F_bar + grad(w_component)
 
     def e_field_with_macro(E_bar, phi):
-        return E_bar + grad(phi)
+        return E_bar - grad(phi)
 
     # Computation Initialization
     comp = MicroComputation(cell, mat_li,

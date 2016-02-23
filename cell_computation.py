@@ -26,8 +26,8 @@ ffc_options = {"optimize": True,
 # computation and initialization, specific storage method according to the
 # backend will be used. If not done, error of 'down_cast' will be raised
 
-# parameters['linear_algebra_backend'] = 'PETSc'
-parameters.update({'linear_algebra_backend': 'Eigen'})
+parameters['linear_algebra_backend'] = 'PETSc'
+# parameters.update({'linear_algebra_backend': 'Eigen'})
 
 # Solver parameters for the fluctuation solving stage
 solver_parameters = {}
@@ -890,8 +890,8 @@ def test_uni_field():
     import cell_material as ma
 
     # Set geometry
-    mesh = Mesh(r"m.xml")
-    # mesh = Mesh(r"m_fine.xml")
+    # mesh = Mesh(r"m.xml")
+    mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     inc = ce.InclusionCircle(2, (0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
@@ -909,7 +909,8 @@ def test_uni_field():
     mat_li = [mat_m, mat_i]
 
     # Initialize MicroComputation
-    F_bar = [1., 0.8, 0., 1.]
+    # F_bar = [.9, 0., 0., 1.]
+    F_bar = [1., 0.5, 0., 1.]
     # F_bar = [1., 0.5, 0., 1.]
     w = Function(VFS)
     strain_space = TensorFunctionSpace(mesh, 'DG', 0)
@@ -918,7 +919,7 @@ def test_uni_field():
 
     comp.input([F_bar], [w])
     comp.comp_fluctuation()
-    # comp.view_fluctuation()
+    comp.view_fluctuation()
     # comp.view_displacement()
     # Post-Processing
     # comp._energy_update()
@@ -939,8 +940,8 @@ def test_multi_field():
     import cell_material as ma
 
     # Set geometry
-    mesh = Mesh(r"m.xml")
-    # mesh = Mesh(r"m_fine.xml")
+    # mesh = Mesh(r"m.xml")
+    mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     inc = ce.InclusionCircle(2, (0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
@@ -977,7 +978,8 @@ def test_multi_field():
         return F_bar + grad(w_component)
 
     def e_field_with_macro(E_bar, phi):
-        return E_bar + grad(phi)
+        # return E_bar + grad(phi)
+        return E_bar - grad(phi)
 
     # Computation Initialization
     comp = MicroComputation(cell, mat_li,
@@ -986,8 +988,9 @@ def test_multi_field():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
-    # comp.view_displacement()
-    # comp.view_fluctuation(1)
+    comp.view_displacement()
+    comp.view_fluctuation(1)
+    comp.view_fluctuation(2)
     # comp.view_post_processing('stress', 5)
     # Post-Processing
     # comp._energy_update()
@@ -1029,7 +1032,7 @@ def test_uni_field_3d():
 
     # Initialize MicroComputation
     # if multi field bc should match
-    F_bar = [.9, 0., 0.,
+    F_bar = [.9, 0.3, 0.,
              0., 1., 0.,
              0., 0., 1.]
     w = Function(VFS)
@@ -1038,7 +1041,10 @@ def test_uni_field_3d():
                             [strain_space])
 
     comp.input([F_bar], [w])
-    comp.comp_fluctuation()
+
+    set_solver_parameters('snes', 'iterative', 'minres')
+
+    comp.comp_fluctuation(print_progress=True, print_solver_info=False)
     comp.view_fluctuation()
 
     # Post-Processing
@@ -1113,5 +1119,5 @@ def test_solver():
 if __name__ == '__main__':
     # test_uni_field()
     # test_multi_field()
-    # test_uni_field_3d()
-    test_solver()
+    test_uni_field_3d()
+    # test_solver()

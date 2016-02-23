@@ -681,12 +681,14 @@ if __name__ == "__main__":
 
     # compiled_face_subdom(3)
 
-    # test_period_3d()
+    # test_inclusion_3d()
 
     # test_inclusion_3d_2()
 
+    test_period_3d()
+
     # test_period_2d()
 
-    test_period_3d()
+    # test_period_3d()
 
     # test_string_template()
