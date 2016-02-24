@@ -1,26 +1,26 @@
-%\documentclass[10pt,a4paper]{article}
-\documentclass[10pt,a4paper]{scrreprt}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
-
-\usepackage{bm}
-
-\usepackage{pythonhighlight}
-
-% integral d
-\newcommand{\myd}{\;\mathrm{d}}
-% overbar
-\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
-
-\author{Yi Hu}
-\title{Homogenization for Multi Field Modelling}
-\subtitle{Part II: Implementation and Numerical Examples}
-
-\begin{document}
+%%\documentclass[10pt,a4paper]{article}
+%\documentclass[10pt,a4paper]{scrreprt}
+%\usepackage[utf8]{inputenc}
+%\usepackage{amsmath}
+%\usepackage{amsfonts}
+%\usepackage{amssymb}
+%\usepackage{graphicx}
+%\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+%
+%\usepackage{bm}
+%
+%\usepackage{pythonhighlight}
+%
+%% integral d
+%\newcommand{\myd}{\;\mathrm{d}}
+%% overbar
+%\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
+%
+%\author{Yi Hu}
+%\title{Homogenization for Multi Field Modelling}
+%\subtitle{Part II: Implementation and Numerical Examples}
+%
+%\begin{document}
 
 \chapter{Derivation and Implementation}
 In this chapter modelling of composite materials in multiple fields is investigated. Our target is to achieve multi scale modelling. The current work is a Unit Cell module, which supports the calculation of the micro scale. Next homogenization is carried out to compute the averaged strain, averaged stress and ends with the calculation of effective tangent moduli. In order to obtain an effective and generic formulation energy method is exploited. The considered materials are Neo-Hookean materials and the composites contain periodic micro structures.
@@ -306,4 +306,4 @@ LTKL2 = self.sensitivity(B2)
 \section{Documentation}
 This unit cell module contains a Python documentation in the original code. Docstrings are used in the implementation. The format of docstring is reStructuredText. A Sphinx documentation manual is generated for the module. Besides the usage of this module is clarified with examples and the unittest cases are also included for testing the new functionalities.
 
-\end{document}
+%\end{document}

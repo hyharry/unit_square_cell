@@ -302,12 +302,13 @@ def compiled_face_subdom(dim):
 
 class InclusionCircle(SubDomain):
     """
-    Subclass of SubDomain for circle inclusion ((2D and 3D)
+    Subclass of SubDomain for circle inclusion (2D and 3D)
     """
     def __init__(self, dim, *args):
         """
         Two ways to generate Circle Inclusion
 
+        :param dim: dimension of the problem
         :param args: 1. args[0] = (x_c, y_c), args[1] = r
                      2. args[0] = fraction ration, center is (0.5, 0.5)
         """
@@ -344,6 +345,7 @@ class InclusionRectangle(SubDomain):
         """
         Generate Rectangle Inclusion
 
+        :param dim: dimension of the problem)
         :param args[0]: x_lower_bound
         :param args[1]: x_upper_bound
         :param args[2]: y_lower_bound
