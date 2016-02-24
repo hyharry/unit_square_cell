@@ -634,6 +634,7 @@ class MicroComputation(object):
 
         :return:
         """
+        # FIXME uni field post processing the index should be reconsidered
         if label is 'strain':
             if not self.F_merge:
                 self._energy_update()
@@ -919,12 +920,14 @@ def test_uni_field():
 
     comp.input([F_bar], [w])
     comp.comp_fluctuation()
-    comp.view_fluctuation()
+    # comp.view_fluctuation()
     # comp.view_displacement()
     # Post-Processing
     # comp._energy_update()
-    # comp.comp_strain()
-    # comp.comp_stress()
+    comp.comp_strain()
+    comp.comp_stress()
+    comp.view_post_processing('strain', (0,1))
+    comp.view_post_processing('stress', (0,1))
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
@@ -955,8 +958,8 @@ def test_multi_field():
 
     # Set materials
     E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
-    # n = 1000
-    n = 10  # 13.Jan
+    n = 1000
+    # n = 10  # 13.Jan
     E_i, nu_i, Kappa_i = 1000 * E_m, 0.3, n * Kappa_m
 
     mat_m = ma.neo_hook_eap(E_m, nu_m, Kappa_m)
@@ -964,9 +967,9 @@ def test_multi_field():
     mat_li = [mat_m, mat_i]
 
     # Macro Field Boundary
-    F_bar = [1., 0.,
+    F_bar = [0.9, 0.,
              0., 1.]
-    E_bar = [0., -0.2]
+    E_bar = [0., 0.2]
 
     # Solution Field
     w = Function(VFS)
@@ -988,10 +991,10 @@ def test_multi_field():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
-    comp.view_displacement()
+    # comp.view_displacement()
     comp.view_fluctuation(1)
     comp.view_fluctuation(2)
-    # comp.view_post_processing('stress', 5)
+    comp.view_post_processing('stress', 5)
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -999,7 +1002,7 @@ def test_multi_field():
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
-    # comp.effective_moduli_2()
+    comp.effective_moduli_2()
 
 
 def test_uni_field_3d():
@@ -1054,7 +1057,7 @@ def test_uni_field_3d():
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
-    # comp.effective_moduli_2()
+    comp.effective_moduli_2()
 
 
 def test_solver():

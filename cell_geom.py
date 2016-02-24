@@ -549,7 +549,7 @@ class PeriodicBoundary_no_corner(SubDomain):
 def test_gmsh_with_incl():
     print 'gmsh with inclusion test'
     mesh = Mesh(r"m.xml")
-    mesh = Mesh(r"m_fine.xml")
+    # mesh = Mesh(r"m_fine.xml")
     # Generate Inclusion
     inc1 = InclusionCircle(2, (0.5, 0.5), 0.25)
     inc_group = {'circle_inc1': inc1}
@@ -672,7 +672,7 @@ def test_period_2d():
 if __name__ == "__main__":
     print 'this is for testing'
 
-    # test_gmsh_with_incl()
+    test_gmsh_with_incl()
 
     # test_init_cell_with_inclusion_and_add()
 
@@ -687,7 +687,7 @@ if __name__ == "__main__":
 
     # test_inclusion_3d_2()
 
-    test_period_3d()
+    # test_period_3d()
 
     # test_period_2d()
 

@@ -5,6 +5,7 @@
 %\usepackage{amsfonts}
 %\usepackage{amssymb}
 %\usepackage{graphicx}
+%\usepackage{subfigure}
 %\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 %
 %\usepackage{bm}
@@ -27,20 +28,48 @@ In this part some numerical examples using this module is presented. First diffe
 
 \section{Various Inclusions}
 Inclusions in two dimensional or three dimensional cases can be added to the unit cell. User defined mesh and geometry can also be applied.
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.4]{/home/yihu/studien_arbeit_fenics/report/pics/dolfin_plot_2.png}
-\caption{Typical free energy profile}
-\label{fig:meta}
-\end{figure}
 
-[fig: inclusion and geometry 2d, 3d, different inclusions]
+\begin{figure}[h]
+  \centering
+  \subfigure[2D Circle Inclusion]{
+    \label{fig: inc 2d circ} %% label for first subfigure
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_0.png}}
+  %\hspace{0in}
+  \subfigure[3D Unit Cube with Inclusion at Corners]{
+    \label{fig: inc 3d box} %% label for second subfigure
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_2.png}}
+  \caption{Various Inclusion Types}
+  \label{fig: inc} %% label for entire figure
+\end{figure} 
 
 \section{2D Modelling}
-A unit square is considered in two dimensional calculation. At first a uni field problem is introduced, specifically a Saint Venant-Kirchhoff material in mechanical field. The model is given in the previous chapter. Material parameters and geometry parameters are given in the following table. The inclusion is simply a center located circle.
+\subsection{Uni Field Modelling}
+A unit square is considered in two dimensional calculation. At first a uni field problem is introduced, specifically a Saint Venant-Kirchhoff material in mechanical field. The model is given in the previous chapter. Material parameters and geometry parameters are given in the following table. The inclusion is simply a center located circle with radius 0.25. \\
 
-[table: mat para, geom para]
+\begin{figure}[h]
+  \centering
+  \subfigure[Coarse Mesh]{
+    \label{fig: inc 2d circ}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_16.png}}
+  %\hspace{0in}
+  \subfigure[Fine Mesh]{
+    \label{fig: inc 3d box}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_15.png}}
+  \caption{Geometry Layout and Mesh}
+  \label{fig: inc}
+\end{figure} 
 
+\begin{center}
+\captionof{table}{Material Parameters}
+\begin{tabular}{l|c|c}
+\hline
+& Young's Modulus & Poisson Ratio \\
+\hline
+Matrix Material & 10.0 & 0.3 \\
+Inclusion Material & 1000.0 & 0.3 \\
+\hline
+\end{tabular}
+\end{center}
 Boundary condition is periodic boundary condition and the fluctuation at corners is fixed to prevent rigid body movements. And the macro field is set as 
 \[
 \overbar{\mathbf{F}} = 
@@ -51,13 +80,81 @@ Boundary condition is periodic boundary condition and the fluctuation at corners
 \]
 which is an uni axial compression test. Here the macro deformation is set not very large. Because of the non-linearity nature of the problem, the load cannot set to be too high. For large macro deformation input a quasi static loading process needs to be imposed. This will achieve more obvious loading. The fluctuation plot, strain plot and stress plot is demonstrated here.
 
-[fig: 2d uni fluctuation, strain, stress]
+\begin{figure}[h]
+  \centering
+  \subfigure[Coarse Mesh Contour on Element]{
+    \label{fig: inc 2d circ}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_5.png}}
+  %\hspace{0in}
+  \subfigure[Coarse Mesh Fluctuation Contour]{
+    \label{fig: inc 3d box}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_3.png}}
+  \label{fig: inc} 
+  \subfigure[Fine Mesh Contour on Element]{
+    \label{fig: inc 2d circ}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_4.png}}
+  %\hspace{0in}
+  \subfigure[Fine Mesh Fluctuation Contour]{
+    \label{fig: inc 3d box}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_6.png}}
+  \caption{Uniaxial Compression Test: Fluctuation Result}
+\end{figure} 
 
-The calculated homogenized tangent moduli is 
+If shear macro field strain is defined, namely
+\[
+\overbar{\mathbf{F}} = 
+\begin{bmatrix}
+1. & 0.5 \\
+0 & 1 \\
+\end{bmatrix},
+\]
+the result will look like 
+
+\begin{figure}[h]
+  \centering
+  \subfigure[Coarse Mesh Contour on Element]{
+    \label{fig: inc 2d circ}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_9.png}}
+  %\hspace{0in}
+  \subfigure[Coarse Mesh Fluctuation Contour]{
+    \label{fig: inc 3d box}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_8.png}}
+  \label{fig: inc} 
+  \subfigure[Fine Mesh Contour on Element]{
+    \label{fig: inc 2d circ}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_11.png}}
+  %\hspace{0in}
+  \subfigure[Fine Mesh Fluctuation Contour]{
+    \label{fig: inc 3d box}
+    \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_10.png}}
+  \caption{Simple Shear Test: Fluctuation Result}
+\end{figure}
+
+The calculated homogenized tangent moduli (from fine mesh) for uniaxial compression load case is 
 \begin{equation}
 \mathbb{C}_{\text{eff}} = 
+\begin{bmatrix}
+1.05215604 \times 10^{+01} &  6.81100019\times 10^{-04}  & 8.10922941\times 10^{-04} & 6.0931974\times 10^{+00} \\
+6.81100019\times 10^{-04} &  3.03957695\times 10^{+00} &  4.12022593\times 10^{+00} & -2.43801203\times 10^{-04}\\
+8.10922941\times 10^{-04} &  4.12022593\times 10^{+00} &  2.98311033\times 10^{+00} & -3.19622254\times 10^{-04}\\
+6.09319740\times 10^{+00} & -2.43801203\times 10^{-04} & -3.19622254\times 10^{-04} &  1.74423266\times 10^{+01}\\
+\end{bmatrix},
+\end{equation}
+while for simple shear load case is 
+\begin{equation}
+\mathbb{C}_{\text{eff}} = 
+\begin{bmatrix}
+22.27828078 & 11.45747779 &  4.84645322 &  7.52308193 \\
+11.45747779 & 15.71048687 &  6.80879894 & 11.93754869 \\
+4.84645322 &  6.80879894  & 7.35347903 &  4.53857874 \\
+7.52308193 & 11.93754869 &  4.53857874 & 23.42982073 \\
+\end{bmatrix},
 \end{equation}
 
+Comment: Stress and strain plot is not smooth!! And is throws the error that it cannot plot properly.
+
+
+\subsection{Multi Field Modelling}
 As for multi field modelling, the material considered is Neo Hookean type electroactive polymer material in both mechanical and electrical fields, 
 \begin{equation}
 \label{eq: nhk}
@@ -72,15 +169,65 @@ Macro field input is
 \end{bmatrix},
 \overbar{\mathbf{E}} = 
 \begin{bmatrix}
-0.9 \\
-0
+0. \\
+0.2
 \end{bmatrix}
 \]
 
-[fig: 2d multi]
+Material input is in the following table,
+\begin{center}
+\captionof{table}{Material Parameters}
+\begin{tabular}{l|c|c|c}
+\hline
+& Young's Modulus & Poisson Ratio & Electric Susceptibility\\
+\hline
+Matrix Material & $2\times 10^{5}$ & 0.4 & 7 \\
+Inclusion Material & $2\times 10^{8}$ & 0.3 & 7000 \\
+\hline
+\end{tabular}
+\end{center}
 
+The fluctuation result is illustrated below (only the fine mesh is given). And the effective tangent moduli is
+\begin{equation}
+\mathbb{C}_{\text{eff}} = 
+\begin{bmatrix}
+[[  1.26964757e+06  -1.68087536e+00  -2.02332432e+00   1.05514398e+06
+   -1.57805309e+00  -1.31326835e+04]
+ [ -1.68087536e+00   3.23090783e+05   4.41338179e+03  -1.13998687e+00
+   -1.70067902e+04   1.95527770e+00]
+ [ -2.02332432e+00   4.41338179e+03   3.27056466e+05  -1.12653621e+00
+   -1.88964336e+04   2.17253080e+00]
+ [  1.05514398e+06  -1.13998687e+00  -1.12653621e+00   1.51218863e+06
+    2.25985680e+00  -4.69241135e+04]
+ [ -1.57805309e+00  -1.70067902e+04  -1.88964336e+04   2.25985680e+00
+    1.16854722e+05   3.48372831e+00]
+ [ -1.31326835e+04   1.95527770e+00   2.17253080e+00  -4.69241135e+04
+    3.48372832e+00   9.72390167e+04]]
+\end{bmatrix}.
+\end{equation}
+
+\begin{figure}[htbp]
+  \centering
+  \subfigure[Fluctuation of Displacement on Element Edges]{
+    \includegraphics[width=0.45\linewidth]{../pics/multi_field_disp2.png}}    
+  \subfigure[Fluctuation of Displacement]{
+    \includegraphics[width=0.45\linewidth]{../pics/multi_field_disp.png}}
+  \subfigure[Fluctuation of Electrical Potential on Element Edges]{
+    \includegraphics[width=0.45\linewidth]{../pics/multi_field_pot2.png}}
+  \subfigure[Fluctuation of Electrical Potential]{
+    \includegraphics[width=0.45\linewidth]{../pics/multi_field_pot.png}}
+  \subfigure[Electrical Field Intensity in Y Direction on Element Edges]{
+    \includegraphics[width=0.45\linewidth]{../pics/multi_field_el2.png}}
+  \subfigure[Electrical Field Intensity in Y Direction]{
+    \includegraphics[width=0.45\linewidth]{../pics/multi_field_el.png}}
+  \caption{Multi Field Modelling: Electroactive Polymer in Mechanical Field and Electrical Field}
+\end{figure}
+
+\newpage
 \section{3D Modelling}
-In 3D case we consider a unit cube, where a rectangular block is set as inclusion which cuts through the unit cell. Uni field and multi field problems are both accounted in this circumstance. The parameters and macro fields values are listed in the table below. 
+In 3D case we consider a unit cube, where a rectangular block is set as inclusion which cuts through the unit cell. Uni field and multi field problems are both accounted in this circumstance. Material parameters are set as the same with in 2D cases, while the macro field input for uni field and multi field are as follows.
+
+
 
 [fig: 3d uni]
 
