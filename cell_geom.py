@@ -622,6 +622,26 @@ def test_inclusion_3d_2():
     cell.view_domain()
 
 
+def test_inclusion_3d_3():
+    print '3d geometry test'
+    mesh = UnitCubeMesh(20, 20, 20)
+    cell = UnitCell(mesh)
+    inc = InclusionCircle(3, 0.5)
+    inc1 = InclusionRectangle(3, 0., 0.3, 0., 0.3, 0., 0.3)
+    inc2 = InclusionRectangle(3, 0., 0.3, 0., 0.3, 0.7, 1.)
+    inc3 = InclusionRectangle(3, 0., 0.3, 0.7, 1., 0., 0.3)
+    inc4 = InclusionRectangle(3, 0., 0.3, 0.7, 1., 0.7, 1.)
+    inc5 = InclusionRectangle(3, 0.7, 1., 0., 0.3, 0., 0.3)
+    inc6 = InclusionRectangle(3, 0.7, 1., 0., 0.3, 0.7, 1.)
+    inc7 = InclusionRectangle(3, 0.7, 1., 0.7, 1., 0., 0.3)
+    inc8 = InclusionRectangle(3, 0.7, 1., 0.7, 1., 0.7, 1.)
+    inc_group = {'circle': inc, 'corner1': inc1, 'corner2': inc2,
+                 'corner3': inc3, 'corner4': inc4, 'corner5': inc5,
+                 'corner6': inc6, 'corner7': inc7, 'corner8': inc8}
+    cell = UnitCell(mesh, inc_group)
+    cell.view_domain()
+
+
 def test_string_template():
     print "BASIC OPERATION"
     print string_template(1)
@@ -672,7 +692,7 @@ def test_period_2d():
 if __name__ == "__main__":
     print 'this is for testing'
 
-    test_gmsh_with_incl()
+    # test_gmsh_with_incl()
 
     # test_init_cell_with_inclusion_and_add()
 
