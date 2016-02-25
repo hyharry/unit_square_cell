@@ -350,7 +350,7 @@ class MicroComputation(object):
         int_a_li = [a * dx(i) for i in range(self.material_num)]
         a = sum(int_a_li)
 
-        solve(a == L, P)
+        solve(a == L, P, solver_parameters=post_solver_parameters)
 
         self.P_merge = P
 
@@ -372,6 +372,8 @@ class MicroComputation(object):
         d = self.geom_dim
         mat_num = self.material_num
 
+        # Not that left and right multiply with constant functions is also
+        # possible
         if self.field_num > 1:
             F_merge_dim = self.F_merge.shape()[0]
             F_merge_avg = np.zeros((F_merge_dim, 1))
@@ -531,12 +533,17 @@ class MicroComputation(object):
         vec_dim = (w_test.ufl_shape[0] if w_test.ufl_shape else 1)
 
         # Assemble K symmetrically
+        # !!Notice Here only PETScSolver is used!!
+        K_a = PETScMatrix()
         f = Constant((0.,) * vec_dim)
         b = inner(w_test, f) * dx
-        K_a, L_a = assemble_system(J, b, bc)
+        K_a, L_a = assemble_system(J, b, bc, A_tensor=K_a)
 
         # Assemble L
-        F_merge_len = sum(self.F_merge.ufl_shape)
+        if self.field_num == 1:
+            F_merge_len = self.F_merge.ufl_shape[0]**2
+        else:
+            F_merge_len = sum(self.F_merge.ufl_shape)
         rows = []
         for bc_i in bc:
             rows.extend(bc_i.get_boundary_values().keys())
@@ -552,12 +559,27 @@ class MicroComputation(object):
 
         LTKL = np.zeros((F_merge_len, F_merge_len))
         L_assign = Function(self.w_merge.function_space())
-        x = Vector()
+        x = PETScVector()
+        # x = Vector()
+
+        if post_solver_parameters:
+            lin_sol_meth = post_solver_parameters['linear_solver']
+            if lin_sol_meth in lu_solver_methods().keys():
+                solver = LUSolver(K_a, lin_sol_meth)
+            elif lin_sol_meth in krylov_solver_methods().keys():
+                if post_solver_parameters.has_key('preconditioner'):
+                    iter_pre_cond = post_solver_parameters['preconditioner']
+                    solver = KrylovSolver(K_a, lin_sol_meth, iter_pre_cond)
+                else:
+                    solver = KrylovSolver(K_a, lin_sol_meth)
+        else:
+            solver = LUSolver(K_a)
 
         for i in range(F_merge_len):
             L_assign.vector().set_local(L[:, i])
-            # Default solver for equation system
-            solve(K_a, x, L_assign.vector())
+            b = as_backend_type(L_assign.vector())
+            # print type(b)
+            solver.solve(x, b)
             LTKL[:, i] = L.T.dot(x.array())
         return LTKL
 
@@ -658,7 +680,7 @@ class MicroComputation(object):
 
 
 def set_solver_parameters(non_lin_method, lin_method=None,
-                          linear_solver='default', preconditioner=False,
+                          linear_solver='default', preconditioner=None,
                           para=None):
     """
     Assistance function to set global solver parameters
@@ -711,6 +733,10 @@ def set_solver_parameters(non_lin_method, lin_method=None,
     # Global solve_parameters parameters
     global solver_parameters
 
+    print '.-------------------.'
+    print '| Solver Parameters |'
+    print '.-------------------.'
+
     # Set non lin solver and parameters
     if non_lin_method == 'snes':
         solver_parameters = {"nonlinear_solver": "snes",
@@ -744,10 +770,49 @@ def set_solver_parameters(non_lin_method, lin_method=None,
         else:
             raise Exception('Error in Newton Method Setup')
 
+    if lin_method is 'iterative':
         # Preconditioner for iterative solver
         if preconditioner in krylov_solver_preconditioners().keys():
             solver_parameters["newton_solver"]["preconditioner"] = \
                 preconditioner
+        else:
+            print 'a valid preconditioner should be provided'
+
+
+def set_post_solver_parameters(lin_method=None, linear_solver='default',
+                               preconditioner=None, para=None):
+    global post_solver_parameters
+
+    print '+----------------------------+'
+    print '| Post Processing Parameters |'
+    print '+----------------------------+'
+
+    # Linear solver types
+    lin_method_dict = {'direct': lu_solver_methods().keys(),
+                       'iterative': krylov_solver_methods().keys()}
+
+    if lin_method in lin_method_dict.keys():
+        print lin_method + ' method is used'
+    elif lin_method is None:
+        print 'Default Setting is used'
+    else:
+        raise Exception('Linear Solver Method Not Valid!')
+
+    if lin_method is not None:
+        if linear_solver in lin_method_dict[lin_method]:
+            post_solver_parameters = {"linear_solver": linear_solver}
+        else:
+            raise Exception('Error in Newton Method Setup')
+
+    if lin_method is 'iterative':
+        # Preconditioner for iterative solver
+        if preconditioner in krylov_solver_preconditioners().keys():
+            post_solver_parameters["preconditioner"] = preconditioner
+        else:
+            print 'a valid preconditioner should be provided'
+
+    if para is not None:
+        post_solver_parameters.update(para)
 
 
 def solver_setting(solver, solver_para,
@@ -924,14 +989,14 @@ def test_uni_field():
     # comp.view_displacement()
     # Post-Processing
     # comp._energy_update()
-    comp.comp_strain()
-    comp.comp_stress()
-    comp.view_post_processing('strain', (0,1))
-    comp.view_post_processing('stress', (0,1))
+    # comp.comp_strain()
+    # comp.comp_stress()
+    # comp.view_post_processing('strain', (0,1))
+    # comp.view_post_processing('stress', (0,1))
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
-    # comp.effective_moduli_2()
+    comp.effective_moduli_2()
 
 
 def test_multi_field():
@@ -992,9 +1057,9 @@ def test_multi_field():
     comp.input([F_bar, E_bar], [w, el_pot_phi])
     comp.comp_fluctuation()
     # comp.view_displacement()
-    comp.view_fluctuation(1)
-    comp.view_fluctuation(2)
-    comp.view_post_processing('stress', 5)
+    # comp.view_fluctuation(1)
+    # comp.view_fluctuation(2)
+    # comp.view_post_processing('stress', 5)
     # Post-Processing
     # comp._energy_update()
     # comp.comp_strain()
@@ -1014,7 +1079,7 @@ def test_uni_field_3d():
     import cell_material as ma
 
     # Set geometry
-    mesh = UnitCubeMesh(16, 16, 16)
+    mesh = UnitCubeMesh(4, 4, 4)
     # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
@@ -1047,8 +1112,95 @@ def test_uni_field_3d():
 
     set_solver_parameters('snes', 'iterative', 'minres')
 
-    comp.comp_fluctuation(print_progress=True, print_solver_info=False)
-    comp.view_fluctuation()
+    comp.comp_fluctuation(print_progress=False, print_solver_info=False)
+    # comp.view_fluctuation()
+
+    # Post-Processing
+    # set_post_solver_parameters(lin_method='direct', linear_solver='lu')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='cg',
+    #                            preconditioner='hypre_amg')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='gmres',
+    #                            preconditioner='ilu')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='minres',
+    #                            preconditioner='amg')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='minres')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='gmres')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='tfqmr')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='cg')
+    # set_post_solver_parameters(lin_method='iterative',
+    #                            linear_solver='richardson')
+
+    # comp._energy_update()
+    # comp.comp_strain()
+    comp.comp_stress()
+    # comp.avg_merge_strain()
+    # comp.avg_merge_stress()
+    # comp.avg_merge_moduli()
+    comp.effective_moduli_2()
+
+
+def test_multi_field_3d():
+    """
+    Test for Multi Field 3d Problem
+    """
+    print 'St-Venant Kirchhoff Material Test'
+    import cell_geom as ce
+    import cell_material as ma
+
+    # Set geometry
+    mesh = UnitCubeMesh(4, 4, 4)
+    # mesh = Mesh(r"m_fine.xml")
+    cell = ce.UnitCell(mesh)
+    # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
+    inc = ce.InclusionRectangle(3, 0., 1., .25, .75, .25, .75)
+    inc_di = {'box': inc}
+    cell.set_append_inclusion(inc_di)
+    # cell.view_domain()
+
+    VFS = VectorFunctionSpace(cell.mesh, "CG", 1,
+                              constrained_domain=ce.PeriodicBoundary_no_corner(
+                                  3))
+    FS = FunctionSpace(cell.mesh, "CG", 1,
+                       constrained_domain=ce.PeriodicBoundary_no_corner(3))
+
+    # Set materials
+    E_m, nu_m, Kappa_m = 2e5, 0.4, 7.
+    n = 1000
+    # n = 10  # 13.Jan
+    E_i, nu_i, Kappa_i = 1000 * E_m, 0.3, n * Kappa_m
+
+    mat_m = ma.neo_hook_eap(E_m, nu_m, Kappa_m)
+    mat_i = ma.neo_hook_eap(E_i, nu_i, Kappa_i)
+    mat_li = [mat_m, mat_i]
+
+    # Initialize MicroComputation
+    # if multi field bc should match
+    F_bar = [.9, 0.3, 0.,
+             0., 1., 0.,
+             0., 0., 1.]
+    E_bar = [0., 0., 0.]
+
+    # Solution Field
+    w = Function(VFS)
+    el_pot_phi = Function(FS)
+    strain_space_w = TensorFunctionSpace(mesh, 'DG', 0)
+    strain_space_E = VectorFunctionSpace(mesh, 'DG', 0)
+
+    def deform_grad_with_macro(F_bar, w_component):
+        return F_bar + grad(w_component)
+
+    def e_field_with_macro(E_bar, phi):
+        # return E_bar + grad(phi)
+        return E_bar - grad(phi)
+
+    # Computation Initialization
+    comp = MicroComputation(cell, mat_li,
+                            [deform_grad_with_macro, e_field_with_macro],
+                            [strain_space_w, strain_space_E])
+
+    comp.input([F_bar, E_bar], [w, el_pot_phi])
+    comp.comp_fluctuation()
+    # comp.view_fluctuation(1)
 
     # Post-Processing
     # comp._energy_update()
@@ -1120,7 +1272,8 @@ def test_solver():
 
 
 if __name__ == '__main__':
-    # test_uni_field()
+    test_uni_field()
     # test_multi_field()
-    test_uni_field_3d()
+    # test_uni_field_3d()
+    # test_multi_field_3d()
     # test_solver()

@@ -644,7 +644,7 @@ def test_string_template():
 
 
 def test_period_3d():
-    a, b, c = 3, 6, 9
+    a, b, c = 4, 4, 4
     mesh_3d = UnitCubeMesh(a, b, c)
     FS_3d = FunctionSpace(mesh_3d, 'CG', 1,
                           constrained_domain=PeriodicBoundary_no_corner(3))
@@ -672,7 +672,7 @@ def test_period_2d():
 if __name__ == "__main__":
     print 'this is for testing'
 
-    test_gmsh_with_incl()
+    # test_gmsh_with_incl()
 
     # test_init_cell_with_inclusion_and_add()
 
@@ -691,6 +691,6 @@ if __name__ == "__main__":
 
     # test_period_2d()
 
-    # test_period_3d()
+    test_period_3d()
 
     # test_string_template()
