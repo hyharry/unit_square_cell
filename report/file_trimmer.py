@@ -10,6 +10,7 @@ ptn_4 = re.compile(r'trimmed')
 def trim_file(file_name):
     file_handle = open(file_name)
     lines = file_handle.readlines()
+    file_handle.close()
 
     num_line = len(lines)
     ra = range(num_line)

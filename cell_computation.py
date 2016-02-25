@@ -1079,7 +1079,7 @@ def test_uni_field_3d():
     import cell_material as ma
 
     # Set geometry
-    mesh = UnitCubeMesh(4, 4, 4)
+    mesh = UnitCubeMesh(16, 16, 16)
     # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
@@ -1112,8 +1112,9 @@ def test_uni_field_3d():
 
     set_solver_parameters('snes', 'iterative', 'minres')
 
+    cell.view_domain()
     comp.comp_fluctuation(print_progress=False, print_solver_info=False)
-    # comp.view_fluctuation()
+    comp.view_fluctuation()
 
     # Post-Processing
     # set_post_solver_parameters(lin_method='direct', linear_solver='lu')
@@ -1132,7 +1133,7 @@ def test_uni_field_3d():
 
     # comp._energy_update()
     # comp.comp_strain()
-    comp.comp_stress()
+    # comp.comp_stress()
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
@@ -1143,12 +1144,12 @@ def test_multi_field_3d():
     """
     Test for Multi Field 3d Problem
     """
-    print 'St-Venant Kirchhoff Material Test'
+    print 'EAP Material Test'
     import cell_geom as ce
     import cell_material as ma
 
     # Set geometry
-    mesh = UnitCubeMesh(4, 4, 4)
+    mesh = UnitCubeMesh(16, 16, 16)
     # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
@@ -1178,7 +1179,7 @@ def test_multi_field_3d():
     F_bar = [.9, 0.3, 0.,
              0., 1., 0.,
              0., 0., 1.]
-    E_bar = [0., 0., 0.]
+    E_bar = [0., 0., 0.2]
 
     # Solution Field
     w = Function(VFS)
@@ -1199,8 +1200,16 @@ def test_multi_field_3d():
                             [strain_space_w, strain_space_E])
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
+
+    cell.view_domain()
+    para = {"linear_solver": "lu", "line_search": "bt",
+            "maximum_iterations": 50, "report": True,
+            "error_on_nonconvergence": False,}
+    set_solver_parameters('snes', 'iterative', 'gmres',
+                          para=para)
     comp.comp_fluctuation()
-    # comp.view_fluctuation(1)
+    comp.view_fluctuation(1)
+    comp.view_fluctuation(2)
 
     # Post-Processing
     # comp._energy_update()
@@ -1209,7 +1218,7 @@ def test_multi_field_3d():
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
-    comp.effective_moduli_2()
+    # comp.effective_moduli_2()
 
 
 def test_solver():
@@ -1272,7 +1281,7 @@ def test_solver():
 
 
 if __name__ == '__main__':
-    test_uni_field()
+    # test_uni_field()
     # test_multi_field()
     # test_uni_field_3d()
     # test_multi_field_3d()

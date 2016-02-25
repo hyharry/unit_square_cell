@@ -188,23 +188,16 @@ Inclusion Material & $2\times 10^{8}$ & 0.3 & 7000 \\
 \end{center}
 
 The fluctuation result is illustrated below (only the fine mesh is given). And the effective tangent moduli is
-\begin{equation}
-\mathbb{C}_{\text{eff}} = 
+\[
 \begin{bmatrix}
-[[  1.26964757e+06  -1.68087536e+00  -2.02332432e+00   1.05514398e+06
-   -1.57805309e+00  -1.31326835e+04]
- [ -1.68087536e+00   3.23090783e+05   4.41338179e+03  -1.13998687e+00
-   -1.70067902e+04   1.95527770e+00]
- [ -2.02332432e+00   4.41338179e+03   3.27056466e+05  -1.12653621e+00
-   -1.88964336e+04   2.17253080e+00]
- [  1.05514398e+06  -1.13998687e+00  -1.12653621e+00   1.51218863e+06
-    2.25985680e+00  -4.69241135e+04]
- [ -1.57805309e+00  -1.70067902e+04  -1.88964336e+04   2.25985680e+00
-    1.16854722e+05   3.48372831e+00]
- [ -1.31326835e+04   1.95527770e+00   2.17253080e+00  -4.69241135e+04
-    3.48372832e+00   9.72390167e+04]]
+1.26 \times 10^{+06} & -1.68 \times 10^{+00} & -2.02 \times 10^{+00} & 1.05 \times 10^{+06} & -1.57 \times 10^{+00} & -1.31 \times 10^{+04}\\ 
+-1.68 \times 10^{+00} & 3.23 \times 10^{+05} & 4.41 \times 10^{+03} & -1.13 \times 10^{+00} & -1.70 \times 10^{+04} & 1.95 \times 10^{+00}\\ 
+-2.02 \times 10^{+00} & 4.41 \times 10^{+03} & 3.27 \times 10^{+05} & -1.12 \times 10^{+00} & -1.88 \times 10^{+04} & 2.17 \times 10^{+00}\\ 
+1.05 \times 10^{+06} & -1.13 \times 10^{+00} & -1.12 \times 10^{+00} & 1.51 \times 10^{+06} & 2.25 \times 10^{+00} & -4.69 \times 10^{+04}\\ 
+-1.57 \times 10^{+00} & -1.70 \times 10^{+04} & -1.88 \times 10^{+04} & 2.25 \times 10^{+00} & 1.16 \times 10^{+05} & 3.48 \times 10^{+00}\\ 
+-1.31 \times 10^{+04} & 1.95 \times 10^{+00} & 2.17 \times 10^{+00} & -4.69 \times 10^{+04} & 3.48 \times 10^{+00} & 9.72 \times 10^{+04}\\  
 \end{bmatrix}.
-\end{equation}
+\]
 
 \begin{figure}[htbp]
   \centering
@@ -225,13 +218,49 @@ The fluctuation result is illustrated below (only the fine mesh is given). And t
 
 \newpage
 \section{3D Modelling}
-In 3D case we consider a unit cube, where a rectangular block is set as inclusion which cuts through the unit cell. Uni field and multi field problems are both accounted in this circumstance. Material parameters are set as the same with in 2D cases, while the macro field input for uni field and multi field are as follows.
+In 3D case we consider a unit cube, where a rectangular block is set as inclusion which cuts through the unit cell. Uni field and multi field problems are both accounted in this circumstance. Material parameters are set the same as in 2D cases, while the macro field input for uni field and multi field are as follows.
 
+\begin{figure}[htbp]
+  \centering
+  \subfigure[2D Uni Field Modelling Mesh]{
+    \includegraphics[width=0.45\linewidth]{../pics/3d_uni_mesh.png}}    
+  \subfigure[Fluctuation of Displacement (Uni)]{
+    \includegraphics[width=0.45\linewidth]{../pics/3d_uni_fluc.png}}
+  \subfigure[3D Multi Field Modelling Mesh]{
+    \includegraphics[width=0.45\linewidth]{../pics/3d_multi_mesh.png}}
+  \subfigure[Fluctuation of Displacement (Multi)]{
+    \includegraphics[width=0.45\linewidth]{../pics/3d_multi_fluc_disp.png}}
+  \caption{3D Modelling in Uni Field and Multi Field Case}
+\end{figure}
+% Uni Field
+%    F_bar = [.9, 0.3, 0.,
+%             0., 1., 0.,
+%             0., 0., 1.]
 
+% Multi Field
+%    F_bar = [.9, 0.3, 0.,
+%             0., 1., 0.,
+%             0., 0., 1.]
+%    E_bar = [0., 0., 0.2]
 
-[fig: 3d uni]
+In multi field calculation an iterative solver is chosen, namely ``SNES" solver in ``PETSc". The solver parameters are tuned referring the 3D examples from FEniCS. In 3D case an iterative is a necessity, otherwise the calculation would take too much time. And the convergence is not so positive because of the nonlinearity of the current problem. Hence a loading scheme should be applied. However the potential of 3D modelling in both uni field and multi field cases are obvious. And the output of effective tangent moduli is possible. The effective tangent moduli for uni field in 3D is given here, which has 81 entries as its rank 4 tensor in 3D. The homogenized tangent moduli can also be calculated in this scheme. It ends with 12 by 12 huge matrix, where a relative coarser mesh is used.
+\begin{center}
+\[
+\begin{bmatrix}
+1 \cdot 10^{+02} & 7 \cdot 10^{+00} & -1 \cdot 10^{-02} & 3 \cdot 10^{+00} & 7 \cdot 10^{+00} & -5 \cdot 10^{-03} & -1 \cdot 10^{-02} & -5 \cdot 10^{-03} & 7 \cdot 10^{+00}\\ 
+7 \cdot 10^{+00} & 1 \cdot 10^{+01} & -5 \cdot 10^{-02} & 1 \cdot 10^{+01} & 1 \cdot 10^{+01} & -3 \cdot 10^{-02} & -4 \cdot 10^{-02} & -3 \cdot 10^{-02} & 3 \cdot 10^{+00}\\ 
+-1 \cdot 10^{-02} & -5 \cdot 10^{-02} & 6 \cdot 10^{+00} & -3 \cdot 10^{-02} & -4 \cdot 10^{-02} & 2 \cdot 10^{+00} & 6 \cdot 10^{+00} & 2 \cdot 10^{+00} & -8 \cdot 10^{-03}\\ 
+3 \cdot 10^{+00} & 1 \cdot 10^{+01} & -3 \cdot 10^{-02} & -1 \cdot 10^{+01} & 7 \cdot 10^{+00} & -3 \cdot 10^{-02} & -3 \cdot 10^{-02} & -2 \cdot 10^{-02} & 1 \cdot 10^{+00}\\ 
+7 \cdot 10^{+00} & 1 \cdot 10^{+01} & -4 \cdot 10^{-02} & 7 \cdot 10^{+00} & 2 \cdot 10^{+01} & -3 \cdot 10^{-02} & -3 \cdot 10^{-02} & -2 \cdot 10^{-02} & 6 \cdot 10^{+00}\\ 
+-5 \cdot 10^{-03} & -3 \cdot 10^{-02} & 2 \cdot 10^{+00} & -3 \cdot 10^{-02} & -3 \cdot 10^{-02} & 5 \cdot 10^{+00} & 4 \cdot 10^{-01} & 5 \cdot 10^{+00} & 1 \cdot 10^{-02}\\ 
+-1 \cdot 10^{-02} & -4 \cdot 10^{-02} & 6 \cdot 10^{+00} & -3 \cdot 10^{-02} & -3 \cdot 10^{-02} & 4 \cdot 10^{-01} & -1 \cdot 10^{+01} & 2 \cdot 10^{+00} & -1 \cdot 10^{-02}\\ 
+-5 \cdot 10^{-03} & -3 \cdot 10^{-02} & 2 \cdot 10^{+00} & -2 \cdot 10^{-02} & -2 \cdot 10^{-02} & 5 \cdot 10^{+00} & 2 \cdot 10^{+00} & 6 \cdot 10^{+00} & 7 \cdot 10^{-03}\\ 
+7 \cdot 10^{+00} & 3 \cdot 10^{+00} & -8 \cdot 10^{-03} & 1 \cdot 10^{+00} & 6 \cdot 10^{+00} & 1 \cdot 10^{-02} & -1 \cdot 10^{-02} & 7 \cdot 10^{-03} & 2 \cdot 10^{+01}\\ 
+\end{bmatrix}.
+\]
 
-[fig: 3d multi]
+\end{center}
+
 
 \section{Simulation Template}
 In this section a simulation template is provided. The presentation of this template introduces all the common interface of this module, which allows users to gain an overview of all the usages of this module. This code sample starts with importing all the files of unit cell module. Then geometry is defined within \texttt{cell\_geom.py} followed with material definition within \texttt{cell\_material.py}. Completing the setting of the problem calculation is initiated with defining an object of \texttt{MicroComputation} from \texttt{cell\_computation.py}. After inputting macro field and field variables which need to be solved, micro fluctuation can be calculated using the member method \texttt{comp\_fluctuation()} and the user defined solver parameters. It is seen that an instance of \texttt{MicroComputation} can be called every time step and reused among several different cells if the setting of geometry and materials does not change. The only thing to notice is that a new FEniCS \texttt{Function} object should be provided in the interim. This template can be used in IPython interactively or embedded in other computation which requires a unit cell investigation.
