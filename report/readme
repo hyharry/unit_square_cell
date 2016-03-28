@@ -1,0 +1,12 @@
+Each part of report is written separately. In each part every chapter was set up
+separately. Build on every chapter is possible.
+
+Build on the whole part follows with commands:
+1. latex-clean
+	clean previous build
+2. python file_trimmer.py r
+	clean previous trimmed tex files
+3. python file_trimmer.py t
+	trim tex files of each chapter
+4. build with main.tex
+	build the whole part with trimmed tex files

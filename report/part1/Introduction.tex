@@ -14,13 +14,16 @@
 
 \chapter{Introduction}
 
-Composites play an important role in engineering, as they combine the advantages of each components in materials. In order to model composite materials, different materials and different material configurations need to be considered. There are several methods to achieve this modelling. Intuitively a full simulation can be realized, where micro structures and different materials would be represented explicitly in the simulated object. This results in a tremendous many degrees of freedom consuming not only large amount of memory but also the computation resources. Hence a full simulation accounting for all the micro structures and inclusions is not the most efficient way.\\
+Composites play an important role in engineering, as they combine the advantages of each components in materials. They finds many applications in the field of Civil Engineering, Aerospace Engineering, etc. In order to understand composites thoroughly, experiments and simulations are accomplished. The current work specialized in the simulation of composites.
 
-A multi scale model is conducive in modelling [search], where the deformation in small scale will be reflected in the corresponding macro scale. Moreover scale separation would benefit from various computing techniques such as parrellelization and model reduction[ref]. These techniques would possibly boost the efficiency of computation. \\
+A multi scale model is conducive in modelling, where the deformation in small scale will be reflected in the corresponding macro scale. Micro structures in composites are essential for their properties. Material behaviours are determined by these micro structures. If an energy function is used to describe the composites, material components and geometry configuration in micro scale governs the material energy function. Under this condition, an appropriate energy function is sought after. However, the exact expression for composites under different loading and with various inclusion geometry is hard to obtain. Hence the consideration shift to acquire this description on the fly, i.e. to embed the result of micro scale simulation into macro scale simulation. From a practical perspective, models in multiple scales would lead to full understanding of composite, which will in return be beneficial for material design. Moreover, in computing scale separation would benefit from various computing techniques such as parrellelization and model reduction. These techniques would possibly boost the efficiency of computation. 
 
-There are several approaches tackling the multi scale problem [search and ref].
+Intuitively a full simulation can be realized, where micro structures and different materials would be represented explicitly in the simulated object. This results in a tremendous many degrees of freedom consuming large amount of computation resources. Hence a full simulation accounting for all the micro structures and inclusions is not an efficient way.
 
-In this work Homogenization Method is used.
+In this work Homogenization Method is used to achieve multi scale modelling. The key task of homogenization is to calculate homogenized parameters for macro scale model, which is mainly based on the micro scale result. The formulation of homogenized parameters is carried out through material energy. Using material energy in the formulation is of great importance, as it simplifies the derivation of equilibrium and unifies the calculation of homogenized parameters. In the case of composites in multiple fields, energy formulation will result in relative simple formulation in the homogenized context. 
 
+To avoid the lengthy derivation of equations for coupled fields, calculation under FEniCS framework is realized. Its strength lies in the field of coupled problem, which will be seen in the later chapter. 
+
+The whole report will fall into two parts. The first part concentrates on the theory basics of simulation, while the second part focus more on the derivation and implementation for the composite simulation under multiple fields. Numerical examples and summary are given in the end of this report.
 
 \end{document}

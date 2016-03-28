@@ -6,7 +6,7 @@
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
-
+\usepackage{natbib}
 \usepackage{bm}
 
 \usepackage{pythonhighlight}
@@ -24,23 +24,35 @@
 
 \chapter{Finite Element Framework FEniCS}
 
-FEniCS project was started at University of Chicago and Charmers University of Technology in 2003. The name ``FEniCS" consists ``FE", ``Finite Element" and ``CS", ``Computational Software". ``ni" makes the name sound like ``phenix" and end with a meaningful name. It is a collection of packages that make the best of each package or concepts to realize Computational Mathematical and Modelling. The main interface language of FEniCS is Python, which is a fast language for prototyping, while the most of codes and libraries are implemented in C++, whose efficiency in computing stands out. Various linear algebra backends and parallelization allow FEniCS boost in speed. As for modelling, UFL (Unified Form Language) and FFC (FEniCS Form Compiler) make the direct translation of mathematical formulation such as linear form and bilinear form into symbolic codes possible. It can be regarded as the language of modelling, which simplify the modelling process to a large extent. [ref: literature]
+FEniCS project was started at University of Chicago and Charmers University of Technology in 2003. The name ``FEniCS" consists ``FE", ``Finite Element" and ``CS", ``Computational Software". ``ni" makes the name sound like ``phenix". It is a collection of packages that make the best of each package to realize Computational Mathematical and Modelling. The main interface language of FEniCS is Python, which is a fast language for prototyping, while the most of codes and libraries are implemented in C++, whose efficiency in computing stands out. Various linear algebra backends and parallelization allow FEniCS boost in speed. As for modelling, UFL (Unified Form Language) and FFC (FEniCS Form Compiler) allow the direct translation of mathematical formulation such as linear form and bilinear form into symbolic codes. It can be regarded as the language of modelling, which simplifies the modelling process to a large extent \citep{kirby2006compiler}.
 
-This part concentrates on the introduction of FEniCS. Firstly the work flow and each component of FEniCS will be presented. Then the most simple example is given in order to clarify its efficiency in modelling. At last some key features of FEniCS is listed and discussed, which provide the flexibility in research and real world problems.
+This part concentrates on the introduction of FEniCS. Firstly the work flow and components of FEniCS will be presented. Then the most simple example is given in order to clarify its efficiency in modelling. At last some key features of FEniCS is listed and discussed, which provides the flexibility in simulations.
 
 %--------------------------------
 \section{The Structure of FEniCS}
-The work flow of FEniCS can be described with the following diagram [pic: fenics blocks]. It is seen that the whole process is decomposed into three major parts. Each part represents one or several functionalities. For form compiler UFL language is involved. With the help of form compiler (FFC), C++ code for the whole model is obtained. Till this point the mathematical derivation, which is often the weak form of a PDE, is converted into pure symbolic efficient C++ codes. The interface between symbolic codes and numerical codes is called UFC (Unified Form-assembly Code). It works as a fixed interface that achieve efficient assembling of finite elements. [ref: website]
+The work flow of FEniCS can be described with the following diagram. It is seen that the whole process is decomposed into three major parts. Each part represents one or several functionalities. For form compiler UFL language is involved. With the help of form compiler (FFC), C++ code of the whole model is obtained. Till this point the mathematical derivation, which is the weak form of a PDE in most cases, is converted into pure symbolic efficient C++ codes. The interface between symbolic codes and numerical codes is called UFC (Unified Form-assembly Code). It works as a fixed interface that achieve efficient assembling of finite elements \citep{wells2012automated}.
 
-Numerical algorithms enter after the UFC interface. The main package that carries the numerical algorithm is DOLFIN. DOLFIN's task is to wrap functionalities of each components and coordinate them. The user interface of DOLFIN is Python, where efficient extraction of properties and manipulation are allowed in a easy fashion.  
+\begin{figure}[h]
+\center
+\label{fig: fenics blocks}
+\includegraphics[width=0.6\linewidth]{../pics/fenics_building_blocks.png}
+\caption{Building Blocks of FEniCS \citep{wells2012automated}}
+\end{figure} 
+
+Numerical algorithms enter after the UFC interface. The main package that carries the numerical algorithm is DOLFIN. DOLFIN's task is to wrap functionalities of each components and their interactions. The user interface of DOLFIN is Python, where object oriented programming can be followed in a easy fashion.  
 
 Other building blocks such as mshr for geometrical modelling and mesh generation, and FIAT (FInite element Automatic Tabulator) for automatic finite element generation for arbitrary orders. Linear algebra backends work as add-ons for FEniCS, which provides the possibility of extension. The visualization package in use is VTK, a substitute of the old one, Viper. The output files could be in various formats. Therefore software like ParaView could apply in terms of visualization. The full structure of FEniCS can be viewed in the following diagram.
 
-[pic: full fenics]
+\begin{figure}[h]
+\center
+\label{fig: fenics map}
+\includegraphics[width=0.5\linewidth]{../pics/fenics_map.png}
+\caption{Components of FEniCS \citep{wells2012automated}}
+\end{figure} 
 
 %--------------------------------
 \section{Simple Poisson Problem}
-An implementation of simple Poisson problem is presented in the official tutorial of FEniCS. This example is reproduced here to give a quick overview of the usage and convince its simplicity in modelling. [ref: website]
+An implementation of simple Poisson problem is presented in the official tutorial of FEniCS. This example is reproduced here to give a quick overview of the usage and convince its simplicity in modelling \citep{wells2012automated}.
 
 \begin{python}
 from dolfin import *
@@ -79,9 +91,9 @@ file = File('poisson.pvd')
 file << u
 \end{python}
 
-As can be immediately seen in the code, the encapsulation of almost every functionality is well preserved in the package. Moreover, the name of functions and classes are in good consistent with the mathematical language. The modelling always begins with defining its geometry and function space. This setting is similar with solving a PDE in weak form that domain and function space is usually given in the condition. Geometry and mesh can also be necessarily imported using external files. Various formats are supported, such as \texttt{.msh} generated by \texttt{gmsh}. One thing to notice is that element type should be defined when defining th function space. As shown here \texttt{Lagrange}. The order of element is simply 1.
+As can be immediately seen in the code, the encapsulation of almost every functionality is well preserved in FEniCS. Moreover, the name of functions and classes are in good consistent with the mathematical language. The modelling always begins with defining its geometry and function space. This setting is similar with solving a PDE in weak form, where its domain and function spaces are usually given in condition. Geometry and mesh can also be imported using external files. Various formats are supported, such as \texttt{.msh} generated by \texttt{gmsh}. One thing to notice is that element type is defined when defining function space. As shown in the example \texttt{'Lagrange’}. The order of element is simply 1.
 
-It follows with defining the boundary conditions such as Dirichlet boundary conditions. An \texttt{Expression} is a class holding the codes of creating a mathematical function in the domain. It is extensible with C++. Here we use it to define the boundary values. As for imposing this boundary condition, one need to mark the boundary first. The structure of marking boundary points, lines, and facets are all derived from this structure. \texttt{on\_boundary} is only a predefined marker that will return \texttt{True} when on the boundary.
+It follows with defining the boundary conditions such as Dirichlet boundary conditions. An \texttt{Expression} is a class holding the codes of creating a mathematical function in the domain. It is extensible with C++. Here we use it to define the boundary values. As for imposing this boundary condition, one need to mark the boundary first. Marking other boundary entities such as points, lines, and facets is the same with the provided code structure. \texttt{on\_boundary} is only a predefined marker that will return \texttt{True} when on the boundary.
 
 The mathematical model of this problem is 
 \begin{equation}
@@ -110,9 +122,9 @@ The presentation of the simple Poisson problem serves as an introduction to the 
 
 %--------------------------------
 \section{Relevant Key Features}
-When the problem becomes more complicated, there are more advanced and handy usage to be revealed. Here list only a few that appear in the material modelling and multi field problems.
+When the problem becomes more complicated, there are more advanced and handy usage come into play. Here list only a few that appear in the material modelling and multi field problems.
 
-First we explore the function space in FEniCS. There are several kinds of \texttt{FunctionSpace} in FEniCS. If a vector or tensor is used, \texttt{VectorFunctionSpace} or \texttt{TensorFunctionSpace} should be defined. More powerful usage is the \texttt{MixedFunctionSpace}, which receives a list of \texttt{FunctionSpace} and compose them together into a merged one. It is especially useful when multiple fields are accounted. When concerning about constructing function spaces, various function space families are available. Thanks to the general representation of function spaces arbitrary order of elements and a lot many of types are possible. For very specific type of function space requiring periodicity \texttt{constrained\_type} keyword is set to be a periodic mapping. This mapping is derived from \texttt{SubDomain}. Much caution needs to be devoted into the definition of mapping, which can be seen already in the current code for material modelling. Some properties are listed below.
+First we explore the function space in FEniCS. There are several kinds of \texttt{FunctionSpace} in FEniCS. If a vector or tensor is used, \texttt{VectorFunctionSpace} or \texttt{TensorFunctionSpace} should be defined. More powerful usage is the \texttt{MixedFunctionSpace}, which receives a list of \texttt{FunctionSpace} and compose them together into a merged one. It is especially useful when multiple fields are accounted. When concerning about constructing function spaces, various function space families are available. Thanks to the general representation of function spaces arbitrary order of elements and a lot many types are possible. For very specific function space which requires periodicity \texttt{constrained\_type} keyword is set to be a periodic mapping. This mapping is derived from \texttt{SubDomain}. Much caution needs to be devoted into the definition of mapping, which can be observed in the corresponding code for material modelling.
 
 \begin{python}
 # Useful properties and variables for FunctionSpace definition
@@ -126,7 +138,7 @@ TFS = TensorFunctionSpace(mesh, 'Hermite', 1)
 MFS = MixedFunctionSpace([FS, VFS, TFS])
 \end{python}
 
-When it is concerned with multi field modelling, not only merged function but also split functions are required, since in the formulation different terms are calculated with different functions. A mixed function is generated with a \texttt{MixedFunctionSpace} and the corresponding component functions are obtained through \texttt{split} without losing dependency to the merged function. In the problem formulation it is often the case that inner product, outer product, derivative, and integral etc. are built. This is achieved easily with the help of UFL operators. Some of the operators such as \texttt{nabla\_grad()} and \texttt{inner()} are already mentioned above. One strength of FEniCS is that this formulation is not restricted in the vector and matrix, but applicable by tensors of higher order. The index notation representation is also valid in the formulation, namely \texttt{i,j,k,l}, obeying Einstein's summation convention. After the derivation a stiffness matrix is assembled with \texttt{assemble}. The usages are as follows.
+When it is concerned with multi field modelling, not only merged function but also split functions are required, since in the formulation different terms are calculated with different functions. A mixed function is generated with a \texttt{MixedFunctionSpace} and the corresponding component functions are obtained through \texttt{split} without losing dependency to the merged function. In the problem formulation it is often the case that inner product, outer product, derivative, and integral etc. are built. This is achieved easily with the help of UFL operators. Some of the operators such as \texttt{nabla\_grad()} and \texttt{inner()} are already mentioned above. One strength of FEniCS is that this formulation is not restricted in the vector and matrix, but applicable on tensors of higher order. The index notation representation is also valid in the formulation, namely \texttt{i,j,k,l}, obeying Einstein's summation convention. After the derivation a stiffness matrix is assembled with \texttt{assemble}. The usages are as follows.
 
 \begin{python}
 # Merged function space
@@ -154,8 +166,7 @@ a = f_test*C*t_trial*dx
 K = assemble(a)
 \end{python}
 
-The last usage is particularly useful in composite modelling, i.e. defining different domains. The definition is also not complicated. Subdomains are defining through subclassing of \texttt{SubDomain}. Overriding its member method \texttt{inside()} gives the condition required for classifying the entity into subdomain. In integral the differentials are set accordingly to the subdomain.
-
+The last usage is particularly useful in composite modelling, i.e. defining different domains. The definition is also not complicated. Subdomains are defining through subclassing of \texttt{SubDomain}. Overriding its member method \texttt{inside()} gives the condition to distinguish whether it is in the corresponding subdomain or not. In integral the differentials are set accordingly to the subdomain.
 
 \begin{python}
 # Inclusion definition

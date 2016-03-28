@@ -24,7 +24,7 @@
 \begin{document}
 
 \chapter{Numerical Examples}
-In this part some numerical examples using this module is presented. First different kinds of inclusions are listed. Then 2d and 3d examples both in uni field and multi field modelling are given. At the end of this part the usage of the module is given in the IPython environment.
+In this chapter some numerical examples using this module is presented. First different kinds of inclusions are listed. Then 2D and 3D examples both in uni field and multi field modelling are given. At the end of this part the usage of the module is given in the IPython environment.
 
 \section{Various Inclusions}
 Inclusions in two dimensional or three dimensional cases can be added to the unit cell. User defined mesh and geometry can also be applied.
@@ -55,7 +55,7 @@ A unit square is considered in two dimensional calculation. At first a uni field
   \subfigure[Fine Mesh]{
     \label{fig: inc 3d box}
     \includegraphics[width=0.45\linewidth]{../pics/dolfin_plot_15.png}}
-  \caption{Geometry Layout and Mesh}
+  \caption{Geometry and Mesh}
   \label{fig: inc}
 \end{figure} 
 
@@ -78,7 +78,7 @@ Boundary condition is periodic boundary condition and the fluctuation at corners
 0 & 1 \\
 \end{bmatrix},
 \]
-which is an uni axial compression test. Here the macro deformation is set not very large. Because of the non-linearity nature of the problem, the load cannot set to be too high. For large macro deformation input a quasi static loading process needs to be imposed. This will achieve more obvious loading. The fluctuation plot, strain plot and stress plot is demonstrated here.
+which is an uni axial compression test. Here the macro deformation is set not very large. Because of the non-linear nature of the problem, the load cannot set to be too high. For large macro deformation input a quasi static loading process needs to be imposed. The fluctuation plot is demonstrated here.
 
 \begin{figure}[h]
   \centering
@@ -151,14 +151,14 @@ while for simple shear load case is
 \end{bmatrix},
 \end{equation}
 
-Comment: Stress and strain plot is not smooth!! And is throws the error that it cannot plot properly.
-
+%Comment: Stress and strain plot is not smooth!! And is throws the error that it cannot plot properly.
+Similar fluctuation contour convinces that the calculation is consistent between fine and coarse mesh. It is also shown that the interface between inclusion and matrix material is a critical part.
 
 \subsection{Multi Field Modelling}
-As for multi field modelling, the material considered is Neo Hookean type electroactive polymer material in both mechanical and electrical fields, 
+As for multi field modelling, the material in consideration is Neo-Hookean type electroactive polymer material, 
 \begin{equation}
 \label{eq: nhk}
-\psi\left( \mathbf{C}, \mathbf{E} \right) =  \frac{1}{2}\mu_{0} \left( \text{tr}[\mathbf{C}]-3 \right) + \dfrac{\lambda}{4} \left( J^{2}-1 \right) - \left( \dfrac{\lambda}{2} + \mu \right) \ln J - \frac{1}{2} \epsilon_{0} \left( 1+\dfrac{\chi}{J} \right) J \left[ \mathbf{C}^{-1}: (\mathbf{E} \otimes \mathbf{E}) \right]
+\psi\left( \mathbf{C}, \mathbf{E} \right) =  \frac{1}{2}\mu_{0} \left( \text{tr}[\mathbf{C}]-3 \right) + \dfrac{\lambda}{4} \left( J^{2}-1 \right) - \left( \dfrac{\lambda}{2} + \mu \right) \ln J - \frac{1}{2} \epsilon_{0} \left( 1+\dfrac{\chi}{J} \right) J \left[ \mathbf{C}^{-1}: (\mathbf{E} \otimes \mathbf{E}) \right].
 \end{equation}
 Macro field input is 
 \[
@@ -243,7 +243,7 @@ In 3D case we consider a unit cube, where a rectangular block is set as inclusio
 %             0., 0., 1.]
 %    E_bar = [0., 0., 0.2]
 
-In multi field calculation an iterative solver is chosen, namely ``SNES" solver in ``PETSc". The solver parameters are tuned referring the 3D examples from FEniCS. In 3D case an iterative is a necessity, otherwise the calculation would take too much time. And the convergence is not so positive because of the nonlinearity of the current problem. Hence a loading scheme should be applied. However the potential of 3D modelling in both uni field and multi field cases are obvious. And the output of effective tangent moduli is possible. The effective tangent moduli for uni field in 3D is given here, which has 81 entries as its rank 4 tensor in 3D. The homogenized tangent moduli can also be calculated in this scheme. It ends with 12 by 12 huge matrix, where a relative coarser mesh is used.
+In multi field calculation an iterative solver is chosen, namely ``SNES" solver in ``PETSc". The solver parameters are tuned referring the 3D examples from FEniCS. In 3D case an iterative solver is a necessity, otherwise the calculation would take too much time. And the convergence is not so positive because of the nonlinearity of the current problem. Hence a loading scheme should be applied. However the potential of 3D modelling in both uni field and multi field cases are obvious. The effective tangent moduli for uni field in 3D is given here, which has 81 entries as its fourth rank tensor in 3D. The homogenized tangent moduli can also be calculated in this scheme. It ends with 12 by 12 huge matrix, where a relative coarser mesh is used.
 \begin{center}
 \[
 \begin{bmatrix}
@@ -263,7 +263,7 @@ In multi field calculation an iterative solver is chosen, namely ``SNES" solver 
 
 
 \section{Simulation Template}
-In this section a simulation template is provided. The presentation of this template introduces all the common interface of this module, which allows users to gain an overview of all the usages of this module. This code sample starts with importing all the files of unit cell module. Then geometry is defined within \texttt{cell\_geom.py} followed with material definition within \texttt{cell\_material.py}. Completing the setting of the problem calculation is initiated with defining an object of \texttt{MicroComputation} from \texttt{cell\_computation.py}. After inputting macro field and field variables which need to be solved, micro fluctuation can be calculated using the member method \texttt{comp\_fluctuation()} and the user defined solver parameters. It is seen that an instance of \texttt{MicroComputation} can be called every time step and reused among several different cells if the setting of geometry and materials does not change. The only thing to notice is that a new FEniCS \texttt{Function} object should be provided in the interim. This template can be used in IPython interactively or embedded in other computation which requires a unit cell investigation.
+In this section a simulation template is provided. This template introduces all the common interface of this module, which allows users to gain an overview of all the usages of this module. This code sample starts with importing all the files of unit cell module. Then geometry is defined within \texttt{cell\_geom.py} followed with material definition within \texttt{cell\_material.py}. Once the setting of the problem is completed, micro scale calculation is initiated with defining an object of \texttt{MicroComputation} from \texttt{cell\_computation.py}. After inputting macro field functions, micro fluctuation can be calculated using the member method \texttt{comp\_fluctuation()} with the user defined solver parameters. It is seen that an instance of \texttt{MicroComputation} can be called every time step and reused among several different cells if the setting of geometry and materials does not change. The only thing to notice is that a new FEniCS \texttt{Function} object should be provided in the interim. Moreover this template can be used in IPython interactively or embedded in other computation which requires a unit cell investigation.
 
 \begin{python}
 from dolfin import *
@@ -329,13 +329,13 @@ for i in range(10):
 \end{python}
 
 \section{Convergence Comparison with Finite Difference Calculation}
-The convergence of the homogenized effective tangent moduli is investigated with Finite Difference calculation. Here Finite Difference calculation stands for the difference of the averaged extended stress with respect to small change of the macro extended strain input. This method leads to the following expression, 
+The convergence of the homogenized effective tangent moduli is investigated with Finite Difference calculation. Here Finite Difference calculation stands for calculating the ratio between the change of the averaged extended stress with respect to small change of the macro extended strain input. This method leads to the following expression, 
 \begin{equation}
 \mathbb{C}_{\text{eff}} = \dfrac{\partial \mathbf{P}_{\text{avg}} \left( \overbar{\mathbf{F}}, \widetilde{\mathbf{F}} \right)}{\partial \overbar{\mathbf{F}}} \ \Rightarrow \ \mathbb{C}_{\text{eff}} = \dfrac{\Delta \mathbf{P}_{\text{avg}}}{\Delta \overbar{\mathbf{F}}}.
 \end{equation}
 The fraction of vectors or matrices is arranged in the same manner with the effective tangent moduli. In the calculation varying only a component of $\overbar{\mathbf{F}}$ is realized and the change of $\mathbf{P}_{\text{avg}}$ is calculated. The division ends with corresponding terms in $\mathbb{C}_{\text{eff}}$.
 
-The result shows that in uni field and multi fields the implementation of the previous derivation gives a good approximate to the Finite Difference calculation of effective tangent moduli. The script for multiple fields modelling is given here.
+The comparison is given at the end of this demonstration. The script for multiple fields modelling is given here.
 
 \begin{python}
 import sys
@@ -448,7 +448,7 @@ tmp = np.outer(np.ones((len(delta),1)),np.transpose(component))
 error = np.linalg.norm(tmp - C_eff_component_FD, axis=1)/np.linalg.norm(component)
 \end{python}
 
-The output of the error (or calculation difference between two methods) is in the following code block.
+The output of the error (or calculation difference between two methods) is in the following block.
 \begin{python}
 In [61]: error
 

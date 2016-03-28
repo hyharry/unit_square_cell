@@ -8,6 +8,7 @@
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 
 \usepackage{bm}
+\usepackage{natbib}
 
 % integral d
 \newcommand{\myd}{\;\mathrm{d}}
@@ -22,12 +23,12 @@
 \begin{document}
 
 \chapter{Homogenization Method}
-The method used in the current work is Homogenization Method. It was proposed in 1970s by Babuska and collaborators, [ref: abdulle]. The main purpose of this method is to make use of the scale separation, in order to obtain a reduced PDE for the macroscopic problem. The macroscopic problem always contains the information from the according micro scale, and it is often represented as ``effective parameters''. These effective parameters are often calculated in the sense of ``averaging procedure'' or ``homogenization''. As for the micro scale problem, various types of problem arise. They could be solved with either finite difference or finite element method, other kinds of numerical methods could also be employed. An extensive review is from the book [ref: multiscale thomas y hou]. A more general framework, the Heterogeneous Multiscale Method (HMM), was proposed by Bjorn Engquist. This method extend the idea of homogenization and introduce generic methodology between macro scale and micro scale. An introductory review could be found in [ref: weinan e].
+The method used in the current work is Homogenization Method. It was proposed in 1970s by Babuska and collaborators \citep{EPFL-ARTICLE-184958}. The main purpose of this method is to make use of the scale separation, in order that a reduced PDE for the macroscopic problem is obtained. The macroscopic problem always contains the information from the corresponding micro scale, and it is often represented as ``effective parameters''. These effective parameters are often calculated in the sense of ``averaging procedure'' or ``homogenization''. In order to obtain homogenized quantities a micro scale problem needs to be solved. It could be solved with numerical methods such as Finite Element Method, Finite Volume Method or theoretical results in simple cases. An extensive review  can be found in book \citep{efendiev2009multiscale}. A more general framework, the Heterogeneous Multiscale Method (HMM), was proposed by Bjorn Engquist. This method extend the idea of homogenization and introduce generic methodology between macro scale and micro scale. An introductory review could be found in \citep{weinan2007heterogeneous}.
 
-In this part the basic idea of Homogenization Method is presented with a one dimensional example. Then the application to the 3d elliptic PDE is briefly discussed. Hill Mandel requirements should be fulfilled in the energy conserving problem. Hence they are stated in the end of this part. We confine our discussion here mainly on the material possessing periodic structures. 
+In this part the basic idea of Homogenization Method is presented with a one dimensional example. Then the application to the 3D elliptic PDE is briefly discussed. Hill Mandel requirements should be fulfilled in the energy conserving problem. Hence they are stated in the end of this part. We confine our discussion here mainly on materials with periodic structures. 
 
 \section{Periodic Structures}
-Periodicity appears frequently in composites, for instance material with fiber or particle reinforcement. The periodicity in these materials takes the form of periodic geometry and periodic materials. Concerning about material parameters they could be expressed with periodic functions of coordinates. For example, Young's Modulus can be written in the following form,
+Periodicity appears frequently in composites, for instance material with fiber or particle reinforcement. In these materials inclusions are arranged periodically. Concerning about material parameters they could be expressed with periodic functions of coordinates. For example, Young's Modulus can be written in the following form,
 %
 \begin{equation}
 \label{eq:periodic 1}
@@ -36,21 +37,28 @@ Periodicity appears frequently in composites, for instance material with fiber o
 %
 
 \section{Scale Separation}
-When two scale problem is addressed, field variable could be expanded as follows, 
+When a two scale problem is addressed, a corresponding field variable could be expanded as follows, 
 %
 \begin{equation}
 \label{eq:field epsi}
 \mathbf{\Phi}^{\epsilon}(\mathbf{x}) = \mathbf{\Phi}^{0}(\mathbf{x},\mathbf{y}) + \epsilon\mathbf{\Phi}^{1}(\mathbf{x},\mathbf{y}) + \epsilon\mathbf{\Phi}^{2}(\mathbf{x},\mathbf{y}) + \cdots,
 \end{equation}
 %
-In the above formula, $\mathbf{x}$ is the position vector of a point, which is deemed as the \textit{macroscopic} coordinate. $\mathbf{y}=\mathbf{x}/\epsilon$ is a \textit{microscopic} coordinate, which stands for \textit{rapid} oscillation. The physical nature of the right hand side is the decomposition of macro scale dependency and micro scale dependency with respect to reference cell. The purpose of setting $\mathbf{y}=\mathbf{x}/\epsilon$ is achieving a closed form expressed with the original coordinates. The ratio $\epsilon$ means that the quantity will vary $1/\epsilon$ faster in microscopic level. When $\epsilon$ goes to $0$, functions $\mathbf{\Phi}^{0}(\mathbf{x}, \mathbf{y}), \mathbf{\Phi}^{1}(\mathbf{x}, \mathbf{y}), \cdots$ are smooth in $\mathbf{x}$ and $\mathbf{Y}$-periodic in $\mathbf{y}$.
+In the above formula, $\mathbf{x}$ is the position vector of a point, which is deemed as the \textit{macroscopic} coordinate. $\mathbf{y}=\mathbf{x}/\epsilon$ is a \textit{microscopic} coordinate, which stands for \textit{rapid} oscillation. The physical nature of the right hand side is the decomposition of macro scale dependency and micro scale dependency with respect to a reference cell. The purpose of setting $\mathbf{y}=\mathbf{x}/\epsilon$ is achieving a closed form expressed with the original coordinates. The ratio $\epsilon$ means that the micro quantity will vary $1/\epsilon$ faster than macroscopic level. When $\epsilon$ goes to $0$, functions $\mathbf{\Phi}^{0}(\mathbf{x}, \mathbf{y}), \mathbf{\Phi}^{1}(\mathbf{x}, \mathbf{y}), \cdots$ are smooth in $\mathbf{x}$ and $\mathbf{Y}$-periodic in $\mathbf{y}$.
 
-The characteristic of field variable can be viewed in the diagram [figure: scale decomposition]
+The characteristic of field variable is illustrated in the following figure.
+
+\begin{figure}[h]
+  \centering
+    \label{fig: scale sepa}
+    \includegraphics[width=0.45\linewidth]{../pics/ref_cell_mic_mac_coord.png}
+  \caption{Micro and Macro Coordinate of Field Variable \citep{hassani1998review}}
+\end{figure}
 
 \section{One Dimensional Problem}
-Many books and review papers list one dimensional problem, such as [ref: ciorsanescu]. Here we briefly go through one dimensional elasticity problem. More detailed derivation could be referred to [ref: B.hassani].
+Many books and review papers list one dimensional problem, such as \citep{cioranescu2000introduction}. Here we briefly go through one dimensional elasticity problem. More detailed derivation could be referred to \citep{hassani1998review}.
 
-The governing equations such as the equilibrium and Hooke's law are,
+The governing equations, i.e. the equilibrium and Hooke's law are,
 \begin{equation}
 \left\{
 \begin{array}{l}
@@ -64,7 +72,7 @@ Noting that $\epsilon$ in superscript represents its periodic property. $\gamma^
 \begin{equation}
 E^{\epsilon}(x,x/\epsilon)=E^{\epsilon}(x/\epsilon)=E(y),
 \end{equation}
-The relation with respect to body weight is likewise. Utilizing the double scale expansion referring to (\ref{eq:field epsi}) it follows that,
+The relation with respect to body weight is likewise. Regarding the double scale expansion according to (\ref{eq:field epsi}) it follows,
 \begin{equation}
 \left\{
 \begin{array}{l}
@@ -74,7 +82,7 @@ u^{\epsilon}(x) = u^{0}(x,y) + \epsilon u^{1}(x,y) + \epsilon^{2} u^{2}(x,y) + \
 \right.
 \end{equation}
 
-After substitution and equating the according terms, we have
+After substitution and equating the correspondent terms, we have
 \begin{equation}
 \label{eq: to simp 1}
 \left\{
@@ -118,16 +126,16 @@ where $\bar{\gamma}=1/Y \int_{Y} \gamma(y)$ is the average of $\gamma$ inside th
 \begin{equation}
 \dfrac{\myd^2 u^{0}(x)}{\myd{x^{2}}} = -\dfrac{\bar{\gamma}}{E^{H}}
 \end{equation}
-Regarding the boundary conditions on both ends deliver the result
+Accounting the boundary conditions on both ends gives the result
 \[u(x) = -\dfrac{\bar{\gamma}}{E^{H}} \dfrac{x^{2}}{2} + \dfrac{\bar{\gamma}}{E^{H}} Lx \]
 
 \section{General Elliptical PDE}
-If a general PDE for three dimensional problem is taken into account, it would be more intricate, as the solution is often sought in the sense of weak form. In this circumstance a homogenized weak form is considered instead of the homogenized differential operator. Then the limit of homogenized weak form should converge to the weak form without homogenization, which is called \textit{G-convergence}, [ref: a comparison, u michi]. As for the case of elasticity tensor in the sense of differential operator G-convergence is the following,
+If a general PDE for three dimensional problem is taken into account, it would be more intricate, as the solution is often sought in the sense of weak form. In this circumstance a homogenized weak form is considered instead of the homogenized differential operator. Then the limit of homogenized weak form should converge to the weak form without homogenization, which is called \textit{G-convergence}, \citep{hollister1992comparison}. As for the case of elasticity tensor in the sense of differential operator G-convergence is expressed as
 \begin{equation}
 \label{eq: G conv}
 \lim_{\epsilon \to 0} \dfrac{\partial}{\partial x_{i}} \left[ C^{\epsilon}_{ijkl} \dfrac{\partial u^{\epsilon}_{k}}{\partial x_{l}} \right] \rightarrow \dfrac{\partial}{\partial x_{i}} \left[ \bar{C}_{ijkl} \dfrac{\partial u_{k}}{\partial x_{l}} \right]
 \end{equation}
-A quick overview of the general problem is given in the review [ref: hassani]. Several key points of the general problem are listed here. With the notation of general elliptical operator using 
+A quick overview of the general problem is given in the review \citep{hassani1998review}. Several key points of the general problem are listed here. With the notation of general elliptical operator using 
 \begin{equation}
 \mathcal{A}^{\epsilon} = \dfrac{\partial}{\partial x_{i}} \left( a_{ij}(\mathbf{y}) \dfrac{\partial}{\partial x_{j}} \right).
 \end{equation}
@@ -166,9 +174,9 @@ Substitution with the above differential operators and comparing with the accord
 \end{array}
 \right.
 \end{equation}
-Referring [ref: cioranescu] it is known that if a $\mathbf{Y}$-periodic function $u$ has a unique solution in terms of $\mathcal{A}^{1}$ operator, i.e. 
+Referring \citep{cioranescu2000introduction} it is known that if a $\mathbf{Y}$-periodic function $u$ has a unique solution in terms of $\mathcal{A}^{1}$ operator, i.e. 
 \begin{equation}
-\mathcal{A}^{1} \mathbf{u} = \mathbf{F} \quad \text{in the reference cell}.
+\mathcal{A}^{1} \mathbf{u} = \mathbf{F} \quad \text{in reference cell}.
 \end{equation}
 Then the right hand side of the above equation, $\mathbf{F}$ should satisfy 
 \begin{equation}
@@ -178,9 +186,9 @@ Applying this proposition to (\ref{eq: eq group}) several times the field variab
 \begin{equation}
 \mathbf{u}^{1}(\mathbf{x}, \mathbf{y}) = \chi^{i}(\mathbf{y}) \dfrac{\partial \mathbf{u}(\mathbf{x})}{\partial x_{j}} + \mathbf{\xi} (\mathbf{x})
 \end{equation}
-Function $\chi^{i}(\mathbf{y})$ is local solution of the problem, which has $\mathbf{Y}$-periodic property. The local problem is
+Function $\chi^{i}(\mathbf{y})$ is the local solution of this problem, which has $\mathbf{Y}$-periodic property. The local problem is
 \begin{equation}
-\mathcal{A}^{1} \mathbf{\chi}^{j}(\mathbf{y}) = \dfrac{\partial a_{ij}(\mathbf{y})}{\partial y_{i}} \quad \text{in the reference cell}.
+\mathcal{A}^{1} \mathbf{\chi}^{j}(\mathbf{y}) = \dfrac{\partial a_{ij}(\mathbf{y})}{\partial y_{i}} \quad \text{in reference cell}.
 \end{equation}
 Hence the macro scale problem (homogenized problem) can be written as
 \begin{equation}
@@ -191,21 +199,25 @@ with
 \mathcal{A}^{H} = a^{H}_{ij} \dfrac{\partial^{2}}{\partial x_{i} \partial x_{j}}.
 \end{equation}
 %
-And the effective coefficients are related with the solution of micro scale problem,
+And the effective coefficients are related with the solution of micro scale problem, i.e.
 \begin{equation}
 a^{H}_{ij} = \dfrac{1}{|Y|} \int_{Y} \left( a_{ij}(\mathbf{y}) + a_{ik}(\mathbf{y}) \dfrac{\partial \chi^{j}}{\partial y_{k}} \right) \myd{\mathbf{y}}
 \end{equation}
 
 %--------------------------------
 \section{Hill-Mandel Condition}
-After introducing the general mathematical concepts about homogenization methods, we move to its application in material modelling. In this case a Representative Volume Element (RVE) is always investigated. Homogenization of the coefficients is then obtained through calculation on RVE. As RVE represents a material in the micro scale, the behaviour of RVE should resemble the material in this scale. Therefore the model for micro scale should be able to capture such features, for instance the continuum mechanical equilibrium of composites in the micro scale. Besides the boundary condition of micro scale model should also be compatible with macro scale. The Hill-Mandel condition needs to be fulfilled [ref: r.hill 1952 from gluege]
+After introducing the general mathematical concepts about homogenization methods, we move to its application in material modelling. In this case a Representative Volume Element (RVE) is always investigated. Homogenization of the coefficients is then obtained through calculation on RVE. As RVE represents a material in the micro scale, the behaviour of RVE should resemble the material in this scale. Therefore the model for micro scale should be able to capture specific features, for instance the continuum mechanical equilibrium of composites in the micro scale. Besides the boundary condition of micro scale model should also be compatible with macro scale. This is the content of  Hill-Mandel condition \citep{gluge2012comparison}.
 
 The Hill-Mandel condition states that the total stress power on the micro scale should be equal to the stress power at relevant point on the macro scale. For small strain, the following equation holds,
 
 \begin{equation}
 \left< \bm{\sigma} \cdot \dot{\bm{\varepsilon}} \right> = \left< \bm{\sigma} \right> \cdot \left< \dot{\bm{\varepsilon}} \right>,
 \end{equation}
-where $\left< \cdot \right>$ means averaging of the considered variable.
+where $\left< \cdot \right>$ means averaging of the considered variable. In simulations certain boundary conditions are devised to fulfil Hill-Mandel condition automatically. 
+
+%\bibliographystyle{plain}
+%\bibliography{/home/yihu/studien_arbeit_fenics/report/part1/part1_ref.bib}
+%\nocite{*}
 
 \end{document}
 
