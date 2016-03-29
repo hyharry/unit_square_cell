@@ -1,85 +1,74 @@
 # coding = utf-8
 # Copyright (C) Yi Hu
+"""
+Unit test for cell_material
+"""
+import unittest
+import sys
+from dolfin import *
+
+sys.path.append('../')
+import cell_material as mat
 
 
-def test_st_venant():
-    print 'Test Saint Venant Material'
-    mesh = UnitSquareMesh(2, 2)
-    FS = FunctionSpace(mesh, 'CG', 1)
-    TFS = TensorFunctionSpace(mesh, 'CG', 1)
+class MaterialTestCase(unittest.TestCase):
+    """
+    Test Various Materials
+    """
+    def setUp(self):
+        mesh = UnitSquareMesh(2, 2)
 
-    VFS = VectorFunctionSpace(mesh, 'CG', 1)
-    w = Function(VFS)
-    # F = Function(TFS)
-    F = grad(w)
+        FS = FunctionSpace(mesh, 'CG', 1)
+        TFS = TensorFunctionSpace(mesh, 'CG', 1)
+        VFS = VectorFunctionSpace(mesh, 'CG', 1)
 
-    E_m, nu_m = 10.0, 0.3
-    svk = st_venant_kirchhoff(E_m, nu_m)
+        self.w = Function(VFS)
+        # F = Function(TFS)
+        self.F = grad(self.w)
+        self.theta = Function(FS)
+        self.C = Function(TFS)
+        self.M = Function(VFS)
+        self.E = Function(VFS)
 
-    # print id(svk)
-    svk([F])
-    # print id(svk)
+    def test_st_venant(self):
+        """
+        Test Saint Venant Material
+        """
+        E_m, nu_m = 10.0, 0.3
+        svk = mat.st_venant_kirchhoff(E_m, nu_m)
+        svk([self.F])
+        self.assertIsNotNone(svk.psi)
 
+    def test_simo_pister(self):
+        """
+        Test Simo Pister Thermomechanic Material
+        """
+        mu0, m0, lmbda0, ro0, cv, theta0 = 1, 2, 3, 4, 5, 6
+        sp = mat.simo_pister(mu0, m0, lmbda0, ro0, cv, theta0)
+        sp([self.F.T * self.F, self.theta, ])
+        self.assertIsNotNone(sp.psi)
 
-def test_simo_pister():
-    print 'Test Simo Pister Thermomechanic Material'
-    mesh = UnitSquareMesh(2, 2)
-    FS = FunctionSpace(mesh, 'CG', 1)
-    TFS = TensorFunctionSpace(mesh, 'CG', 1)
+    def test_magneto_mechano(self):
+        """
+        Test Magneto Mechanic Material
+        """
+        N = Constant((1., 1.))
+        a, b, c = 1., 2., 3.
+        mre = mat.magneto_mechano(N, a, b, c)
+        mre([self.C, self.M, ])
+        self.assertIsNotNone(mre.psi)
 
-    VFS = VectorFunctionSpace(mesh, 'CG', 1)
-    w = Function(VFS)
-    # F = Function(TFS)
-    F = grad(w)
-
-    mu0, m0, lmbda0, ro0, cv, theta0 = 1, 2, 3, 4, 5, 6
-    theta = Function(FS)
-    sp = simo_pister(mu0, m0, lmbda0, ro0, cv, theta0)
-    sp([F.T * F, theta, ])
-
-
-def test_magneto_mechano():
-    print 'Test Magneto Mechanic Material'
-    mesh = UnitSquareMesh(2, 2)
-    # FS = FunctionSpace(mesh, 'CG', 1)
-    TFS = TensorFunctionSpace(mesh, 'CG', 1)
-    VFS = VectorFunctionSpace(mesh, 'CG', 1)
-
-    C = Function(TFS)
-    M = Function(VFS)
-    N = Constant((1., 1.))
-    a, b, c = 1., 2., 3.
-    mre = magneto_mechano(N, a, b, c)
-    mre([C, M, ])
-
-
-def test_neo_hookean_eap():
-    print 'Test neo hookean EAP Material'
-    mesh = UnitSquareMesh(2, 2)
-    # FS = FunctionSpace(mesh, 'CG', 1)
-    TFS = TensorFunctionSpace(mesh, 'CG', 1)
-    VFS = VectorFunctionSpace(mesh, 'CG', 1)
-
-    E_m, nu_m, kappa = 10.0, 0.3, 2
-    C = Function(TFS)
-    E = Function(VFS)
-    nh_eap = neo_hook_eap(E_m, nu_m, kappa)
-    nh_eap([C, E, ])
-    assert nh_eap is not None
+    def test_neo_hookean_eap(self):
+        """
+        Test neo hookean EAP Material
+        """
+        E_m, nu_m, kappa = 10.0, 0.3, 2
+        nh_eap = mat.neo_hook_eap(E_m, nu_m, kappa)
+        nh_eap([self.C, self.E, ])
+        self.assertIsNotNone(nh_eap.psi)
 
 
 if __name__ == '__main__':
-    print 'this is for testing'
-    from dolfin import *
-    # import unittest
-    #
-    # test_li = [test_st_venant, test_simo_pister,
-    #            test_magneto_mechano, test_neo_hookean_eap]
-    # test_case_li = [unittest.FunctionTestCase(test_i) for test_i in test_li]
-
-    test_neo_hookean_eap()
-
-    # print nh_eap.psi
-    # print mre.psi
-    # print sp.psi
-    # print svk.psi
+    unittest.main()
+    # suite = unittest.TestLoader().loadTestsFromTestCase(MaterialTestCase)
+    # unittest.TextTestRunner().run(suite)

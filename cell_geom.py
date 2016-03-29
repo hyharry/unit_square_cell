@@ -35,7 +35,7 @@ class UnitCell(object):
         self.mesh = mesh
         self.dim = mesh.geometry().dim()
         self.domain = MeshFunction("size_t", mesh, self.dim)
-        # self.boundary = {}
+        self.boundary = None
 
         self.domain.set_all(0)
         self.incl_di = {}
@@ -67,6 +67,18 @@ class UnitCell(object):
 
     def add_mark_boundary(self, bound_dim):
         """
+        Add index to each bondary entity.
+
+        2D case: if boundary edges are marked, index are given to 4 edges
+                    [0, 1, 2, 3]
+                 if boundary points are marked, 4 corners are marked
+                 while other edges are marked with 30
+
+        3D case: similar with 2D
+
+        Be careful that only one kind of boundary entity can be added (edges
+        or points)!!
+
         Add boundary is not really needed for the current state!!
         all kinds of boundary can be generated
 
@@ -78,7 +90,10 @@ class UnitCell(object):
         if bound_dim >= dim:
             raise Exception("invalid boundary dimension")
 
-        boundary = MeshFunction("size_t", self.mesh, bound_dim)
+        # FIXME: can only add one kind of boundary entity, boundary entity
+        # labels are not well given
+        self.boundary = MeshFunction("size_t", self.mesh, bound_dim)
+        self.boundary.set_all(30)
         if bound_dim == 0:
             compiled_boundary = compiled_corner_subdom(dim)
         elif bound_dim == 1:
@@ -87,7 +102,7 @@ class UnitCell(object):
             compiled_boundary = compiled_face_subdom(dim)
 
         for i, bound in enumerate(compiled_boundary):
-            bound.mark(boundary, i)
+            bound.mark(self.boundary, i)
 
 
 def string_template(dim, with_boundary=False, coord_label=None,

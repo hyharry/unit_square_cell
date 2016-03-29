@@ -12,7 +12,6 @@ import unittest
 
 from dolfin import *
 import numpy as np
-from ..
 from cell_material import Material
 import cell_geom as geom
 

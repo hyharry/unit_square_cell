@@ -403,7 +403,8 @@ def test_neo_hookean_eap():
     E = Function(VFS)
     nh_eap = neo_hook_eap(E_m, nu_m, kappa)
     nh_eap([C, E, ])
-    assert nh_eap is not None
+    # print nh_eap.psi
+    assert nh_eap.psi is not None
 
 
 if __name__ == '__main__':

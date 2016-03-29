@@ -1281,7 +1281,7 @@ def test_solver():
 
 
 if __name__ == '__main__':
-    # test_uni_field()
+    test_uni_field()
     # test_multi_field()
     # test_uni_field_3d()
     # test_multi_field_3d()
