@@ -10,7 +10,7 @@ Material Library: st_venant_kirchhoff, simo_pister, magneto_mechano, neo_hook_mr
 
 """
 
-from dolfin import Identity, tr, inner, outer, inv, sqrt, det, ln, transpose
+from dolfin import *
 
 
 class Material(object):

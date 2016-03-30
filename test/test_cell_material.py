@@ -5,9 +5,10 @@ Unit test for cell_material
 """
 import unittest
 import sys
-from dolfin import *
+# from dolfin import *
 
 sys.path.append('../')
+
 import cell_material as mat
 
 
@@ -16,19 +17,19 @@ class MaterialTestCase(unittest.TestCase):
     Test Various Materials
     """
     def setUp(self):
-        mesh = UnitSquareMesh(2, 2)
+        mesh = mat.UnitSquareMesh(2, 2)
 
-        FS = FunctionSpace(mesh, 'CG', 1)
-        TFS = TensorFunctionSpace(mesh, 'CG', 1)
-        VFS = VectorFunctionSpace(mesh, 'CG', 1)
+        FS = mat.FunctionSpace(mesh, 'CG', 1)
+        TFS = mat.TensorFunctionSpace(mesh, 'CG', 1)
+        VFS = mat.VectorFunctionSpace(mesh, 'CG', 1)
 
-        self.w = Function(VFS)
-        # F = Function(TFS)
-        self.F = grad(self.w)
-        self.theta = Function(FS)
-        self.C = Function(TFS)
-        self.M = Function(VFS)
-        self.E = Function(VFS)
+        self.w = mat.Function(VFS)
+        # F = mat.Function(TFS)
+        self.F = mat.grad(self.w)
+        self.theta = mat.Function(FS)
+        self.C = mat.Function(TFS)
+        self.M = mat.Function(VFS)
+        self.E = mat.Function(VFS)
 
     def test_st_venant(self):
         """
@@ -52,7 +53,7 @@ class MaterialTestCase(unittest.TestCase):
         """
         Test Magneto Mechanic Material
         """
-        N = Constant((1., 1.))
+        N = mat.Constant((1., 1.))
         a, b, c = 1., 2., 3.
         mre = mat.magneto_mechano(N, a, b, c)
         mre([self.C, self.M, ])

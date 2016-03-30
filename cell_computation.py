@@ -512,13 +512,15 @@ class MicroComputation(object):
 
         # print LTKL2
 
-        print C_avg - LTKL2
+        # print C_avg - LTKL2
         return C_avg - LTKL2
 
     def sensitivity(self, B):
         """
         Sensitivity matrix calculation. Assemble linear and bilinear form
         symetrically. Solve use the default FEniCS linear solver
+
+        Notice that here only PETSc backend is considered
 
         :param B: (numpy array) linear form w.r.t fluctuation as well as
                                 linear form w.r.t macro deformation
@@ -559,6 +561,12 @@ class MicroComputation(object):
 
         LTKL = np.zeros((F_merge_len, F_merge_len))
         L_assign = Function(self.w_merge.function_space())
+        # K_a.mat().assemble()
+        # K_a.apply('add')
+        # K = as_backend_type(K_a).mat()
+        # K.setUp()
+        # K.assemblyBegin()
+        # K.assemblyEnd()
         x = PETScVector()
         # x = Vector()
 
@@ -575,11 +583,18 @@ class MicroComputation(object):
         else:
             solver = LUSolver(K_a)
 
+        # solver = KrylovSolver(K_a, 'default', 'default')
+        # solver = KrylovSolver('default', 'default')
+        # solver = KrylovSolver("gmres", "amg")
+        # solver = PETScKrylovSolver('gmres')
+        # solver = PETScKrylovSolver()
+        # print solver.methods()
         for i in range(F_merge_len):
             L_assign.vector().set_local(L[:, i])
             b = as_backend_type(L_assign.vector())
             # print type(b)
             solver.solve(x, b)
+            # solver.solve(K_a, x, b)
             LTKL[:, i] = L.T.dot(x.array())
         return LTKL
 
@@ -956,8 +971,9 @@ def test_uni_field():
     import cell_material as ma
 
     # Set geometry
-    # mesh = Mesh(r"m.xml")
-    mesh = Mesh(r"m_fine.xml")
+    # mesh = UnitSquareMesh(6, 6)
+    mesh = Mesh(r"m.xml")
+    # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     inc = ce.InclusionCircle(2, (0.5, 0.5), 0.25)
     inc_di = {'circle_inc': inc}
@@ -979,11 +995,13 @@ def test_uni_field():
     F_bar = [1., 0.5, 0., 1.]
     # F_bar = [1., 0.5, 0., 1.]
     w = Function(VFS)
-    strain_space = TensorFunctionSpace(mesh, 'DG', 0)
+    strain_space = TensorFunctionSpace(cell.mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
                             [strain_space])
 
     comp.input([F_bar], [w])
+
+    set_solver_parameters('non_lin_newton', 'iterative', 'gmres')
     comp.comp_fluctuation()
     # comp.view_fluctuation()
     # comp.view_displacement()
@@ -996,6 +1014,14 @@ def test_uni_field():
     # comp.avg_merge_strain()
     # comp.avg_merge_stress()
     # comp.avg_merge_moduli()
+
+    # set_post_solver_parameters(lin_method='direct', linear_solver='mumps')
+    set_post_solver_parameters(lin_method='iterative',)
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='gmres',
+    #                            preconditioner='hypre_amg')
+    # set_post_solver_parameters(lin_method='iterative', linear_solver='cg',
+    #                            preconditioner='amg')
+    #
     comp.effective_moduli_2()
 
 
@@ -1039,8 +1065,8 @@ def test_multi_field():
     # Solution Field
     w = Function(VFS)
     el_pot_phi = Function(FS)
-    strain_space_w = TensorFunctionSpace(mesh, 'DG', 0)
-    strain_space_E = VectorFunctionSpace(mesh, 'DG', 0)
+    strain_space_w = TensorFunctionSpace(cell.mesh, 'DG', 0)
+    strain_space_E = VectorFunctionSpace(cell.mesh, 'DG', 0)
 
     def deform_grad_with_macro(F_bar, w_component):
         return F_bar + grad(w_component)
@@ -1080,6 +1106,7 @@ def test_uni_field_3d():
 
     # Set geometry
     mesh = UnitCubeMesh(16, 16, 16)
+    # mesh = UnitCubeMesh(4, 4, 4)
     # mesh = Mesh(r"m_fine.xml")
     cell = ce.UnitCell(mesh)
     # inc = ce.InclusionRectangle(3, .25, .75, .25, .75, .25, .75)
@@ -1104,7 +1131,7 @@ def test_uni_field_3d():
              0., 1., 0.,
              0., 0., 1.]
     w = Function(VFS)
-    strain_space = TensorFunctionSpace(mesh, 'DG', 0)
+    strain_space = TensorFunctionSpace(cell.mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
                             [strain_space])
 
@@ -1112,12 +1139,14 @@ def test_uni_field_3d():
 
     set_solver_parameters('snes', 'iterative', 'minres')
 
-    cell.view_domain()
+    # cell.view_domain()
     comp.comp_fluctuation(print_progress=False, print_solver_info=False)
-    comp.view_fluctuation()
+    # comp.view_fluctuation()
 
     # Post-Processing
-    # set_post_solver_parameters(lin_method='direct', linear_solver='lu')
+    # solver setup for post processing
+    # set_post_solver_parameters(lin_method='direct', linear_solver='petsc')
+    # set_post_solver_parameters(lin_method='direct', linear_solver='umfpack')
     # set_post_solver_parameters(lin_method='iterative', linear_solver='cg',
     #                            preconditioner='hypre_amg')
     # set_post_solver_parameters(lin_method='iterative', linear_solver='gmres',
@@ -1130,6 +1159,7 @@ def test_uni_field_3d():
     # set_post_solver_parameters(lin_method='iterative', linear_solver='cg')
     # set_post_solver_parameters(lin_method='iterative',
     #                            linear_solver='richardson')
+    set_post_solver_parameters(lin_method='iterative',)
 
     # comp._energy_update()
     # comp.comp_strain()
@@ -1184,8 +1214,8 @@ def test_multi_field_3d():
     # Solution Field
     w = Function(VFS)
     el_pot_phi = Function(FS)
-    strain_space_w = TensorFunctionSpace(mesh, 'DG', 0)
-    strain_space_E = VectorFunctionSpace(mesh, 'DG', 0)
+    strain_space_w = TensorFunctionSpace(cell.mesh, 'DG', 0)
+    strain_space_E = VectorFunctionSpace(cell.mesh, 'DG', 0)
 
     def deform_grad_with_macro(F_bar, w_component):
         return F_bar + grad(w_component)
@@ -1201,7 +1231,7 @@ def test_multi_field_3d():
 
     comp.input([F_bar, E_bar], [w, el_pot_phi])
 
-    cell.view_domain()
+    # cell.view_domain()
     para = {"linear_solver": "lu", "line_search": "bt",
             "maximum_iterations": 50, "report": True,
             "error_on_nonconvergence": False,}
@@ -1255,7 +1285,7 @@ def test_solver():
     # F_bar = [1., 0.5, 0., 1.]
     # parameters['linear_algebra_backend'] = 'Eigen'
     w = Function(VFS)
-    strain_space = TensorFunctionSpace(mesh, 'DG', 0)
+    strain_space = TensorFunctionSpace(cell.mesh, 'DG', 0)
     comp = MicroComputation(cell, mat_li, [deform_grad_with_macro],
                             [strain_space])
 
@@ -1281,8 +1311,8 @@ def test_solver():
 
 
 if __name__ == '__main__':
-    test_uni_field()
+    # test_uni_field()
     # test_multi_field()
-    # test_uni_field_3d()
+    test_uni_field_3d()
     # test_multi_field_3d()
     # test_solver()
