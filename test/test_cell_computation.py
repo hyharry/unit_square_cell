@@ -254,7 +254,7 @@ class ThreeDimUniTestCase(unittest.TestCase):
         self.comp.view_displacement()
 
 
-@unittest.skipIf(parameters['linear_algebra_backend'] is not 'PETSc',
+@unittest.skipIf(parameters['linear_algebra_backend'] is 'PETSc',
                  'linear algebra backend not PETSc')
 class PETScSolverParaTestCase(unittest.TestCase):
     """
@@ -321,7 +321,7 @@ class PETScSolverParaTestCase(unittest.TestCase):
         self.assertNotEqual(len(val_set), 1)
 
     def test_nonlin_newton_setting_2(self):
-        com.set_solver_parameters('non_lin_newton', 'direct', 'default')
+        com.set_solver_parameters('non_lin_newton', 'direct')
         self.comp.comp_fluctuation(print_progress=True)
         val_set = set(self.comp.w_merge.vector().array())
         self.assertNotEqual(len(val_set), 1)
@@ -407,6 +407,6 @@ if __name__ == '__main__':
     # suite = unittest.TestLoader().loadTestsFromTestCase(TwoDimUniTestCase)
     # suite = unittest.TestLoader().loadTestsFromTestCase(ThreeDimUniTestCase)
     # parameters.update({'linear_algebra_backend': 'Eigen'})
-    # suite = unittest.TestLoader().loadTestsFromTestCase(PETScSolverParaTestCase)
-    suite = unittest.TestLoader().loadTestsFromTestCase(EigenSolverParaTestCase)
+    suite = unittest.TestLoader().loadTestsFromTestCase(PETScSolverParaTestCase)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(EigenSolverParaTestCase)
     unittest.TextTestRunner().run(suite)
