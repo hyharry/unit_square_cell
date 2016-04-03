@@ -1,21 +1,20 @@
 
-Table of Contents
+cell_geom.py
 =================
 
--  `Overview <#Overview>`__
--  `Inclusions <#Inclusions>`__
+-  `Overview <#overview>`__
+-  `Inclusions <#inclusions>`__
 
-   -  `2D Case <#2D-Case>`__
-   -  `3D Case <#3D-Case>`__
+   -  `2D Case <#d-case>`__
+   -  `3D Case <#id1>`__
 
--  `Peirodic Boundary Condition <#Peirodic-Boundary-Condition>`__
+-  `Peirodic Boundary Condition <#peirodic-boundary-condition>`__
 
 Overview
-========
+--------
 
 In this file ``class UnitCell`` is defined, where possible inclusions
-can be added to the unit cell. The member methods of this class are
-constructor, ``set_append_inclusion``, ``add_mark_boundary``,
+can be added to the unit cell. The member methods of this class are ``set_append_inclusion``, ``add_mark_boundary``,
 ``view_mesh``, and ``view_domain``. The instance of this method is
 instantiated with a ``Mesh`` object in *FEniCS*. A ``UnitCell`` instance
 can be either two dimensional or three dimensional.
@@ -26,20 +25,22 @@ namely ``InclusionCircle`` and ``InclusionRectangle``. Besides,
 for *periodic boundary condition* in homogenization problem.
 
 Inclusions
-==========
+----------
 
 Setting a unit cell and its inclusions is introduced in this part. We
 first import modules
 
 .. code:: python
-
-    from dolfin import *
-    import sys
-    sys.path.append('../')
-    import cell_geom as geom
+   
+   from dolfin import *
+   import sys
+  
+   # Include the module directory
+   sys.path.append('./')
+   import cell_geom as geom
 
 2D Case
--------
+~~~~~~~
 
 **Import mesh and instantiation**
 
@@ -55,20 +56,18 @@ first import modules
     cell = geom.UnitCell(mesh, inc_group)
     cell.view_domain()
 
-**Multiple inclusions and append inclusion**
+**Multiple inclusions and append inclusionis**
 
 .. code:: python
 
     mesh = UnitSquareMesh(40, 40, 'crossed')
-    
+
     # Instantiation with inclusions
     inc1 = geom.InclusionCircle(2, (0.1, 0.1), 0.5)
     inc2 = geom.InclusionCircle(2, (0.9, 0.9), 0.5)
     inc_group_1 = {'circle_inc1': inc1, 'circle_inc2': inc2,}
     cell = geom.UnitCell(mesh, inc_group_1)
     cell.view_domain()
-
-.. code:: python
 
     # Another group of inlusions
     inc3 = geom.InclusionRectangle(2, 0.1, 0.3, 0.7, 0.9)
@@ -80,9 +79,9 @@ first import modules
     cell.view_domain()
 
 3D Case
--------
+~~~~~~~
 
-**Multiple inclusions and append inclusion**
+**Multiple inclusions and append inclusions**
 
 .. code:: python
 
@@ -106,12 +105,12 @@ first import modules
     cell.view_domain()
 
 Peirodic Boundary Condition
-===========================
+---------------------------
 
 Periodic mapping for FunctionSpace initiallization. Both 2D case and 3D
 case are covered. This periodic mapping excludes corners of unit cell.
 In unit cell computation these corners are set fixed to prevent rigid
-body movement.
+body movements.
 
 .. code:: python
 
@@ -128,12 +127,14 @@ body movement.
     print 'actual DoF =', f.vector().size(), ';',
     print 'the excluded DoF =', (a - 1 + b - 1)
 
+Outputs for 2D case are as below,
 
 .. parsed-literal::
 
     2D periodic map
     original DoF = 28 ; actual DoF = 21 ; the excluded DoF = 7
 
+If 3D problem is considered, the code above pass with little modification,
 
 .. code:: python
 
@@ -151,6 +152,7 @@ body movement.
     print 'the excluded DoF =', (a - 1 + b - 1 + c - 1) * 3 + \
             (a - 1) * (b - 1) + (a - 1) * (c - 1) + (b - 1) * (c - 1)
 
+Outputs for 3D case are as below,
 
 .. parsed-literal::
 

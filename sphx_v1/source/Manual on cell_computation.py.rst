@@ -1,22 +1,23 @@
 
-Table of Contents
-=================
+cell_computation.py
+===================
 
--  `Overview <#Overview>`__
+-  `Overview <#overview>`__
 -  `Example on 2D uni field unit cell
-   computation <#Example-on-2D-uni-field-unit-cell-computation>`__
--  `Concepts in implementation <#Concepts-in-implementation>`__
+   computation <#example-on-2d-uni-field-unit-cell-computation>`__
+-  `Concepts in implementation <#concepts-in-implementation>`__
+-  `Simulation Template <#simulation-template>`__
 
 Overview
-========
+---------
 
 This is the main part of the module consisting of class
-``MicroComputation`` and several assisting functions which cover setup
-of the solver parameters and relation between extended strain and
-displacement.
+``MicroComputation`` and several assisting functions which concern about setup
+of the solver parameters, generation of extended strains and initiation of field variables for
+multiple field problems.
 
 Example on 2D uni field unit cell computation
-=============================================
+----------------------------------------------
 
 -  **Module import**
 
@@ -39,7 +40,7 @@ The embedded backends can be viewed through
 ``linear_algebra_backend()``, namely *Eigen*, *PETSc* (default), and
 *STL*. Notice that the backend should be specified at the beginning of
 all the calculation and initialization, as the corresponding matrix and
-vector objects are casted in a style appropriate for the chose backend.
+vector objects are casted in a style appropriate for the chosen backend.
 
 .. code:: python
 
@@ -48,8 +49,7 @@ vector objects are casted in a style appropriate for the chose backend.
 
 -  **Define unit cell geometry (mesh, inclusions)**
 
-The geometrical properties are set according to the *Manual on
-cell*\ geom.py\_. Inclusions such as circle and rectangular in 2D and 3D
+The geometrical properties are set according to the `manual on cell_geom.py <Manual%20on%20cell_geom.py.html#overview>`__. Inclusions such as circle and rectangular in 2D and 3D
 are available. Extensions are possible in this context. Mesh can be
 imported the same as in *FEniCS*.
 
@@ -67,17 +67,18 @@ imported the same as in *FEniCS*.
 -  **Define materials in composites**
 
 The material properties are set according to the `manual on
-cell\_material.py <http://localhost:8888/notebooks/Manual%20on%20cell_material.py.ipynb>`__.
+cell_material.py <Manual%20on%20cell_material.py.html#overview>`__.
 Three types of materials are provided in the material libraries. Users
 can also specify their own materials. The definition of a new material
-follows the steps, 1. free energy function ``psi``, 2. invariant
-relations with physical variables, 3. initialize an instance of
-``Material`` with ``psi`` and required parameters, 4. append invariant
-relations to the ``Material`` instance, 5. call this instance with the
-physical field variables and complete instantiation
+follows the steps,
+     1. free energy function ``psi``, 
+     2. invariant relations with physical variables, 
+     3. initialize an instance of ``Material`` with ``psi`` and required parameters, 
+     4. append invariant relations to the ``Material`` instance
+     5. call this instance with the physical field variables and complete instantiation
 
 Details and restrictions are referred in `manual on
-cell\_material.py <http://localhost:8888/notebooks/Manual%20on%20cell_material.py.ipynb>`__.
+cell\_material.py <Manual%20on%20cell_material.py.html#overview>`__.
 
 .. code:: python
 
@@ -97,18 +98,12 @@ a general strain measure, which are considered in the material total
 energy. ``F_bar`` is the general strain from macro computation serving
 as input for ``MicroComputation``.
 
-The instantiation steps are as follows 1. Function spaces for physical
-field variables and generate Functions for field variables. These field
-variables are often regarded as general displacements, and in
-``MicroComputation`` they are fluctuation to solve. 2. Define relation
-between general strains and general displacements. 3. Give function
-space for general strain, these are for the post processing. 4.
-Initialize a ``MicroComputation`` instance using geometry (``cell``),
-materials (``mat_li``), general strain-displacement relation
-(``deform_grad_with_macro``), and the strain function space for
-post-processing (``strain_space``). 5. Specify general strain from macro
-field and input them into instance of ``MicroComputation``. It completes
-the creation a ``MicroComputation``
+The instantiation steps are as follows 
+  1. Function spaces for physical field variables and generate Functions for field variables. These fiel variables are often regarded as general displacements, and in ``MicroComputation`` they are fluctuation to solve. 
+  2. Define relation between general strains and general displacements. 
+  3. Give function space for general strain, these are for the post processing. 
+  4. Initialize a ``MicroComputation`` instance using geometry (``cell``), materials (``mat_li``), general strain-displacement relation (``deform_grad_with_macro``), and the strain function space for post-processing (``strain_space``). 
+  5. Specify general strain from macro field and input them into instance of ``MicroComputation``. It completes the creation a ``MicroComputation``
 
 .. code:: python
 
@@ -145,13 +140,14 @@ command is ``krylov_solver_methods()``. For iterative solvers a
 preconditioner is needed, which can be viewed using command
 ``krylov_solver_preconditioners()``. A complete summary of solvers can
 be referred in the `website of
-*PETSc* <http://www.mcs.anl.gov/petsc/documentation/linearsolvertable.html>`__.
+PETSc <http://www.mcs.anl.gov/petsc/documentation/linearsolvertable.html>`__.
 
 .. code:: python
 
     # Parameters for solving of fluctuation
     comp.set_solver_parameters('non_lin_newton', lin_method='direct', linear_solver='mumps')
 
+The solver parameters are showed as follows,
 
 .. parsed-literal::
 
@@ -160,11 +156,13 @@ be referred in the `website of
     .-------------------.
     direct method is used
 
+The fluctuation computation step is 
 
 .. code:: python
 
     compute.comp_fluctuation(print_progress=True, print_solver_info=False)
 
+which gives the result,
 
 .. parsed-literal::
 
@@ -192,6 +190,8 @@ functions are ``view_fluctuation()``, ``view_displacement()``, and
 ``view_post_processing()``. When multiple fields are considered,
 specifying the component of visualization is needed.
 
+When the following methods are invoked,
+
 .. code:: python
 
     compute.comp_strain()
@@ -200,6 +200,7 @@ specifying the component of visualization is needed.
     compute.avg_merge_stress()
     compute.avg_merge_moduli()
 
+the corresponding results will be,
 
 .. parsed-literal::
 
@@ -210,11 +211,6 @@ specifying the component of visualization is needed.
     average merge stress computation finished
     average merge moduli computation finished
 
-
-
-
-.. parsed-literal::
-
     array([[  2.68263384e+02,  -1.47306216e-02,   1.45226354e-02,
               1.16307090e+02],
            [ -1.47306216e-02,   7.64588022e+01,   7.75364924e+01,
@@ -224,7 +220,7 @@ specifying the component of visualization is needed.
            [  1.16307090e+02,  -1.46396985e-02,   1.44729548e-02,
               2.72444929e+02]])
 
-
+For effective tangent moduli, 
 
 .. code:: python
 
@@ -244,11 +240,6 @@ specifying the component of visualization is needed.
     a valid preconditioner should be provided
     average merge moduli computation finished
 
-
-
-
-.. parsed-literal::
-
     array([[  1.05215604e+01,   6.81100019e-04,   8.10922941e-04,
               6.09319740e+00],
            [  6.81100019e-04,   3.03957695e+00,   4.12022593e+00,
@@ -258,7 +249,7 @@ specifying the component of visualization is needed.
            [  6.09319740e+00,  -2.43801203e-04,  -3.19622254e-04,
               1.74423266e+01]])
 
-
+And for visualization,
 
 .. code:: python
 
@@ -276,10 +267,13 @@ behind a function, and two question marks will show the detailed
 implementation the method. In Python context, ``help()`` is used to list
 the docstring.
 
+Calling 
+
 .. code:: python
 
     help(compute.comp_fluctuation)
 
+gives
 
 .. parsed-literal::
 
@@ -293,19 +287,16 @@ the docstring.
         
         :return: updated self.w_merge
     
-
-
-**This example can work as a `simulation
-template <http://localhost:8888/notebooks/simulation_template.ipynb>`__.**
+This example can work as a `Simulation Template <#simulation-template>`__ listed at the end of this manual.
 
 Concepts in implementation
-==========================
+--------------------------
 
 The design concepts of this module are elaborated in this part. The main
 idea of the ``MicroComputation`` is to establish a unit cell. When the
 deformation or field variables from macro state are input, micro state
 computation can be realized. This computation will fall into several
-parts such as solving fluctuation, and in the end calculating effective
+parts such as solving fluctuation, and in the end calculation of effective
 tangent moduli.
 
 If the geometry and materials of this unit cell does not change. This
@@ -337,7 +328,7 @@ within the physical fields. The summation of all the free enerygies of
 every material components in composite make the total energy complete.
 
 Then boundary condition is provided with ``_bc_fixed_corner()``, which
-fix all the corners of the unit cell.
+fixes all the corners of the unit cell.
 
 ``_fem_formulation_composite`` follows with derivation of the nonlinear
 problem using powerful functions defined in *FEniCS*, ``derivative()``
@@ -380,5 +371,77 @@ strain and displacement should be specified by the user.
 
 Another thing to notice is that a good solver needs to be chosen in
 complicated cases such as multi field or 3D. Direct solvers are rather
-slow in this circumstances, while iterative solvers will not always
-converge and requires a lot of try-outs with the right preconditioners.
+slow in these circumstances.However iterative solvers do not always
+converge and require a lot of try-outs with the right preconditioners.
+
+Simulation Template
+-------------------
+
+.. code:: python
+
+    from dolfin import *
+    
+    import numpy as np
+    
+    import sys
+    sys.path.append('../')
+    
+    import cell_geom as geom
+    import cell_material as mat
+    import cell_computation as comp
+    
+    ## Linear Backend
+    
+    parameters['linear_algebra_backend'] = 'Eigen'
+    
+    ## Define Geometry
+    
+    mesh = Mesh(r'../m_fine.xml')
+    
+    cell = geom.UnitCell(mesh)
+    
+    # Add inclusion
+    inc = geom.InclusionCircle(2, (0.5, 0.5), 0.25)
+    inc_di = {'circle_inc': inc}
+    cell.set_append_inclusion(inc_di)
+    
+    ## Define Material
+    
+    E_m, nu_m, E_i, nu_i = 10.0, 0.3, 1000.0, 0.3
+    mat_m = mat.st_venant_kirchhoff(E_m, nu_m)
+    mat_i = mat.st_venant_kirchhoff(E_i, nu_i)
+    mat_li = [mat_m, mat_i]
+    
+    ## Define Computation
+    
+    VFS = VectorFunctionSpace(cell.mesh, "CG", 1, 
+                              constrained_domain=geom.PeriodicBoundary_no_corner(2))
+    
+    def deform_grad_with_macro(F_bar, w_component):
+        return F_bar + grad(w_component)
+    
+    w = Function(VFS)
+    strain_space = TensorFunctionSpace(mesh, 'DG', 0)
+    compute = comp.MicroComputation(cell, mat_li, 
+                                    [deform_grad_with_macro],
+                                    [strain_space])
+    
+    F_bar = [0.9, 0., 0., 1.]
+    
+    compute.input([F_bar], [w])
+    
+    # comp.set_solver_parameters('non_lin_newton', lin_method='direct',
+    #                       linear_solver='cholesky')
+    
+    compute.comp_fluctuation(print_progress=True, print_solver_info=False)
+    
+    compute.view_fluctuation()
+    
+    delta = 0.01
+    
+    for i in range(10):
+        F_bar[0] -= delta
+        print F_bar
+        compute.input([F_bar], [w])
+        compute.comp_fluctuation(print_progress=True, print_solver_info=False)
+

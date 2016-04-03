@@ -1,26 +1,26 @@
 
-Table of Contents
+cell_material.py
 =================
 
--  `Overview <#Overview>`__
--  `Definition Steps <#Definition-Steps>`__
--  `Call the defined material <#Call-the-defined-material>`__
+-  `Overview <#overview>`__
+-  `Definition Steps <#definition-steps>`__
+-  `Call the defined material <#call-the-defined-material>`__
 -  `Typical Example (Saint-Venant Kirchhoff
-   Material) <#Typical-Example-%28Saint-Venant-Kirchhoff-Material%29>`__
--  `Material Library <#Material-Library>`__
+   Material) <#typical-example-saint-venant-kirchhoff-material>`__
+-  `Material Library <#material-library>`__
 -  `Neo Hookean Type Electroactive
-   Polymer <#Neo-Hookean-Type-Electroactive-Polymer>`__
+   Polymer <#neo-hookean-type-electroactive-polymer>`__
 
 Overview
-========
+--------
 
-The main class of this file is ``class Material``, which defines the
-material with material free energy function. Material free energy
+The main class of this file is ``class Material``, which defines a
+material through material free energy function. Material free energy
 function in the implementation is a function of invariants. Plasticity
 and viscosity are not included in the current state.
 
 Definition Steps
-================
+----------------
 
 1. setup free energy function ``psi``
 2. relations between invariants ``[invar1, invar2, ...]`` and physical
@@ -36,16 +36,15 @@ Note that step 3 and step 4 can be unified by direct calling
 Detailed examples are given in the following part
 
 Call the defined material
-=========================
+-------------------------
 
-The name of defined material can be called directly, since the internal
-``__call__()`` method is implemented, and the corresponding arguments
+The name of a defined material can be called directly, since the internal
+``__call__()`` method is implemented. The corresponding arguments
 are the physical variables for this material. Then a material
-instantiation is complete with its energy on the corresponding
-variables.
+instantiation is complete with its energy depending on physical variables.
 
 Typical Example (Saint-Venant Kirchhoff Material)
-=================================================
+--------------------------------------------------
 
 Material energy function is
 
@@ -63,7 +62,7 @@ invariants can be formulated as
 with :math:`I_{1} = \text{tr}(\mathbf{E})`, and
 :math:`I_{2} = \text{tr} \left( \mathbf{E}^{2} \right).`
 
-So the material definition following the above steps are
+So the material definition according to the above steps is
 
 .. code:: python
 
@@ -120,23 +119,12 @@ variable :math:`F`
     # Complete instantiation of material
     svk([F])
 
-
-.. parsed-literal::
-
-    DEBUG:FFC:Reusing form from cache.
-
-
-.. code:: python
-
-    # Print free enery function
-    print svk.psi
-
 Material Library
-================
+----------------
 
 Three different materials are implemented in the material library, where
 we do not need to define the energy function and related invariants. The
-required input left consists of parameters for materials and their
+required input left consists of material parameters and their
 physical field variables.
 
 These three materials **Saint Venant-Kirchhoff Material**, **Simo-Pister
@@ -152,7 +140,7 @@ energy functions are as follows
    .. math:: \psi\left( \theta, \mathbf{C} \right) = \frac{1}{2}\mu_{0} \left( I_{C}-3 \right) + \left( m_{0}\Delta \theta \mu_{0}\right) \ln (\det \mathbf{C})^{\frac{1}{2}} + \frac{1}{2} \lambda_{0} \left[ \ln \left( \det \mathbf{C} \right)^{\frac{1}{2}} \right]^{2} - \rho_{0} c_{V} \left( \theta \ln\dfrac{\theta}{\theta_{0}} - \Delta \theta \right)
 
    It describes the behaviour of thermo elastic material and
-   :math:`\theta` represents temperature. This material is taugh in the
+   :math:`\theta` represents temperature. This material is taught in the
    course *Hoehere Mechanik 3*
 
 3. Neo Hookean Type Electroactive Material
@@ -163,14 +151,14 @@ energy functions are as follows
    mechanical behaviour and electrical behaviour, where
    :math:`\mathbf{E}` is the Green-Lagrange tensor, while
    :math:`\mathbf{C}` right Cauchy-Green tensor. The material model is
-   referred to the paper of ...
+   referred in the paper of ...
 
 It is possible to add other material models in the current material
-library. One should implement then the free energy function, invariants
+library. One should implement the free energy function, invariants
 by oneself.
 
 Neo Hookean Type Electroactive Polymer
-======================================
+--------------------------------------
 
 The realization of Neo Hookean Type Electroactive Polymer is given below
 
