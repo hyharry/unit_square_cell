@@ -23,26 +23,26 @@
 \begin{document}
 
 \chapter{Derivation and Implementation}
-In this chapter modelling of composite materials in multiple fields is investigated. Our target is to achieve multi scale modelling. The current work is a Unit Cell module, which supports the calculation of fluctuation in micro scale. Next homogenization is carried out to compute the averaged strain, averaged stress and ends with the calculation of effective tangent moduli. In order to obtain an effective and generic formulation energy method is exploited. The considered materials are Neo-Hookean materials and the composites contain periodic micro structures.
+In this chapter modelling of composite materials in multiple fields is investigated. Our target is to achieve multi scale modelling. The current work is a Unit Cell module, which supports the calculation of fluctuation in micro scale. Next homogenization is carried out to compute the averaged strain, averaged stress and ends with the calculation of effective tangent moduli. In order to obtain an effective and generic formulation energy method is exploited. The considered materials are Neo-Hookean materials and the composites containing periodic micro structures.
 
 Details of the problem setting and derivation are presented in the following two sections. Then some issues in implementation such as alternative way of calculation are shortly discussed. The documentation rules of the code and some points about the usage are clarified in the end of this chapter.
 
 \section{Problem Setting}
-The discussion focus on the unit cell consisting of multiple materials. This unit cell can be two dimensional or three dimensional, namely a square or a cube with edge length $1$. Each material component occupies a range of domain in the cell, which are inclusions. All the inclusions possess no intersections in the domain. Multiple fields can be taken into account, such as mechanical field, temperature field and electrical field. Material types are hyperelasticity, thermomechanical Simo-Pister material (introduced in the course Elements of Non-linear Continuum Thermodynamics) and Neo-Hookean electroactive rheological material \citep{SchKei:2012:tho}. All the materials in the current material library share the common feature, i.e. no time dependency. Plasticity and viscosity are beyond our consideration in the current work.
+The discussion focus on the unit cell consisting of multiple materials. This unit cell can be two dimensional or three dimensional, namely a square or a cube with edge length $1$. Each material component occupies a range of domain in the cell, which are inclusions. All the inclusions possess no intersections in the domain. Multiple fields can be taken into account, such as mechanical field, temperature field and electrical field. Material types are hyperelasticity, thermomechanical Simo-Pister material (introduced in the course Elements of Non-linear Continuum Thermodynamics) and Neo-Hookean electroactive material. The energy function of electroactive material is extracted from the literature \citep{keip_two-scale_2014}. All the materials in the current material library share the common feature, i.e. no time dependency. Plasticity and viscosity are beyond our consideration in the current work.
 
 The material energy potential per unit volume can be summarized here.
 \begin{itemize}
-	\item[] \textbf{Saint Venant-Kirchhoff Material}
+	\item[] \textbf{Saint Venant-Kirchhoff Material} \citep{marsden_mathematical_1994}
 	\begin{equation}
 	\label{eq: svk}
 	\psi\left( \mathbf{E} \right) = \dfrac{\lambda}{2} \left[ \text{tr}(\mathbf{E}) \right]^{2} + \mu \text{tr} \left( \mathbf{E}^{2} \right)
 	\end{equation}
-	\item[] \textbf{Simo Pister Material}
+	\item[] \textbf{Simo Pister Material} \citep{wriggers_coupled_1992}
 	\begin{equation}
 	\label{eq: sp mat}
-	\psi\left( \theta, \mathbf{C} \right) = \frac{1}{2}\mu_{0} \left( I_{C}-3 \right) + \left( m_{0}\Delta \theta \mu_{0}\right) \ln (\det \mathbf{C})^{\frac{1}{2}} + \frac{1}{2} \lambda_{0} \left[ \ln \left( \det \mathbf{C} \right)^{\frac{1}{2}} \right]^{2} - \rho_{0} c_{V} \left( \theta \ln\dfrac{\theta}{\theta_{0}} - \Delta \theta \right)
+	\psi\left( \theta, \mathbf{C} \right) = \frac{1}{2}\mu_{0} \left( I_{C}-3 \right) + \frac{1}{2} \lambda_{0} \left[ \ln \left( \det \mathbf{C} \right)^{\frac{1}{2}} \right]^{2} + \left( m_{0}\Delta \theta \mu_{0}\right) \ln (\det \mathbf{C})^{\frac{1}{2}} - \rho_{0} c_{V} \left( \theta \ln\dfrac{\theta}{\theta_{0}} - \Delta \theta \right)
 	\end{equation}
-	\item[] \textbf{Neo Hookean Type Electroactive Material}
+	\item[] \textbf{Neo Hookean Type Electroactive Material} \citep{keip_two-scale_2014}
 	\begin{equation}
 	\label{eq: nhk}
 	\psi\left( \mathbf{C}, \mathbf{E} \right) =  \frac{1}{2}\mu_{0} \left( \text{tr}[\mathbf{C}]-3 \right) + \dfrac{\lambda}{4} \left( J^{2}-1 \right) - \left( \dfrac{\lambda}{2} + \mu \right) \ln J - \frac{1}{2} \epsilon_{0} \left( 1+\dfrac{\chi}{J} \right) J \left[ \mathbf{C}^{-1}: (\mathbf{E} \otimes \mathbf{E}) \right]
@@ -51,9 +51,9 @@ The material energy potential per unit volume can be summarized here.
 where $\mathbf{E}$ is the Green-Lagrange tensor, while $\mathbf{C}$ right Cauchy-Green tensor. Notice that $\theta$ represents temperature in the second material law and $\mathbf{E}$ in the third material is electric field intensity other than the right Cauchy-Green tensor.
 
 \section{Derivation}
-In this section the derivation concerning about solving the Unit Cell problem as well as calculating the effective tangent moduli are presented. Derivation follows as formulation of total energy, then equilibrium derived from total energy, solution of fluctuation and calculation of effective quantities.
+In this section the derivation concerning about solving the Unit Cell problem as well as calculating the effective tangent moduli are presented. We first formulate the total energy of composite materials, then derive equilibrium from the obtained total energy. Solving the equilibrium will give fluctuation in the micro scale. At last calculation of effective quantities is achieved, which will be required for the macro scale problem.
 
-We denote $\mathbf{w}$ as extended displacement, which comprises the traditional displacement in mechanical problem as well as extra virtual displacements in other fields, such as temperature $T$ for the temperature field. Accordingly the strain in traditional mechanical problem should be regarded as the extended strain tensor measure here with notation $\mathbf{F}$. The extended stress can be defined in the same manner. Since the problem in micro scale is accounted, there are two parts in each variable, namely the averaged quantity from macro scale, $\overbar{(\cdot)}$, and the fluctuation, $\widetilde{(\cdot)}$, to be solved. This relation is stated as
+Motivated by the ideas from \citep{miehe_homogenization_2016}, a compact representation of field variables are presented. We denote $\mathbf{w}$ as extended displacement, which comprises the traditional displacement in mechanical problem as well as extra virtual displacements in other fields, such as temperature $T$ for the temperature field. Accordingly the strain in traditional mechanical problem should be regarded as the extended strain tensor measure here with notation $\mathbf{F}$. The extended stress can be defined in the same manner. It should be noticed that we use a slightly different notation from the one introduced in the literature \citep{miehe_homogenization_2016} (namely without star as superscript), which is for the purpose of consistency with the implementation. Since the problem in micro scale is accounted, there are two parts in each variable, namely the averaged quantity from macro scale, $\overbar{(\cdot)}$, and the fluctuation, $\widetilde{(\cdot)}$ from micro scale, which is to be solved. This relation is stated as
 \begin{equation}
 \label{eq: decomp}
 \mathbf{w} = \overbar{\mathbf{w}} + \widetilde{\mathbf{w}}, \ \mathbf{F} = \overbar{\mathbf{F}} + \widetilde{\mathbf{F}}.

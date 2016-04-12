@@ -1,10 +1,15 @@
 %\documentclass[10pt,a4paper]{article}
 \documentclass[10pt,a4paper]{scrreprt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.5ex}
+
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{natbib}
+
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \author{Yi Hu}
 \title{Homogenization for Multi Field Modelling}
@@ -14,16 +19,17 @@
 
 \chapter{Introduction}
 
-Composites play an important role in engineering, as they combine the advantages of each components in materials. They finds many applications in the field of Civil Engineering, Aerospace Engineering, etc. In order to understand composites thoroughly, experiments and simulations are accomplished. The current work specialized in the simulation of composites.
+Composite materials play an important role in engineering, as they combine the advantages of each components in materials. More specifically they have more specific strengths, can be tailored to their optimum to satisfy design requirements. Their advantage in material fatigue and their resistance against corrosion plus their light weight draw many attentions from industry \citep{campbell_structural_2010}. Many applications can be found in the field of Civil Engineering, Aerospace Engineering, etc. In order to understand composites thoroughly, experiments and simulations are accomplished. The current work specialized in the simulation of composites.
 
-A multi scale model is conducive in modelling, where the deformation in small scale will be reflected in the corresponding macro scale. Micro structures in composites are essential for their properties. Material behaviours are determined by these micro structures. If an energy function is used to describe the composites, material components and geometry configuration in micro scale governs the material energy function. Under this condition, an appropriate energy function is sought after. However, the exact expression for composites under different loading and with various inclusion geometry is hard to obtain. Hence the consideration shift to acquire this description on the fly, i.e. to embed the result of micro scale simulation into macro scale simulation. From a practical perspective, models in multiple scales would lead to full understanding of composite, which will in return be beneficial for material design. Moreover, in computing scale separation would benefit from various computing techniques such as parrellelization and model reduction. These techniques would possibly boost the efficiency of computation. 
+A multi scale model is conducive in modelling, where the deformation in small scale will be reflected in the corresponding macro scale. Micro structures in composites are essential for their properties. Material behaviours are determined by these micro structures. If an energy function is used to describe the composites, material components and geometry configuration in micro scale determines total material energy. Under this condition, an appropriate energy function is sought after. However, the exact expression for composites under different loading and with various inclusion geometries is hard to obtain. From a practical perspective, models in multiple scales would lead to full understanding of composite, which will in return be beneficial for material design. Moreover, the computation of separate scales would benefit from various computing techniques such as parrellelization \citep{feyel_fe2_2000} and model reduction \citep{fritzen_reduced_2013}. These techniques would possibly boost the efficiency of computation. 
 
-Intuitively a full simulation can be realized, where micro structures and different materials would be represented explicitly in the simulated object. This results in a tremendous many degrees of freedom consuming large amount of computation resources. Hence a full simulation accounting for all the micro structures and inclusions is not an efficient way.
+There are several approaches to achieve multi scale modelling. Theoretical results are available in simple inclusion geometry cases, e.g. circle inclusion, which are called Eshelby theory \citep{li_eshelby_2007}. However only specific types of inclusions are handled. Another consideration is to acquire material description on the fly, i.e. to embed the result of micro scale simulation into macro scale simulation. Many contributions are credited to Miehe and coworkers \citep{miehe_computational_1999-1} \citep{miehe_computational_2003} \citep{miehe_strain-driven_2002} \citep{miehe_computational_2002}.
 
-In this work Homogenization Method is used to achieve multi scale modelling. The key task of homogenization is to calculate homogenized parameters for macro scale model, which is mainly based on the micro scale result. The formulation of homogenized parameters is carried out through material energy. Using material energy in the formulation is of great importance, as it simplifies the derivation of equilibrium and unifies the calculation of homogenized parameters. In the case of composites in multiple fields, energy formulation will result in relative simple formulation in the homogenized context. 
+In this work Homogenization Method is used to achieve multi scale modelling. The formulation of multi scale and multi field problems is motivated by \citep{SchKei:2012:tho}. The key task of homogenization is to calculate homogenized parameters for macro scale model, which is mainly based on the micro scale result. The formulation of homogenized parameters is carried out through material energy. Using material energy in the formulation is of great importance, as it simplifies the derivation of equilibrium and unifies the calculation of homogenized parameters. This approach turns the problem into an optimization problem \citep{miehe_computational_2015}, where many tools in optimization can be utilized in this context. Moreover in the case of composites in multiple fields, energy formulation will result in relative simple formulation in the homogenized context \citep{miehe_homogenization_2016}. 
 
-To avoid the lengthy derivation of equations for coupled fields, calculation under FEniCS framework is realized. Its strength lies in the field of coupled problem, which will be seen in the later chapter. 
+To avoid the lengthy derivation of equations for coupled fields, calculation under FEniCS framework is realized. Its strength lies in code generation and convenient formulation of applied mathematics problems, especially in the field of coupled problem, which will be seen in the later chapter \citep{wells2012automated}. 
 
-The whole report will fall into two parts. The first part concentrates on the theory basics of simulation, while the second part focus more on the derivation and implementation for the composite simulation under multiple fields. Numerical examples and summary are given in the end of this report.
+The whole report will fall into two parts. This part concentrates on the theory basics of simulation. Theory of homogenization is briefly covered in the next section. We start the discussion with mathematical point of view and end with Hill-Mandel condition and its position in FE$^{2}$ scheme. The novel FE framework FEniCS is then clarified in the following. We mainly emphasize its features in multi field modelling and composite material modelling. The implementation and numerical examples are elaborated in detail in the second part of the report.
 
 \end{document}
+
