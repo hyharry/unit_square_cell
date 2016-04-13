@@ -59,6 +59,14 @@ Motivated by the ideas from \citep{miehe_homogenization_2016}, a compact represe
 \mathbf{w} = \overbar{\mathbf{w}} + \widetilde{\mathbf{w}}, \ \mathbf{F} = \overbar{\mathbf{F}} + \widetilde{\mathbf{F}}.
 \end{equation}
 
+The macro and micro deformation decomposition can be viewed in the following figure,
+\begin{figure}[h]
+  \centering
+    \label{fig: mima}
+    \includegraphics[width=0.8\linewidth]{../pics/mima.png}
+  \caption{macro and micro deformation decomposition}
+\end{figure}
+
 One advantage of this notion is that there is then no need to treat the variable separately in the derivation. Besides the merged function feature in FEniCS can be employed and realized to its greatest extent. It is then not necessary to derive the coupled terms in stiffness matrix. All the coupled terms in stiffness matrix is calculated implicitly and automatically.
 
 \subsection{Total Energy}

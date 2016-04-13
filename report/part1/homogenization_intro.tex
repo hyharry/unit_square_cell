@@ -44,13 +44,14 @@ We denote $\epsilon$ as a periodicity parameter, or in other words ``the order o
 \begin{equation}
 \mathbb{C}^{\epsilon}(\mathbf{x}) = \mathbb{C} \left( \dfrac{\mathbf{x}}{\epsilon} \right).
 \end{equation}
-Assumed that $\mathbb{C}$ is $\mathbf{Y}$-periodic and a reference cell of size $\mathbf{Y}$ is chosen, after transformation $\mathbb{C}^{\epsilon}$ becomes a function with period $\epsilon \mathbf{Y}$. If $\epsilon$ is less than one, it will lead to faster change of function $\mathbf{C}$, and hence more homogeneous (for a small neighbourhood the constitution almost the same). This process is shown in the following illustration. In other words the underlying meaning of this transformation is a procedure of homogenization. We should notice that there are some discrepancies in the formulation of homogenization from the mathematical point of view and the later introduced engineering view. However the end results are the same.
+Assumed that $\mathbb{C}$ is $\mathbf{Y}$-periodic and a reference cell of size $\mathbf{Y}$ is chosen, after transformation $\mathbb{C}^{\epsilon}$ becomes a function with period $\epsilon \mathbf{Y}$. When $\epsilon$ goes to 0, the composite material becomes more homogeneous (for a small neighbourhood the constitution almost the same). This process is shown in the following illustration. In other words the underlying meaning of this transformation is a process of homogenization. We should notice that there are some discrepancies in the formulation of homogenization from the mathematical point of view (scale separation) and the later introduced engineering view (RVE based simulation). However the end results are the same.
 
-ADD FIG!
-%[scale separ]
-%\begin{figure}
-%\includegraphics[scale=•]{•}
-%\end{figure}
+\begin{figure}[h]
+  \centering
+    \label{fig: homo proc}
+    \includegraphics[width=0.8\linewidth]{../pics/homo_proc.png}
+  \caption{Homogenization process with $\epsilon \to 0$}
+\end{figure}
 
 \section{Scale Separation}
 When a two scale problem is addressed, a corresponding field variable could be expanded as follows, 
