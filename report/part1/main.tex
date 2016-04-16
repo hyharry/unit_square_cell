@@ -8,6 +8,12 @@
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{natbib}
 
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30, text width=4cm]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
 \usepackage{bm}
 
 \usepackage{pythonhighlight}
@@ -20,12 +26,19 @@
 \author{Yi Hu}
 \title{Homogenization for Multi Field Modelling}
 \subtitle{Part I: Theories and FEniCS}
+
 \begin{document}
 
 \maketitle
+
 \tableofcontents
 
+\pagestyle{plain}
+\pagenumbering{roman}
 \input{abstract_part1_trimmed}
+
+\pagestyle{plain}
+\pagenumbering{arabic}
 
 \input{Introduction_trimmed}
 
