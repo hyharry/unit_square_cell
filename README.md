@@ -20,7 +20,7 @@ in part 2.
 
 ## Sphinx Documentation
 
-A detailed documentation is given in the [sphx_v1 directory](sphx_v1/build/html/index.html).
+A detailed documentation is given in the [sphx_v1 directory](sphx_v1/build/html/).
 You can visit the *index.html* in the build file.
 
 ## Examples
