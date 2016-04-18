@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to Unit Cell Module’s documentation! &mdash; Unit Cell Module Documentation 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Unit Cell Module Documentation 1.0 documentation" href="#" />
+    <link rel="next" title="cell_geom.py" href="Manual on cell_geom.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_geom.py.html" title="cell_geom.py"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-unit-cell-module-s-documentation">
+<h1>Welcome to Unit Cell Module&#8217;s documentation!<a class="headerlink" href="#welcome-to-unit-cell-module-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>This Unit Cell Module consists of three files, <em>cell_geom.py</em>, <em>cell_material.py</em>, and <em>cell_computation.py</em>. The main computation part of Unit Cell is done in <em>cell_computation.py</em>, while the other two make up the assisting part of the computation, where materal and geometry (mesh, inclusions) are defined within these two files.</p>
+<dl class="docutils">
+<dt><em>cell_geom.py</em></dt>
+<dd>Mesh and inclusions are generated through this file. It is needed for the modelling of composites. The inclusions defined in this files are circle (sphere) and rectangular (brick).</dd>
+<dt><em>cell_material.py</em></dt>
+<dd>In this file a generic creation of material is covered. In the current version of the module the material concerning about plasticity and viscosity is not realized.</dd>
+<dt><em>cell_computation.py</em></dt>
+<dd>After specifying geometry and materials in the modelling, the unit cell in micro state is analyzed in the context of this file. Main functionalities of this file ranges from solving fluctuation, post-processing and visualization of the results.</dd>
+</dl>
+<p><strong>Contents:</strong></p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Manual on cell_geom.py.html">cell_geom.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_geom.py.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_geom.py.html#inclusions">Inclusions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_geom.py.html#peirodic-boundary-condition">Peirodic Boundary Condition</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Manual on cell_material.py.html">cell_material.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_material.py.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_material.py.html#definition-steps">Definition Steps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_material.py.html#call-the-defined-material">Call the defined material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_material.py.html#typical-example-saint-venant-kirchhoff-material">Typical Example (Saint-Venant Kirchhoff Material)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_material.py.html#material-library">Material Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_material.py.html#neo-hookean-type-electroactive-polymer">Neo Hookean Type Electroactive Polymer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Manual on cell_computation.py.html">cell_computation.py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_computation.py.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_computation.py.html#example-on-2d-uni-field-unit-cell-computation">Example on 2D uni field unit cell computation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_computation.py.html#concepts-in-implementation">Concepts in implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Manual on cell_computation.py.html#simulation-template">Simulation Template</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="source file.html">Source File Docstring</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="source file.html#module-cell_geom">cell_geom.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source file.html#module-cell_material">cell_material.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source file.html#module-cell_computation">cell_computation.py</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to Unit Cell Module&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Manual on cell_geom.py.html"
+                        title="next chapter">cell_geom.py</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_geom.py.html" title="cell_geom.py"
+             >next</a> |</li>
+        <li><a href="#">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Yi Hu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

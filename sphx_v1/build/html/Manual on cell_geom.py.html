@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cell_geom.py &mdash; Unit Cell Module Documentation 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Unit Cell Module Documentation 1.0 documentation" href="index.html" />
+    <link rel="next" title="cell_material.py" href="Manual on cell_material.py.html" />
+    <link rel="prev" title="Welcome to Unit Cell Module’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_material.py.html" title="cell_material.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Unit Cell Module’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cell-geom-py">
+<h1>cell_geom.py<a class="headerlink" href="#cell-geom-py" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#inclusions">Inclusions</a><ul>
+<li><a class="reference external" href="#d-case">2D Case</a></li>
+<li><a class="reference external" href="#id1">3D Case</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#peirodic-boundary-condition">Peirodic Boundary Condition</a></li>
+</ul>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>In this file <tt class="docutils literal"><span class="pre">class</span> <span class="pre">UnitCell</span></tt> is defined, where possible inclusions
+can be added to the unit cell. The member methods of this class are <tt class="docutils literal"><span class="pre">set_append_inclusion</span></tt>, <tt class="docutils literal"><span class="pre">add_mark_boundary</span></tt>,
+<tt class="docutils literal"><span class="pre">view_mesh</span></tt>, and <tt class="docutils literal"><span class="pre">view_domain</span></tt>. The instance of this method is
+instantiated with a <tt class="docutils literal"><span class="pre">Mesh</span></tt> object in <em>FEniCS</em>. A <tt class="docutils literal"><span class="pre">UnitCell</span></tt> instance
+can be either two dimensional or three dimensional.</p>
+<p>Classes for creation of inclusions are included in the current file,
+namely <tt class="docutils literal"><span class="pre">InclusionCircle</span></tt> and <tt class="docutils literal"><span class="pre">InclusionRectangle</span></tt>. Besides,
+<tt class="docutils literal"><span class="pre">PeriodicBoundary_no_corner</span></tt> is a class specifying the periodic map
+for <em>periodic boundary condition</em> in homogenization problem.</p>
+</div>
+<div class="section" id="inclusions">
+<h2>Inclusions<a class="headerlink" href="#inclusions" title="Permalink to this headline">¶</a></h2>
+<p>Setting a unit cell and its inclusions is introduced in this part. We
+first import modules</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">dolfin</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c"># Include the module directory</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;./&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">cell_geom</span> <span class="kn">as</span> <span class="nn">geom</span>
+</pre></div>
+</div>
+<div class="section" id="d-case">
+<h3>2D Case<a class="headerlink" href="#d-case" title="Permalink to this headline">¶</a></h3>
+<p><strong>Import mesh and instantiation</strong></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="s">r&quot;../m.xml&quot;</span><span class="p">)</span>
+
+<span class="c"># Generate Inclusion</span>
+<span class="n">inc1</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionCircle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span>
+<span class="n">inc_group</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;circle_inc1&#39;</span><span class="p">:</span> <span class="n">inc1</span><span class="p">}</span>
+
+<span class="c"># Initiate UnitCell Instance with Inclusion</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">UnitCell</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">inc_group</span><span class="p">)</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">view_domain</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Multiple inclusions and append inclusionis</strong></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mesh</span> <span class="o">=</span> <span class="n">UnitSquareMesh</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="s">&#39;crossed&#39;</span><span class="p">)</span>
+
+<span class="c"># Instantiation with inclusions</span>
+<span class="n">inc1</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionCircle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="n">inc2</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionCircle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="n">inc_group_1</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;circle_inc1&#39;</span><span class="p">:</span> <span class="n">inc1</span><span class="p">,</span> <span class="s">&#39;circle_inc2&#39;</span><span class="p">:</span> <span class="n">inc2</span><span class="p">,}</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">UnitCell</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">inc_group_1</span><span class="p">)</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">view_domain</span><span class="p">()</span>
+
+<span class="c"># Another group of inlusions</span>
+<span class="n">inc3</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">)</span>
+<span class="n">inc4</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<span class="n">inc_group_2</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;rect_inc3&#39;</span><span class="p">:</span> <span class="n">inc3</span><span class="p">,</span> <span class="s">&#39;rect_inc4&#39;</span><span class="p">:</span> <span class="n">inc4</span><span class="p">}</span>
+
+<span class="c"># Append inclusions and view</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">set_append_inclusion</span><span class="p">(</span><span class="n">inc_group_2</span><span class="p">)</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">view_domain</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>3D Case<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p><strong>Multiple inclusions and append inclusions</strong></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">mesh</span> <span class="o">=</span> <span class="n">UnitCubeMesh</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+<span class="c"># 9 Inclusions with 8 corner inclusions and one sphere inclusion in the center</span>
+<span class="n">inc</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionCircle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="n">inc1</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<span class="n">inc2</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<span class="n">inc3</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<span class="n">inc4</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<span class="n">inc5</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<span class="n">inc6</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<span class="n">inc7</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">)</span>
+<span class="n">inc8</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionRectangle</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<span class="n">inc_group</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;circle&#39;</span><span class="p">:</span> <span class="n">inc</span><span class="p">,</span> <span class="s">&#39;corner1&#39;</span><span class="p">:</span> <span class="n">inc1</span><span class="p">,</span> <span class="s">&#39;corner2&#39;</span><span class="p">:</span> <span class="n">inc2</span><span class="p">,</span>
+             <span class="s">&#39;corner3&#39;</span><span class="p">:</span> <span class="n">inc3</span><span class="p">,</span> <span class="s">&#39;corner4&#39;</span><span class="p">:</span> <span class="n">inc4</span><span class="p">,</span> <span class="s">&#39;corner5&#39;</span><span class="p">:</span> <span class="n">inc5</span><span class="p">,</span>
+             <span class="s">&#39;corner6&#39;</span><span class="p">:</span> <span class="n">inc6</span><span class="p">,</span> <span class="s">&#39;corner7&#39;</span><span class="p">:</span> <span class="n">inc7</span><span class="p">,</span> <span class="s">&#39;corner8&#39;</span><span class="p">:</span> <span class="n">inc8</span><span class="p">}</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">UnitCell</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">inc_group</span><span class="p">)</span>
+
+<span class="n">cell</span><span class="o">.</span><span class="n">view_domain</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="peirodic-boundary-condition">
+<h2>Peirodic Boundary Condition<a class="headerlink" href="#peirodic-boundary-condition" title="Permalink to this headline">¶</a></h2>
+<p>Periodic mapping for FunctionSpace initiallization. Both 2D case and 3D
+case are covered. This periodic mapping excludes corners of unit cell.
+In unit cell computation these corners are set fixed to prevent rigid
+body movements.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># 2D</span>
+<span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span>
+<span class="n">mesh_2d</span> <span class="o">=</span> <span class="n">UnitSquareMesh</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+<span class="n">FS_2d</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">FunctionSpace</span><span class="p">(</span><span class="n">mesh_2d</span><span class="p">,</span> <span class="s">&#39;CG&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                           <span class="n">constrained_domain</span><span class="o">=</span><span class="n">geom</span><span class="o">.</span><span class="n">PeriodicBoundary_no_corner</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">FS_2d</span><span class="p">)</span>
+
+<span class="c"># DoF that are cancelled out</span>
+<span class="k">print</span> <span class="s">&#39;2D periodic map&#39;</span>
+<span class="k">print</span> <span class="s">&#39;original DoF =&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="s">&#39;;&#39;</span><span class="p">,</span>
+<span class="k">print</span> <span class="s">&#39;actual DoF =&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">vector</span><span class="p">()</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="s">&#39;;&#39;</span><span class="p">,</span>
+<span class="k">print</span> <span class="s">&#39;the excluded DoF =&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Outputs for 2D case are as below,</p>
+<div class="highlight-python"><div class="highlight"><pre>2D periodic map
+original DoF = 28 ; actual DoF = 21 ; the excluded DoF = 7
+</pre></div>
+</div>
+<p>If 3D problem is considered, the code above pass with little modification,</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># 3D</span>
+<span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">9</span>
+<span class="n">mesh_3d</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">UnitCubeMesh</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="n">FS_3d</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">FunctionSpace</span><span class="p">(</span><span class="n">mesh_3d</span><span class="p">,</span> <span class="s">&#39;CG&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                           <span class="n">constrained_domain</span><span class="o">=</span><span class="n">geom</span><span class="o">.</span><span class="n">PeriodicBoundary_no_corner</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span><span class="n">FS_3d</span><span class="p">)</span>
+
+<span class="c"># DoF that are cancelled out</span>
+<span class="k">print</span> <span class="s">&#39;3D periodic map&#39;</span>
+<span class="k">print</span> <span class="s">&#39;original DoF =&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">c</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="s">&#39;;&#39;</span><span class="p">,</span>
+<span class="k">print</span> <span class="s">&#39;actual DoF =&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">vector</span><span class="p">()</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="s">&#39;;&#39;</span><span class="p">,</span>
+<span class="k">print</span> <span class="s">&#39;the excluded DoF =&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> \
+        <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Outputs for 3D case are as below,</p>
+<div class="highlight-python"><div class="highlight"><pre>3D periodic map
+original DoF = 280 ; actual DoF = 169 ; the excluded DoF = 111
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">cell_geom.py</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#inclusions">Inclusions</a><ul>
+<li><a class="reference internal" href="#d-case">2D Case</a></li>
+<li><a class="reference internal" href="#id1">3D Case</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#peirodic-boundary-condition">Peirodic Boundary Condition</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Unit Cell Module&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Manual on cell_material.py.html"
+                        title="next chapter">cell_material.py</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/Manual on cell_geom.py.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_material.py.html" title="cell_material.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Unit Cell Module’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Yi Hu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

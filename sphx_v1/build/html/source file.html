@@ -1,0 +1,996 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Source File Docstring &mdash; Unit Cell Module Documentation 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Unit Cell Module Documentation 1.0 documentation" href="index.html" />
+    <link rel="prev" title="cell_computation.py" href="Manual on cell_computation.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_computation.py.html" title="cell_computation.py"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="source-file-docstring">
+<h1>Source File Docstring<a class="headerlink" href="#source-file-docstring" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-cell_geom">
+<span id="cell-geom-py"></span><h2>cell_geom.py<a class="headerlink" href="#module-cell_geom" title="Permalink to this headline">¶</a></h2>
+<p>2D or 3D Unit Cell Geometry setting, Periodic Boundary condition, Inclusion
+Library</p>
+<dl class="docutils">
+<dt>Class: UnitCell (view_mesh, view_domain, set_append_inclusion,</dt>
+<dd>add_mark_boundary)</dd>
+<dt>Function: string_template, trim_str_template, compiled_corner_subdom,</dt>
+<dd>compiled_line_subdom, InclusionCircle, InclusionRectangle，
+PeriodicBoundary_no_corner</dd>
+</dl>
+<dl class="class">
+<dt id="cell_geom.InclusionCircle">
+<em class="property">class </em><tt class="descclassname">cell_geom.</tt><tt class="descname">InclusionCircle</tt><big>(</big><em>dim</em>, <em>*args</em><big>)</big><a class="headerlink" href="#cell_geom.InclusionCircle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclass of SubDomain for circle inclusion (2D and 3D)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cell_geom.InclusionRectangle">
+<em class="property">class </em><tt class="descclassname">cell_geom.</tt><tt class="descname">InclusionRectangle</tt><big>(</big><em>dim</em>, <em>*args</em><big>)</big><a class="headerlink" href="#cell_geom.InclusionRectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclass of SubDomain for rectangle inclusion (2D and 3D)</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cell_geom.PeriodicBoundary_no_corner">
+<em class="property">class </em><tt class="descclassname">cell_geom.</tt><tt class="descname">PeriodicBoundary_no_corner</tt><big>(</big><em>dim</em><big>)</big><a class="headerlink" href="#cell_geom.PeriodicBoundary_no_corner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Periodic boundary both directions (no corner) for 2D and 3D</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="cell_geom.UnitCell">
+<em class="property">class </em><tt class="descclassname">cell_geom.</tt><tt class="descname">UnitCell</tt><big>(</big><em>mesh</em>, <em>incl_di=None</em><big>)</big><a class="headerlink" href="#cell_geom.UnitCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>2D: Unit Square, 3D: Unit Cube</p>
+<dl class="method">
+<dt id="cell_geom.UnitCell.add_mark_boundary">
+<tt class="descname">add_mark_boundary</tt><big>(</big><em>bound_dim</em><big>)</big><a class="headerlink" href="#cell_geom.UnitCell.add_mark_boundary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add index to each bondary entity.</p>
+<dl class="docutils">
+<dt>2D case: if boundary edges are marked, index are given to 4 edges</dt>
+<dd><blockquote class="first">
+<div>[0, 1, 2, 3]</div></blockquote>
+<p class="last">if boundary points are marked, 4 corners are marked
+while other edges are marked with 30</p>
+</dd>
+</dl>
+<p>3D case: similar with 2D</p>
+<p>Be careful that only one kind of boundary entity can be added (edges
+or points)!!</p>
+<p>Add boundary is not really needed for the current state!!
+all kinds of boundary can be generated</p>
+<p>in fact it is needed when Neumann Boundary is required to impose
+:param bound_dim: dimension of boundary entity</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_geom.UnitCell.set_append_inclusion">
+<tt class="descname">set_append_inclusion</tt><big>(</big><em>incl_di</em><big>)</big><a class="headerlink" href="#cell_geom.UnitCell.set_append_inclusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inclusion append</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>incl_di</strong> &#8211; (dict) keys:(string), incl name, values:(
+InclusionCircle)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">updated inclu_di</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_geom.compiled_corner_subdom">
+<tt class="descclassname">cell_geom.</tt><tt class="descname">compiled_corner_subdom</tt><big>(</big><em>dim</em><big>)</big><a class="headerlink" href="#cell_geom.compiled_corner_subdom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return compiled subdomain for corners</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dim</strong> &#8211; dimension</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(list of SubDomains)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_geom.compiled_face_subdom">
+<tt class="descclassname">cell_geom.</tt><tt class="descname">compiled_face_subdom</tt><big>(</big><em>dim</em><big>)</big><a class="headerlink" href="#cell_geom.compiled_face_subdom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return compiled subdomain for faces</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dim</strong> &#8211; dimension</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(list of SubDomains)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_geom.compiled_line_subdom">
+<tt class="descclassname">cell_geom.</tt><tt class="descname">compiled_line_subdom</tt><big>(</big><em>dim</em><big>)</big><a class="headerlink" href="#cell_geom.compiled_line_subdom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return compiled subdomain for edges</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dim</strong> &#8211; dimension</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(list of SubDomains)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_geom.string_template">
+<tt class="descclassname">cell_geom.</tt><tt class="descname">string_template</tt><big>(</big><em>dim</em>, <em>with_boundary=False</em>, <em>coord_label=None</em>, <em>joint_sym='&amp;&amp;'</em>, <em>in_colon=False</em>, <em>dict_output=False</em>, <em>no_origin=False</em><big>)</big><a class="headerlink" href="#cell_geom.string_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>String Expression generator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<p>Generate a list of string for method compiled_corner_subdom or alike.
+User can specify coord_label, joint_sym, colon at both side,
+&#8220;on_boundary&#8221; at the end, or as output a dict.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Dependency:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<p>contain: trim_str_template
+used in: compiled_corner_subdom, compiled_line_subdom, compiled_face_subdom
+PeriodicBoundary_no_corner</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>no_origin</strong> &#8211; (bool) if True, return no expression at (0.,), (0.,0.),
+it works only with dict_output=True</li>
+<li><strong>dim</strong> &#8211; (int) in (1,2,3) - dimension of the problem</li>
+<li><strong>with_boundary</strong> &#8211; (bool) - add &#8220;on_boundary&#8221; at the end
+of each string</li>
+<li><strong>coord_label</strong> &#8211; (list) [i,j,k, ..]
+- change the coordinate label from 0,1,2 to i,j,k
+e.g. x[i], x[j], x[k]</li>
+<li><strong>joint_sym</strong> &#8211; (string) &#8216;or&#8217; &#8216;and&#8217; &#8216;&amp;&#8217; &#8216;&amp;&amp;&#8217; ..
+- substitute &#8216;&amp;&amp;&#8217; in &#8216;near() &amp;&amp; near()&#8217; as the given</li>
+<li><strong>in_colon</strong> &#8211; <div class="line-block">
+<div class="line">(bool) - &#8216;near()&#8217; -&gt; &#8216;(near())&#8217;</div>
+</div>
+</li>
+<li><strong>dict_output</strong> &#8211; (bool) - extract out the coord and set it as key</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(list of strings), directly to compile, eval, or,
+CompiledSubDomain(), etc.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Usage:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="line-block">
+<div class="line">string_template(1) -&gt; [&#8216;near(x[0], 0.)&#8217;, &#8216;near(x[0], 1.)&#8217;]</div>
+<div class="line">string_template(2) -&gt; [&#8216;near(x[0], 0.) &amp;&amp; near(x[1], 0.)&#8217;,</div>
+<div class="line-block">
+<div class="line">&#8216;near(x[0], 0.) &amp;&amp; near(x[1], 1.)&#8217;,</div>
+<div class="line">&#8216;near(x[0], 1.) &amp;&amp; near(x[1], 0.)&#8217;,</div>
+<div class="line">&#8216;near(x[0], 1.) &amp;&amp; near(x[1], 1.)&#8217;]</div>
+</div>
+</div>
+<p>string_template(2, dict_output=True, joint_sym=&#8217;or&#8217;) -&gt;
+{(0.0, 1.0): &#8216;near(x[0], 0.) or near(x[1], 1.)&#8217;,
+(1.0, 0.0): &#8216;near(x[0], 1.) or near(x[1], 0.)&#8217;,
+(0.0, 0.0): &#8216;near(x[0], 0.) or near(x[1], 0.)&#8217;,
+(1.0, 1.0): &#8216;near(x[0], 1.) or near(x[1], 1.)&#8217;}</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_geom.trim_str_template">
+<tt class="descclassname">cell_geom.</tt><tt class="descname">trim_str_template</tt><big>(</big><em>str_temp_li</em>, <em>joint_sym</em>, <em>with_boundary=False</em>, <em>in_colon=False</em><big>)</big><a class="headerlink" href="#cell_geom.trim_str_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assistance function for string_template</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>str_temp_li</strong> &#8211; (list of strings) - input</li>
+<li><strong>joint_sym</strong> &#8211; (string) - trim joint_sym at the end</li>
+<li><strong>with_boundary</strong> &#8211; (bool) - add &#8216;on_boundary&#8217;</li>
+<li><strong>in_colon</strong> &#8211; (bool) - put each string in a colon</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">trimmed String Expression List</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cell_material">
+<span id="cell-material-py"></span><h2>cell_material.py<a class="headerlink" href="#module-cell_material" title="Permalink to this headline">¶</a></h2>
+<p>Generic Material setting and Material Library</p>
+<p>Class: Material
+Function: green_lagrange, tensor_invar, compose
+Material Library: st_venant_kirchhoff, simo_pister, magneto_mechano, neo_hook_mre</p>
+<dl class="class">
+<dt id="cell_material.Material">
+<em class="property">class </em><tt class="descclassname">cell_material.</tt><tt class="descname">Material</tt><big>(</big><em>energy_func</em>, <em>para_list</em>, <em>field_label_tuple_list=None</em>, <em>invariant_generator_list_list=None</em><big>)</big><a class="headerlink" href="#cell_material.Material" title="Permalink to this definition">¶</a></dt>
+<dd><p>Material Class for 2D and 3D problem</p>
+<dl class="method">
+<dt id="cell_material.Material.direction">
+<tt class="descname">direction</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_material.Material.direction" title="Permalink to this definition">¶</a></dt>
+<dd><p>For heterogeneous material</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_material.Material.get_field_dim">
+<tt class="descname">get_field_dim</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_material.Material.get_field_dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Obtain field information</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_material.Material.invariant_generator_append">
+<tt class="descname">invariant_generator_append</tt><big>(</big><em>field_label_tuple</em>, <em>invariant_generator_list</em><big>)</big><a class="headerlink" href="#cell_material.Material.invariant_generator_append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize method for invariants generation for material energy</p>
+<p>Please be careful! When the keys are the same, it will override the
+initial one!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>field_label_tuple</strong> &#8211; (tuple) field dependency, e.g. (0,), (0,1)</li>
+<li><strong>invariant_generator_list</strong> &#8211; (list of functions) function list on
+the field, e.g. tr</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">renewed or updated invar_gen_li</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_material.compose">
+<tt class="descclassname">cell_material.</tt><tt class="descname">compose</tt><big>(</big><em>f_list</em>, <em>g</em><big>)</big><a class="headerlink" href="#cell_material.compose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compose every fi and g</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>f_list</strong> &#8211; (list of functions) [f1, f2, ...]</li>
+<li><strong>g</strong> &#8211; (function)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">composed function list</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_material.green_lagrange">
+<tt class="descclassname">cell_material.</tt><tt class="descname">green_lagrange</tt><big>(</big><em>F</em><big>)</big><a class="headerlink" href="#cell_material.green_lagrange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate green_lagrange tensor</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>F</strong> &#8211; (dolfin function) right cauchy green</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(dolfin function) green lagrange tensor</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_material.magneto_mechano">
+<tt class="descclassname">cell_material.</tt><tt class="descname">magneto_mechano</tt><big>(</big><em>N</em>, <em>a</em>, <em>b</em>, <em>c</em><big>)</big><a class="headerlink" href="#cell_material.magneto_mechano" title="Permalink to this definition">¶</a></dt>
+<dd><p>Artificial material model, experiment mixed invariants
+invariants are partly referred from &#8216;K.Danas, 2012, JMPS&#8217;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>C</strong> &#8211; Mech variable right cauchy green</li>
+<li><strong>M</strong> &#8211; Megneto variable</li>
+<li><strong>N</strong> &#8211; Symmetric direction</li>
+<li><strong>a</strong> &#8211; coeff</li>
+<li><strong>b</strong> &#8211; coeff</li>
+<li><strong>c</strong> &#8211; coeff</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_material.neo_hook_eap">
+<tt class="descclassname">cell_material.</tt><tt class="descname">neo_hook_eap</tt><big>(</big><em>E_m</em>, <em>nu_m</em>, <em>kappa</em>, <em>epsi0=8.85e-12</em><big>)</big><a class="headerlink" href="#cell_material.neo_hook_eap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Neo-Hookean-type EAP from &#8216;Keip, Steinmann, Schroeder, 2014, CMAME&#8217;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>E_m</strong> &#8211; Young&#8217;s Modulus</li>
+<li><strong>nu_m</strong> &#8211; Poisson ratio</li>
+<li><strong>epsi0</strong> &#8211; Vacuum Permittivity</li>
+<li><strong>kappa</strong> &#8211; Electric Susceptivity</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Matrial nh_eap</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_material.st_venant_kirchhoff">
+<tt class="descclassname">cell_material.</tt><tt class="descname">st_venant_kirchhoff</tt><big>(</big><em>E_m</em>, <em>nu_m</em><big>)</big><a class="headerlink" href="#cell_material.st_venant_kirchhoff" title="Permalink to this definition">¶</a></dt>
+<dd><p>St Venant Kirchhoff Material</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>E_m</strong> &#8211; (float) Young&#8217;s modulus</li>
+<li><strong>nu_m</strong> &#8211; (float) Poisson ratio</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Material svk</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_material.tensor_invar">
+<tt class="descclassname">cell_material.</tt><tt class="descname">tensor_invar</tt><big>(</big><em>label_tuple</em><big>)</big><a class="headerlink" href="#cell_material.tensor_invar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tensor invariants generator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>label_tuple</strong> &#8211; (tuple) label of invariants, I1, I2, I3</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(list of functions) list of functions</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-cell_computation">
+<span id="cell-computation-py"></span><h2>cell_computation.py<a class="headerlink" href="#module-cell_computation" title="Permalink to this headline">¶</a></h2>
+<p>Micro scale computation for composite material under multi fields</p>
+<dl class="docutils">
+<dt>Class: MicroComputation (pre-processing, fe formulation,</dt>
+<dd>solution, post-processing, view results, write and output results)</dd>
+<dt>Function: field_merge, field_split, set_field, extend_strain,</dt>
+<dd>deformation_grad_with_macro</dd>
+</dl>
+<dl class="class">
+<dt id="cell_computation.MicroComputation">
+<em class="property">class </em><tt class="descclassname">cell_computation.</tt><tt class="descname">MicroComputation</tt><big>(</big><em>cell</em>, <em>material_li</em>, <em>strain_gen_li</em>, <em>strain_FS_li</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unit Cell Computation both 2d and 3d, solve fluctuation, averaged strain
+stress, moduli, homogenized moduli, view results</p>
+<dl class="method">
+<dt id="cell_computation.MicroComputation.avg_merge_moduli">
+<tt class="descname">avg_merge_moduli</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.avg_merge_moduli" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average merged moduli, derivative() of self.Pi w.r.t. self.F_merge,
+and assemble</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">C_avg</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.avg_merge_strain">
+<tt class="descname">avg_merge_strain</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.avg_merge_strain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average merged strain with explicit integration</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">F_merge_avg</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dolfin Function</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.avg_merge_stress">
+<tt class="descname">avg_merge_stress</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.avg_merge_stress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Average merged stress, 3 methods.</p>
+<p>here the consistent one with derivative() is used</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">P_merge_avg</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.comp_fluctuation">
+<tt class="descname">comp_fluctuation</tt><big>(</big><em>print_progress=False</em>, <em>print_solver_info=False</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.comp_fluctuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve fluctuation, solver parameters are set before solving</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>print_progress</strong> &#8211; (bool) print detailed solving progress</li>
+<li><strong>print_solver_info</strong> &#8211; (bool) print detailed solver info</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">updated self.w_merge</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.comp_strain">
+<tt class="descname">comp_strain</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.comp_strain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute strain using project()</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">updated self.F</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.comp_stress">
+<tt class="descname">comp_stress</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.comp_stress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute stress at each node.</p>
+<p>use derivative() w.r.t self.F_merge in self.Pi -&gt; linear form
+integrate F_merge_test*F_merge_trial over domain -&gt; bili form
+solve use default FEniCS linear solver</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">updated self.P_merge</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.effective_moduli_2">
+<tt class="descname">effective_moduli_2</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.effective_moduli_2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Effective moduli calculation according to homogenization method</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">C_avg-LTKL2 &lt;=&gt; C_eff</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.input">
+<tt class="descname">input</tt><big>(</big><em>F_bar_li</em>, <em>w_li</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.input" title="Permalink to this definition">¶</a></dt>
+<dd><p>Input FunctionSpace for F and w to complete initialization, update
+instance members</p>
+<p>F_bar_li and w_li should be updated for each cell and each time step
+values from the previous step is inherited</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>F_bar_li</strong> &#8211; (list of lists) macro F, each term in list is written
+as list, [F_bar, E_bar, T_bar, ...],
+F_bar = [F11,F12,F21,F22]</li>
+<li><strong>w_li</strong> &#8211; (list of dolfin Functions) field list, [w, e, ...]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.sensitivity">
+<tt class="descname">sensitivity</tt><big>(</big><em>B</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.sensitivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sensitivity matrix calculation. Assemble linear and bilinear form
+symetrically. Solve use the default FEniCS linear solver</p>
+<p>Notice that here only PETSc backend is considered</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>B</strong> &#8211; (numpy array) linear form w.r.t fluctuation as well as
+linear form w.r.t macro deformation</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">LTKL</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.view_displacement">
+<tt class="descname">view_displacement</tt><big>(</big><em>field_label=1</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.view_displacement" title="Permalink to this definition">¶</a></dt>
+<dd><p>View displacement of different field</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>field_label</strong> &#8211; (int) field_label 1-&gt;displacement</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">plot</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.view_fluctuation">
+<tt class="descname">view_fluctuation</tt><big>(</big><em>field_label=1</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.view_fluctuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>View fluctuation of different field</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>field_label</strong> &#8211; (int) field_label 1-&gt;displacement</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">plot</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.view_post_processing">
+<tt class="descname">view_post_processing</tt><big>(</big><em>label</em>, <em>component</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.view_post_processing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot strain or stress from Post-Processing</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>label</strong> &#8211; (int) &#8216;stress&#8217; or &#8216;strain&#8217;</li>
+<li><strong>component</strong> &#8211; (int) component label should be label for the merged</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>field</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cell_computation.MicroComputation.write_output">
+<tt class="descname">write_output</tt><big>(</big><em>label</em><big>)</big><a class="headerlink" href="#cell_computation.MicroComputation.write_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write output in a file for post processing of other kinds</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>label</strong> &#8211; field label for writing output</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.deform_grad_with_macro">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">deform_grad_with_macro</tt><big>(</big><em>F_bar</em>, <em>w_component</em><big>)</big><a class="headerlink" href="#cell_computation.deform_grad_with_macro" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic strain generator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>F_bar</strong> &#8211; (dolfin Function) Macro Strain</li>
+<li><strong>w_component</strong> &#8211; (dolfin Function) displacement fluctuation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">complete strain</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dolfin function</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.extend_strain">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">extend_strain</tt><big>(</big><em>macro_li</em>, <em>func_li</em>, <em>generator_li=None</em><big>)</big><a class="headerlink" href="#cell_computation.extend_strain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate strain and extend strain into a list</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>macro_li</strong> &#8211; (list of dolfin Functions) list of macro fields</li>
+<li><strong>func_li</strong> &#8211; (list of dolfin Functions) displacement or other
+fluctuation variable to derive strain</li>
+<li><strong>generator_li</strong> &#8211; (list of functions) functions using macro field and
+fluctuation to generate strain</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">F, extended strain list</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of dolfin Functions</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.field_merge">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">field_merge</tt><big>(</big><em>func_li</em><big>)</big><a class="headerlink" href="#cell_computation.field_merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge field for derivation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func_li</strong> &#8211; (list of dolfin Functions) [Func1, Func2, ...]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">func_merge, func_merge_test, func_merge_trial</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">(tuple of dolfin Functions)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.field_split">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">field_split</tt><big>(</big><em>merged_func</em>, <em>field_num</em><big>)</big><a class="headerlink" href="#cell_computation.field_split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split the merged function to get dependency</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>merged_func</strong> &#8211; (dolfin Function)</li>
+<li><strong>field_num</strong> &#8211; if uni-field no need to split</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of dolfin split Functions</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.material_assem">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">material_assem</tt><big>(</big><em>F</em>, <em>material_list</em><big>)</big><a class="headerlink" href="#cell_computation.material_assem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assemble material energy (psi)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>F</strong> &#8211; (list of dolfin Functions) material energy variables</li>
+<li><strong>material_list</strong> &#8211; (list of Materials)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">updated Material with psi initialized</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.set_field">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">set_field</tt><big>(</big><em>func_li</em><big>)</big><a class="headerlink" href="#cell_computation.set_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>One-stand Function dependency setting (merge and split in one step)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func_li</strong> &#8211; (list of dolfin Functions) w or F to merge and split,
+or other Function_list</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">f_merge, f_merge_test, f_merge_trial, f_split</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.set_solver_parameters">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">set_solver_parameters</tt><big>(</big><em>non_lin_method</em>, <em>lin_method=None</em>, <em>linear_solver='default'</em>, <em>preconditioner=None</em>, <em>para=None</em><big>)</big><a class="headerlink" href="#cell_computation.set_solver_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assistance function to set global solver parameters</p>
+<p>Some parameters should be tuned inside this method. Please keep in mind
+that some parameters set could differ, when backend changes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>non_lin_method</strong> &#8211; (string) name of non linear solver
+from [&#8216;snes&#8217;, &#8216;non_lin_newton]</li>
+<li><strong>lin_method</strong> &#8211; (string) name of linear solver
+from [&#8216;direct&#8217;, &#8216;iterative&#8217;]
+if (None) default is used</li>
+<li><strong>linear_solver</strong> &#8211; (string) name of newton solver
+if &#8216;direct&#8217;, from [&#8216;default&#8217;, &#8216;mumps&#8217;, &#8216;petsc&#8217;,
+&#8216;umfpack]
+if &#8216;iterative&#8217;, from [&#8216;biccgstab&#8217;, &#8216;cg&#8217;,
+&#8216;default&#8217;, &#8216;gmres&#8217;, &#8216;minres&#8217;, &#8216;richardson&#8217;, &#8216;tfqmr&#8217;]</li>
+<li><strong>preconditioner</strong> &#8211; (string) from [&#8216;amg&#8217;, &#8216;default&#8217;, &#8216;hypre_amg&#8217;,
+&#8216;hypre_euclid&#8217;, &#8216;hypre_parasails&#8217;,
+&#8216;icc&#8217;, &#8216;ilu&#8217;, &#8216;none&#8217;, &#8216;petsc_amg&#8217;, &#8216;sor&#8217;]</li>
+<li><strong>para</strong> &#8211; <p>(dict) parameters for the specific solver, e.g.
+krylov_solver (iterative solver):
+{&#8220;absolute_tolerance&#8221;: 1E-9, &#8220;relative_tolerance&#8221;: 1E-7,
+&#8220;maximum_iterations&#8221;: 1000,
+&#8220;gmres&#8221;: {&#8220;restart&#8221;: 30},
+&#8220;preconditioner&#8221;: {&#8220;ilu&#8221;: {&#8220;fill_level&#8221;: 0}}}</p>
+<p>newton_solver:
+{&#8220;absolute_tolerance&#8221;: 1E-8, &#8220;relative_tolerance&#8221;: 2E-7,
+&#8220;maximum_iterations&#8221;: 25, &#8220;relaxation_parameter&#8221;: 1.}</p>
+<p>snes_solver:
+{&#8220;linear_solver&#8221;: &#8220;lu&#8221;, &#8220;line_search&#8221;: &#8220;bt&#8221;,
+&#8220;maximum_iterations&#8221;: 50, &#8220;report&#8221;: True,
+&#8220;error_on_nonconvergence&#8221;: False,}</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(dict) global nested dictionary of parameters setting</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Reference: The formal list of linear solve can be viewed in the following
+website of PETSc
+<a class="reference external" href="http://www.mcs.anl.gov/petsc/documentation/linearsolvertable.html">http://www.mcs.anl.gov/petsc/documentation/linearsolvertable.html</a></p>
+<p>for Eigen3 see the following
+<a class="reference external" href="http://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html">http://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.solver_setting">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">solver_setting</tt><big>(</big><em>solver</em>, <em>solver_para</em>, <em>print_solver_info=False</em>, <em>print_progress=False</em><big>)</big><a class="headerlink" href="#cell_computation.solver_setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solver Setter when a solver is at hand</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>solver</strong> &#8211; an instance of NonlinearVariationalSolver</li>
+<li><strong>solver_para</strong> &#8211; (nested dict) initialized from set_solver_parameters</li>
+<li><strong>print_solver_info</strong> &#8211; (bool) print all solver parameters possibilities</li>
+<li><strong>print_progress</strong> &#8211; (bool) print solver progress</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">updated solver instance</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.test_multi_field">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">test_multi_field</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.test_multi_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test for Multi Field Problem</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.test_multi_field_3d">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">test_multi_field_3d</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.test_multi_field_3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test for Multi Field 3d Problem</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.test_solver">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">test_solver</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.test_solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test for Different Solvers</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.test_uni_field">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">test_uni_field</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.test_uni_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test for Uni Field Problems</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cell_computation.test_uni_field_3d">
+<tt class="descclassname">cell_computation.</tt><tt class="descname">test_uni_field_3d</tt><big>(</big><big>)</big><a class="headerlink" href="#cell_computation.test_uni_field_3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test for Uni Field 3d Problem</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Source File Docstring</a><ul>
+<li><a class="reference internal" href="#module-cell_geom">cell_geom.py</a></li>
+<li><a class="reference internal" href="#module-cell_material">cell_material.py</a></li>
+<li><a class="reference internal" href="#module-cell_computation">cell_computation.py</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Manual on cell_computation.py.html"
+                        title="previous chapter">cell_computation.py</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/source file.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_computation.py.html" title="cell_computation.py"
+             >previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Yi Hu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

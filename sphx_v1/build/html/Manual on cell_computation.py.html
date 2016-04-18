@@ -1,0 +1,538 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cell_computation.py &mdash; Unit Cell Module Documentation 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Unit Cell Module Documentation 1.0 documentation" href="index.html" />
+    <link rel="next" title="Source File Docstring" href="source file.html" />
+    <link rel="prev" title="cell_material.py" href="Manual on cell_material.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="source file.html" title="Source File Docstring"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_material.py.html" title="cell_material.py"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cell-computation-py">
+<h1>cell_computation.py<a class="headerlink" href="#cell-computation-py" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#example-on-2d-uni-field-unit-cell-computation">Example on 2D uni field unit cell
+computation</a></li>
+<li><a class="reference external" href="#concepts-in-implementation">Concepts in implementation</a></li>
+<li><a class="reference external" href="#simulation-template">Simulation Template</a></li>
+</ul>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This is the main part of the module consisting of class
+<tt class="docutils literal"><span class="pre">MicroComputation</span></tt> and several assisting functions which concern about setup
+of the solver parameters, generation of extended strains and initiation of field variables for
+multiple field problems.</p>
+</div>
+<div class="section" id="example-on-2d-uni-field-unit-cell-computation">
+<h2>Example on 2D uni field unit cell computation<a class="headerlink" href="#example-on-2d-uni-field-unit-cell-computation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Module import</strong></li>
+</ul>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">dolfin</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../&#39;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">cell_geom</span> <span class="kn">as</span> <span class="nn">geom</span>
+<span class="kn">import</span> <span class="nn">cell_material</span> <span class="kn">as</span> <span class="nn">mat</span>
+<span class="kn">import</span> <span class="nn">cell_computation</span> <span class="kn">as</span> <span class="nn">comp</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Choose linear backend</strong></li>
+</ul>
+<p>The embedded backends can be viewed through
+<tt class="docutils literal"><span class="pre">linear_algebra_backend()</span></tt>, namely <em>Eigen</em>, <em>PETSc</em> (default), and
+<em>STL</em>. Notice that the backend should be specified at the beginning of
+all the calculation and initialization, as the corresponding matrix and
+vector objects are casted in a style appropriate for the chosen backend.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c">## Linear Backend</span>
+<span class="n">parameters</span><span class="p">[</span><span class="s">&#39;linear_algebra_backend&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;PETSc&#39;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Define unit cell geometry (mesh, inclusions)</strong></li>
+</ul>
+<p>The geometrical properties are set according to the <a class="reference external" href="Manual%20on%20cell_geom.py.html#overview">manual on cell_geom.py</a>. Inclusions such as circle and rectangular in 2D and 3D
+are available. Extensions are possible in this context. Mesh can be
+imported the same as in <em>FEniCS</em>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c">## Define Geometry</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="s">r&#39;../m_fine.xml&#39;</span><span class="p">)</span>
+<span class="n">cell</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">UnitCell</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+
+<span class="c"># Add inclusion</span>
+<span class="n">inc</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionCircle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span>
+<span class="n">inc_di</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;circle_inc&#39;</span><span class="p">:</span> <span class="n">inc</span><span class="p">}</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">set_append_inclusion</span><span class="p">(</span><span class="n">inc_di</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Define materials in composites</strong></li>
+</ul>
+<p>The material properties are set according to the <a class="reference external" href="Manual%20on%20cell_material.py.html#overview">manual on
+cell_material.py</a>.
+Three types of materials are provided in the material libraries. Users
+can also specify their own materials. The definition of a new material
+follows the steps,</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>free energy function <tt class="docutils literal"><span class="pre">psi</span></tt>,</li>
+<li>invariant relations with physical variables,</li>
+<li>initialize an instance of <tt class="docutils literal"><span class="pre">Material</span></tt> with <tt class="docutils literal"><span class="pre">psi</span></tt> and required parameters,</li>
+<li>append invariant relations to the <tt class="docutils literal"><span class="pre">Material</span></tt> instance</li>
+<li>call this instance with the physical field variables and complete instantiation</li>
+</ol>
+</div></blockquote>
+<p>Details and restrictions are referred in <a class="reference external" href="Manual%20on%20cell_material.py.html#overview">manual on
+cell_material.py</a>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c">## Define Material</span>
+<span class="n">E_m</span><span class="p">,</span> <span class="n">nu_m</span><span class="p">,</span> <span class="n">E_i</span><span class="p">,</span> <span class="n">nu_i</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">,</span> <span class="mf">0.3</span>
+<span class="n">mat_m</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">st_venant_kirchhoff</span><span class="p">(</span><span class="n">E_m</span><span class="p">,</span> <span class="n">nu_m</span><span class="p">)</span>
+<span class="n">mat_i</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">st_venant_kirchhoff</span><span class="p">(</span><span class="n">E_i</span><span class="p">,</span> <span class="n">nu_i</span><span class="p">)</span>
+
+<span class="n">mat_li</span> <span class="o">=</span> <span class="p">[</span><span class="n">mat_m</span><span class="p">,</span> <span class="n">mat_i</span><span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Create MicroComputation instance (pre-processing)</strong></li>
+</ul>
+<p>Here a general relation between the physical field variable and strain
+is given. This is realized in the function <tt class="docutils literal"><span class="pre">deform_grad_with_macro</span></tt>.
+<tt class="docutils literal"><span class="pre">w</span></tt> stands for the fluctuation that needs to be solved, while <tt class="docutils literal"><span class="pre">F</span></tt> is
+a general strain measure, which are considered in the material total
+energy. <tt class="docutils literal"><span class="pre">F_bar</span></tt> is the general strain from macro computation serving
+as input for <tt class="docutils literal"><span class="pre">MicroComputation</span></tt>.</p>
+<dl class="docutils">
+<dt>The instantiation steps are as follows</dt>
+<dd><ol class="first last arabic simple">
+<li>Function spaces for physical field variables and generate Functions for field variables. These fiel variables are often regarded as general displacements, and in <tt class="docutils literal"><span class="pre">MicroComputation</span></tt> they are fluctuation to solve.</li>
+<li>Define relation between general strains and general displacements.</li>
+<li>Give function space for general strain, these are for the post processing.</li>
+<li>Initialize a <tt class="docutils literal"><span class="pre">MicroComputation</span></tt> instance using geometry (<tt class="docutils literal"><span class="pre">cell</span></tt>), materials (<tt class="docutils literal"><span class="pre">mat_li</span></tt>), general strain-displacement relation (<tt class="docutils literal"><span class="pre">deform_grad_with_macro</span></tt>), and the strain function space for post-processing (<tt class="docutils literal"><span class="pre">strain_space</span></tt>).</li>
+<li>Specify general strain from macro field and input them into instance of <tt class="docutils literal"><span class="pre">MicroComputation</span></tt>. It completes the creation a <tt class="docutils literal"><span class="pre">MicroComputation</span></tt></li>
+</ol>
+</dd>
+</dl>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c">## Define Computation</span>
+<span class="c"># Step 1: Field variables</span>
+<span class="n">VFS</span> <span class="o">=</span> <span class="n">VectorFunctionSpace</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="s">&quot;CG&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                          <span class="n">constrained_domain</span><span class="o">=</span><span class="n">geom</span><span class="o">.</span><span class="n">PeriodicBoundary_no_corner</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">VFS</span><span class="p">)</span>
+
+<span class="c"># Step 2: Strain and field variable relations</span>
+<span class="k">def</span> <span class="nf">deform_grad_with_macro</span><span class="p">(</span><span class="n">F_bar</span><span class="p">,</span> <span class="n">w_component</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">F_bar</span> <span class="o">+</span> <span class="n">grad</span><span class="p">(</span><span class="n">w_component</span><span class="p">)</span>
+
+<span class="c"># Step 3: Strain space for post processing</span>
+<span class="n">strain_space</span> <span class="o">=</span> <span class="n">TensorFunctionSpace</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s">&#39;DG&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="c"># Step 4: Initialization</span>
+<span class="n">compute</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">MicroComputation</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">mat_li</span><span class="p">,</span>
+                                <span class="p">[</span><span class="n">deform_grad_with_macro</span><span class="p">],</span>
+                                <span class="p">[</span><span class="n">strain_space</span><span class="p">])</span>
+<span class="c"># Step 5: Complete instantiation</span>
+<span class="n">F_bar</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">input</span><span class="p">([</span><span class="n">F_bar</span><span class="p">],</span> <span class="p">[</span><span class="n">w</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Solve fluctuation</strong></li>
+</ul>
+<p>It begins with setting of solver parameters. The solving step is just
+call the member function of this instance <tt class="docutils literal"><span class="pre">comp_fluctuation()</span></tt></p>
+<p>There are two classes of methods, <em>direct</em> (lu solver) and <em>iterative</em>
+(krylov solver). To list the solvers in direct methods, command
+<tt class="docutils literal"><span class="pre">lu_solver_methods()</span></tt>, while for listing iterative method solvers
+command is <tt class="docutils literal"><span class="pre">krylov_solver_methods()</span></tt>. For iterative solvers a
+preconditioner is needed, which can be viewed using command
+<tt class="docutils literal"><span class="pre">krylov_solver_preconditioners()</span></tt>. A complete summary of solvers can
+be referred in the <a class="reference external" href="http://www.mcs.anl.gov/petsc/documentation/linearsolvertable.html">website of
+PETSc</a>.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># Parameters for solving of fluctuation</span>
+<span class="n">comp</span><span class="o">.</span><span class="n">set_solver_parameters</span><span class="p">(</span><span class="s">&#39;non_lin_newton&#39;</span><span class="p">,</span> <span class="n">lin_method</span><span class="o">=</span><span class="s">&#39;direct&#39;</span><span class="p">,</span> <span class="n">linear_solver</span><span class="o">=</span><span class="s">&#39;mumps&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The solver parameters are showed as follows,</p>
+<div class="highlight-python"><div class="highlight"><pre>.-------------------.
+| Solver Parameters |
+.-------------------.
+direct method is used
+</pre></div>
+</div>
+<p>The fluctuation computation step is</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">compute</span><span class="o">.</span><span class="n">comp_fluctuation</span><span class="p">(</span><span class="n">print_progress</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">print_solver_info</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>which gives the result,</p>
+<div class="highlight-python"><div class="highlight"><pre>fluctuation computation finished
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Post Processing and view the results</strong></li>
+</ul>
+<p>Calculation of homogenized quantity is the central part of
+homogenization method. Hence various post processing of the
+<tt class="docutils literal"><span class="pre">MicroComputation</span></tt> result are implemented in this class. These are
+<tt class="docutils literal"><span class="pre">comp_strain()</span></tt>, <tt class="docutils literal"><span class="pre">comp_stress()</span></tt> in terms of calculating general
+strain and stress in the unit cell, <tt class="docutils literal"><span class="pre">avg_merge_strain()</span></tt>,
+<tt class="docutils literal"><span class="pre">avg_merge_stress()</span></tt>, <tt class="docutils literal"><span class="pre">avg_merge_moduli()</span></tt> in terms of calculating
+the averaged quantities in a unit cell, and <tt class="docutils literal"><span class="pre">effective_moduli_2()</span></tt> for
+calculating the homogenized tangent moduli.</p>
+<p><tt class="docutils literal"><span class="pre">effective_moduli_2()</span></tt> is the most consuming part. Specifying a good
+solver for it can speed up this process. This is involved with using
+function <tt class="docutils literal"><span class="pre">set_post_solver_parameters()</span></tt>.</p>
+<p>Visualizing the results are also realized in the current module.
+Wrapping the visualization tools in <em>FEniCS</em> is included. The member
+functions are <tt class="docutils literal"><span class="pre">view_fluctuation()</span></tt>, <tt class="docutils literal"><span class="pre">view_displacement()</span></tt>, and
+<tt class="docutils literal"><span class="pre">view_post_processing()</span></tt>. When multiple fields are considered,
+specifying the component of visualization is needed.</p>
+<p>When the following methods are invoked,</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">compute</span><span class="o">.</span><span class="n">comp_strain</span><span class="p">()</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">comp_stress</span><span class="p">()</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">avg_merge_strain</span><span class="p">()</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">avg_merge_stress</span><span class="p">()</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">avg_merge_moduli</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>the corresponding results will be,</p>
+<div class="highlight-python"><div class="highlight"><pre>strain computation finished
+strain computation finished
+stress computation finished
+average merge strain computation finished
+average merge stress computation finished
+average merge moduli computation finished
+
+array([[  2.68263384e+02,  -1.47306216e-02,   1.45226354e-02,
+          1.16307090e+02],
+       [ -1.47306216e-02,   7.64588022e+01,   7.75364924e+01,
+         -1.46396985e-02],
+       [  1.45226354e-02,   7.75364924e+01,   7.64302939e+01,
+          1.44729548e-02],
+       [  1.16307090e+02,  -1.46396985e-02,   1.44729548e-02,
+          2.72444929e+02]])
+</pre></div>
+</div>
+<p>For effective tangent moduli,</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># Post processing solver parameters</span>
+<span class="n">comp</span><span class="o">.</span><span class="n">set_post_solver_parameters</span><span class="p">(</span><span class="n">lin_method</span><span class="o">=</span><span class="s">&#39;iterative&#39;</span><span class="p">,)</span>
+
+<span class="c"># Homogenized tangent moduli</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">effective_moduli_2</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>+----------------------------+
+| Post Processing Parameters |
++----------------------------+
+iterative method is used
+a valid preconditioner should be provided
+average merge moduli computation finished
+
+array([[  1.05215604e+01,   6.81100019e-04,   8.10922941e-04,
+          6.09319740e+00],
+       [  6.81100019e-04,   3.03957695e+00,   4.12022593e+00,
+         -2.43801203e-04],
+       [  8.10922941e-04,   4.12022593e+00,   2.98311033e+00,
+         -3.19622254e-04],
+       [  6.09319740e+00,  -2.43801203e-04,  -3.19622254e-04,
+          1.74423266e+01]])
+</pre></div>
+</div>
+<p>And for visualization,</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># View results</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">view_fluctuation</span><span class="p">()</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">view_displacement</span><span class="p">()</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">view_post_processing</span><span class="p">(</span><span class="s">&#39;strain&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">compute</span><span class="o">.</span><span class="n">view_post_processing</span><span class="p">(</span><span class="s">&#39;stress&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>Call help for each functions</strong></li>
+</ul>
+<p>Note that in-code docstrings are given to explain functions arguments
+and outputs. Calling docstrings in IPython is simply add a question mark
+behind a function, and two question marks will show the detailed
+implementation the method. In Python context, <tt class="docutils literal"><span class="pre">help()</span></tt> is used to list
+the docstring.</p>
+<p>Calling</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">help</span><span class="p">(</span><span class="n">compute</span><span class="o">.</span><span class="n">comp_fluctuation</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>gives</p>
+<div class="highlight-python"><div class="highlight"><pre>Help on method comp_fluctuation in module cell_computation:
+
+comp_fluctuation(self, print_progress=False, print_solver_info=False) method of cell_computation.MicroComputation instance
+    Solve fluctuation, solver parameters are set before solving
+
+    :param print_progress: (bool) print detailed solving progress
+    :param print_solver_info: (bool) print detailed solver info
+
+    :return: updated self.w_merge
+</pre></div>
+</div>
+<p>This example can work as a <a class="reference external" href="#simulation-template">Simulation Template</a> listed at the end of this manual.</p>
+</div>
+<div class="section" id="concepts-in-implementation">
+<h2>Concepts in implementation<a class="headerlink" href="#concepts-in-implementation" title="Permalink to this headline">¶</a></h2>
+<p>The design concepts of this module are elaborated in this part. The main
+idea of the <tt class="docutils literal"><span class="pre">MicroComputation</span></tt> is to establish a unit cell. When the
+deformation or field variables from macro state are input, micro state
+computation can be realized. This computation will fall into several
+parts such as solving fluctuation, and in the end calculation of effective
+tangent moduli.</p>
+<p>If the geometry and materials of this unit cell does not change. This
+instance of <tt class="docutils literal"><span class="pre">MicroComputation</span></tt> can be reused for another computation.
+This will make <tt class="docutils literal"><span class="pre">MicroComputation</span></tt> act like a factory that produce the
+result of computation in the micro scale.</p>
+<p>Various functions and member methods are targeted to achieve this
+computation.</p>
+<ul class="simple">
+<li><strong>Initializtion</strong></li>
+</ul>
+<p>When an instance is initialized, several methods are called behind
+scene. Once <tt class="docutils literal"><span class="pre">input()</span></tt> is called, the instance is complete. Arguments
+for <tt class="docutils literal"><span class="pre">input()</span></tt> are <tt class="docutils literal"><span class="pre">F_bar_li</span></tt> and <tt class="docutils literal"><span class="pre">w_li</span></tt> representing the macro
+field input and to be solved fluctuation respectively. In <tt class="docutils literal"><span class="pre">input()</span></tt>
+<tt class="docutils literal"><span class="pre">F_bar_li</span></tt> is transformed to a list of Functions suitable for the
+later formulation done by <tt class="docutils literal"><span class="pre">_F_bar_init()</span></tt>. <tt class="docutils literal"><span class="pre">set_field()</span></tt> is called
+to merge and split fields for the variational formulaiton later on. Then
+general strain measures are created through <tt class="docutils literal"><span class="pre">extend_strain()</span></tt> also for
+the later formulation, where the input is the splitted <em>FEniCS</em>
+Functions.</p>
+<ul class="simple">
+<li><strong>Pre-processing</strong></li>
+</ul>
+<p>Pre-processing is the problem formulation stage. <tt class="docutils literal"><span class="pre">_total_energy()</span></tt> is
+to insert general strains into materials to construct its dependency
+within the physical fields. The summation of all the free enerygies of
+every material components in composite make the total energy complete.</p>
+<p>Then boundary condition is provided with <tt class="docutils literal"><span class="pre">_bc_fixed_corner()</span></tt>, which
+fixes all the corners of the unit cell.</p>
+<p><tt class="docutils literal"><span class="pre">_fem_formulation_composite</span></tt> follows with derivation of the nonlinear
+problem using powerful functions defined in <em>FEniCS</em>, <tt class="docutils literal"><span class="pre">derivative()</span></tt></p>
+<ul class="simple">
+<li><strong>Solving</strong></li>
+</ul>
+<p>Solving step is accomplished by <tt class="docutils literal"><span class="pre">comp_fluctuation()</span></tt> with previously
+specified solver parameters.</p>
+<ul class="simple">
+<li><strong>Post-processing</strong></li>
+</ul>
+<p>Post-processing plays the key role in homogenization problem. It starts
+with <tt class="docutils literal"><span class="pre">comp_strain</span></tt>, where convenient <em>FEniCS</em> function <tt class="docutils literal"><span class="pre">project()</span></tt>
+is used. Then material energy is updated with the calculated general
+strains in <tt class="docutils literal"><span class="pre">_energy_update()</span></tt>. It is for the purpose that, general
+stresses are conjugated part in the total energy. Formulating the total
+energy in general strain will lead to direct calculation of general
+stresses with the help of <tt class="docutils literal"><span class="pre">derivative()</span></tt>. It is done by
+<tt class="docutils literal"><span class="pre">comp_stress()</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">avg_merge_strain()</span></tt>, <tt class="docutils literal"><span class="pre">avg_merge_stress()</span></tt>, and
+<tt class="docutils literal"><span class="pre">avg_merge_moduli()</span></tt> are implemented using the trick of multiplying
+trial and test functions defining on a constant Function Space. Detailed
+elaboration is given in the report.</p>
+<p><tt class="docutils literal"><span class="pre">effective_moduli_2()</span></tt> is based on <tt class="docutils literal"><span class="pre">avg_merge_moduli()</span></tt>, a LTKL term
+is subtracted from the averaged merged moduli. The calculation of this
+term is realized in <tt class="docutils literal"><span class="pre">sensitivity()</span></tt>. L matrix is assembled with
+boundary conditions. Some techniques are taken in imposing the boundary
+conditions. Using the <em>FEniCS</em> <tt class="docutils literal"><span class="pre">solve()</span></tt> on <tt class="docutils literal"><span class="pre">K_a</span></tt> and <tt class="docutils literal"><span class="pre">L[:,</span> <span class="pre">i]</span></tt>
+gives a intermediate result. Left multiplying with the transpose of L
+gives the required term.</p>
+<ul class="simple">
+<li><strong>Things to notice</strong></li>
+</ul>
+<p>In the module only the relation between mechanical displacement and
+deformation gradient is given in the function
+<tt class="docutils literal"><span class="pre">deform_grad_with_macro</span></tt>, other kinds of relation between general
+strain and displacement should be specified by the user.</p>
+<p>Another thing to notice is that a good solver needs to be chosen in
+complicated cases such as multi field or 3D. Direct solvers are rather
+slow in these circumstances.However iterative solvers do not always
+converge and require a lot of try-outs with the right preconditioners.</p>
+</div>
+<div class="section" id="simulation-template">
+<h2>Simulation Template<a class="headerlink" href="#simulation-template" title="Permalink to this headline">¶</a></h2>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">dolfin</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../&#39;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">cell_geom</span> <span class="kn">as</span> <span class="nn">geom</span>
+<span class="kn">import</span> <span class="nn">cell_material</span> <span class="kn">as</span> <span class="nn">mat</span>
+<span class="kn">import</span> <span class="nn">cell_computation</span> <span class="kn">as</span> <span class="nn">comp</span>
+
+<span class="c">## Linear Backend</span>
+
+<span class="n">parameters</span><span class="p">[</span><span class="s">&#39;linear_algebra_backend&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Eigen&#39;</span>
+
+<span class="c">## Define Geometry</span>
+
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">Mesh</span><span class="p">(</span><span class="s">r&#39;../m_fine.xml&#39;</span><span class="p">)</span>
+
+<span class="n">cell</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">UnitCell</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+
+<span class="c"># Add inclusion</span>
+<span class="n">inc</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">InclusionCircle</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span>
+<span class="n">inc_di</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;circle_inc&#39;</span><span class="p">:</span> <span class="n">inc</span><span class="p">}</span>
+<span class="n">cell</span><span class="o">.</span><span class="n">set_append_inclusion</span><span class="p">(</span><span class="n">inc_di</span><span class="p">)</span>
+
+<span class="c">## Define Material</span>
+
+<span class="n">E_m</span><span class="p">,</span> <span class="n">nu_m</span><span class="p">,</span> <span class="n">E_i</span><span class="p">,</span> <span class="n">nu_i</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">,</span> <span class="mf">0.3</span>
+<span class="n">mat_m</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">st_venant_kirchhoff</span><span class="p">(</span><span class="n">E_m</span><span class="p">,</span> <span class="n">nu_m</span><span class="p">)</span>
+<span class="n">mat_i</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">st_venant_kirchhoff</span><span class="p">(</span><span class="n">E_i</span><span class="p">,</span> <span class="n">nu_i</span><span class="p">)</span>
+<span class="n">mat_li</span> <span class="o">=</span> <span class="p">[</span><span class="n">mat_m</span><span class="p">,</span> <span class="n">mat_i</span><span class="p">]</span>
+
+<span class="c">## Define Computation</span>
+
+<span class="n">VFS</span> <span class="o">=</span> <span class="n">VectorFunctionSpace</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="s">&quot;CG&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                          <span class="n">constrained_domain</span><span class="o">=</span><span class="n">geom</span><span class="o">.</span><span class="n">PeriodicBoundary_no_corner</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">deform_grad_with_macro</span><span class="p">(</span><span class="n">F_bar</span><span class="p">,</span> <span class="n">w_component</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">F_bar</span> <span class="o">+</span> <span class="n">grad</span><span class="p">(</span><span class="n">w_component</span><span class="p">)</span>
+
+<span class="n">w</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">VFS</span><span class="p">)</span>
+<span class="n">strain_space</span> <span class="o">=</span> <span class="n">TensorFunctionSpace</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s">&#39;DG&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">compute</span> <span class="o">=</span> <span class="n">comp</span><span class="o">.</span><span class="n">MicroComputation</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">mat_li</span><span class="p">,</span>
+                                <span class="p">[</span><span class="n">deform_grad_with_macro</span><span class="p">],</span>
+                                <span class="p">[</span><span class="n">strain_space</span><span class="p">])</span>
+
+<span class="n">F_bar</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]</span>
+
+<span class="n">compute</span><span class="o">.</span><span class="n">input</span><span class="p">([</span><span class="n">F_bar</span><span class="p">],</span> <span class="p">[</span><span class="n">w</span><span class="p">])</span>
+
+<span class="c"># comp.set_solver_parameters(&#39;non_lin_newton&#39;, lin_method=&#39;direct&#39;,</span>
+<span class="c">#                       linear_solver=&#39;cholesky&#39;)</span>
+
+<span class="n">compute</span><span class="o">.</span><span class="n">comp_fluctuation</span><span class="p">(</span><span class="n">print_progress</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">print_solver_info</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="n">compute</span><span class="o">.</span><span class="n">view_fluctuation</span><span class="p">()</span>
+
+<span class="n">delta</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">F_bar</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">delta</span>
+    <span class="k">print</span> <span class="n">F_bar</span>
+    <span class="n">compute</span><span class="o">.</span><span class="n">input</span><span class="p">([</span><span class="n">F_bar</span><span class="p">],</span> <span class="p">[</span><span class="n">w</span><span class="p">])</span>
+    <span class="n">compute</span><span class="o">.</span><span class="n">comp_fluctuation</span><span class="p">(</span><span class="n">print_progress</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">print_solver_info</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">cell_computation.py</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#example-on-2d-uni-field-unit-cell-computation">Example on 2D uni field unit cell computation</a></li>
+<li><a class="reference internal" href="#concepts-in-implementation">Concepts in implementation</a></li>
+<li><a class="reference internal" href="#simulation-template">Simulation Template</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Manual on cell_material.py.html"
+                        title="previous chapter">cell_material.py</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="source file.html"
+                        title="next chapter">Source File Docstring</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/Manual on cell_computation.py.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="source file.html" title="Source File Docstring"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_material.py.html" title="cell_material.py"
+             >previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Yi Hu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

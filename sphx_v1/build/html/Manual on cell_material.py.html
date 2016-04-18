@@ -1,0 +1,304 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>cell_material.py &mdash; Unit Cell Module Documentation 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Unit Cell Module Documentation 1.0 documentation" href="index.html" />
+    <link rel="next" title="cell_computation.py" href="Manual on cell_computation.py.html" />
+    <link rel="prev" title="cell_geom.py" href="Manual on cell_geom.py.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_computation.py.html" title="cell_computation.py"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_geom.py.html" title="cell_geom.py"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cell-material-py">
+<h1>cell_material.py<a class="headerlink" href="#cell-material-py" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#definition-steps">Definition Steps</a></li>
+<li><a class="reference external" href="#call-the-defined-material">Call the defined material</a></li>
+<li><a class="reference external" href="#typical-example-saint-venant-kirchhoff-material">Typical Example (Saint-Venant Kirchhoff
+Material)</a></li>
+<li><a class="reference external" href="#material-library">Material Library</a></li>
+<li><a class="reference external" href="#neo-hookean-type-electroactive-polymer">Neo Hookean Type Electroactive
+Polymer</a></li>
+</ul>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The main class of this file is <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Material</span></tt>, which defines a
+material through material free energy function. Material free energy
+function in the implementation is a function of invariants. Plasticity
+and viscosity are not included in the current state.</p>
+</div>
+<div class="section" id="definition-steps">
+<h2>Definition Steps<a class="headerlink" href="#definition-steps" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>setup free energy function <tt class="docutils literal"><span class="pre">psi</span></tt></li>
+<li>relations between invariants <tt class="docutils literal"><span class="pre">[invar1,</span> <span class="pre">invar2,</span> <span class="pre">...]</span></tt> and physical
+variables <tt class="docutils literal"><span class="pre">[C,</span> <span class="pre">F,</span> <span class="pre">E,</span> <span class="pre">M,</span> <span class="pre">T,</span> <span class="pre">...]</span></tt></li>
+<li>initialize material with free energy function and a list of constants</li>
+<li>use class member method <tt class="docutils literal"><span class="pre">invariant_generator_append()</span></tt> to pass
+invariants relation into the initialized material</li>
+</ol>
+<p>Note that step 3 and step 4 can be unified by direct calling</p>
+<p><tt class="docutils literal"><span class="pre">Material(psi,</span> <span class="pre">[parameter1,</span> <span class="pre">...],</span> <span class="pre">[invariant1_dependency_tuple,</span> <span class="pre">...],</span> <span class="pre">[invariant_generator1,</span> <span class="pre">...])</span></tt></p>
+<p>Detailed examples are given in the following part</p>
+</div>
+<div class="section" id="call-the-defined-material">
+<h2>Call the defined material<a class="headerlink" href="#call-the-defined-material" title="Permalink to this headline">¶</a></h2>
+<p>The name of a defined material can be called directly, since the internal
+<tt class="docutils literal"><span class="pre">__call__()</span></tt> method is implemented. The corresponding arguments
+are the physical variables for this material. Then a material
+instantiation is complete with its energy depending on physical variables.</p>
+</div>
+<div class="section" id="typical-example-saint-venant-kirchhoff-material">
+<h2>Typical Example (Saint-Venant Kirchhoff Material)<a class="headerlink" href="#typical-example-saint-venant-kirchhoff-material" title="Permalink to this headline">¶</a></h2>
+<p>Material energy function is</p>
+<div class="math">
+<p><img src="_images/math/10219af9b48a44d0315d962c1c8fd9ade54908b0.png" alt="\psi\left( \mathbf{E} \right) = \dfrac{\lambda}{2} \left[ \text{tr}(\mathbf{E}) \right]^{2} + \mu \text{tr} \left( \mathbf{E}^{2} \right),"/></p>
+</div><p>where <img class="math" src="_images/math/a5d4acd46eac5a9653d37ccf95f57497a20322c5.png" alt="\mathbf{E}"/> is the Green-Lagrange Tensor, <img class="math" src="_images/math/1ab0134b6e0837594649c75a2ed83cfd85a2d03d.png" alt="\lambda"/>
+and <img class="math" src="_images/math/126e84ba38f7dece5f0ad64e929b9588b20f6440.png" alt="\mu"/> are Lame constants. Detailed illustration can be viewed
+<a class="reference external" href="https://en.wikipedia.org/wiki/Hyperelastic_material">here</a>.</p>
+<p>If the energy is represented by means of invariants, the energy and
+invariants can be formulated as</p>
+<div class="math">
+<p><img src="_images/math/54edd1fc673b946c4e5a785ac0849b29c739f05f.png" alt="\psi\left( I_{1}, I_{2} \right) = \dfrac{\lambda}{2} I_{1}^{2} + \mu I_{2}"/></p>
+</div><p>with <img class="math" src="_images/math/79cfd752839694c49c8ffc9fff60d6ab9b5eebb3.png" alt="I_{1} = \text{tr}(\mathbf{E})"/>, and
+<img class="math" src="_images/math/4e6a60b5a7f559838a2b1a67d25e204bc06413f2.png" alt="I_{2} = \text{tr} \left( \mathbf{E}^{2} \right)."/></p>
+<p>So the material definition according to the above steps is</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">dolfin</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">cell_material</span> <span class="kn">as</span> <span class="nn">mat</span>
+
+<span class="c"># Step1: Energy function</span>
+<span class="k">def</span> <span class="nf">psi</span><span class="p">(</span><span class="n">inv</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">,</span> <span class="n">mu</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">lmbda</span> <span class="o">*</span> <span class="p">(</span><span class="n">inv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">inv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c"># Step2: Invariants</span>
+<span class="k">def</span> <span class="nf">invariant1</span><span class="p">(</span><span class="n">F</span><span class="p">):</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">geometric_dimension</span><span class="p">()</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">Identity</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">F</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">C</span> <span class="o">-</span> <span class="n">I</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tr</span><span class="p">(</span><span class="n">E</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">invariant2</span><span class="p">(</span><span class="n">F</span><span class="p">):</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">geometric_dimension</span><span class="p">()</span>
+    <span class="n">I</span> <span class="o">=</span> <span class="n">Identity</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">F</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">C</span> <span class="o">-</span> <span class="n">I</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tr</span><span class="p">(</span><span class="n">E</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">E</span><span class="p">)</span>
+
+<span class="c"># Step3: Initialization of material</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="mf">7.6e10</span>
+<span class="n">lmbda</span> <span class="o">=</span> <span class="mf">9.7e10</span>
+<span class="c"># Instantiation with energy function and material parameters</span>
+<span class="n">svk</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="p">[</span><span class="n">lmbda</span><span class="p">,</span> <span class="n">mu</span><span class="p">])</span>
+
+<span class="c"># Step4: Pass invariants generator</span>
+<span class="c"># Feed the invariant generators</span>
+<span class="n">svk</span><span class="o">.</span><span class="n">invariant_generator_append</span><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="p">[</span><span class="n">invariant1</span><span class="p">,</span> <span class="n">invariant2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Step 3 and step 4 can be combined to the following</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">svk</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">Material</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="p">[</span><span class="n">lmbda</span><span class="p">,</span> <span class="n">mu</span><span class="p">],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,)],</span> <span class="p">[[</span><span class="n">invariant1</span><span class="p">,</span> <span class="n">invariant2</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>The call of Saint-Venant Kirchhoff Material is just to plug in the field
+variable <img class="math" src="_images/math/183421431fcc0a42e22f825a33dcc3c51607fa6e.png" alt="F"/></p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># Generate field variable</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">UnitSquareMesh</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">TFS</span> <span class="o">=</span> <span class="n">TensorFunctionSpace</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s">&#39;CG&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">F</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">TFS</span><span class="p">)</span>
+
+<span class="c"># Complete instantiation of material</span>
+<span class="n">svk</span><span class="p">([</span><span class="n">F</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="material-library">
+<h2>Material Library<a class="headerlink" href="#material-library" title="Permalink to this headline">¶</a></h2>
+<p>Three different materials are implemented in the material library, where
+we do not need to define the energy function and related invariants. The
+required input left consists of material parameters and their
+physical field variables.</p>
+<p>These three materials <strong>Saint Venant-Kirchhoff Material</strong>, <strong>Simo-Pister
+Material</strong>, and <strong>Neo Hookean Type Electroactive Material</strong>. Their
+energy functions are as follows</p>
+<ol class="arabic">
+<li><p class="first">Saint Venant-Kirchhoff Material</p>
+<div class="math">
+<p><img src="_images/math/167b039b116eb2126ddeb896c3d9ccc744ec0e5c.png" alt="\psi\left( \mathbf{E} \right) = \dfrac{\lambda}{2} \left[ \text{tr}(\mathbf{E}) \right]^{2} + \mu \text{tr} \left( \mathbf{E}^{2} \right)"/></p>
+</div></li>
+<li><p class="first">Simo-Pister Material</p>
+<div class="math">
+<p><img src="_images/math/02f998b13000edbe9e45f37ea1e2c8d7c159a861.png" alt="\psi\left( \theta, \mathbf{C} \right) = \frac{1}{2}\mu_{0} \left( I_{C}-3 \right) + \left( m_{0}\Delta \theta \mu_{0}\right) \ln (\det \mathbf{C})^{\frac{1}{2}} + \frac{1}{2} \lambda_{0} \left[ \ln \left( \det \mathbf{C} \right)^{\frac{1}{2}} \right]^{2} - \rho_{0} c_{V} \left( \theta \ln\dfrac{\theta}{\theta_{0}} - \Delta \theta \right)"/></p>
+</div><p>It describes the behaviour of thermo elastic material and
+<img class="math" src="_images/math/a9cfbeb8ebee1f365919e147a79e242dcb67ee5d.png" alt="\theta"/> represents temperature. This material is taught in the
+course <em>Hoehere Mechanik 3</em></p>
+</li>
+<li><p class="first">Neo Hookean Type Electroactive Material</p>
+<div class="math">
+<p><img src="_images/math/7040d5063a993aa8db5c65fa8f7f32ae3854fd6a.png" alt="\psi\left( \mathbf{C}, \mathbf{E} \right) =  \frac{1}{2}\mu_{0} \left( \text{tr}[\mathbf{C}]-3 \right) + \dfrac{\lambda}{4} \left( J^{2}-1 \right) - \left( \dfrac{\lambda}{2} + \mu \right) \ln J - \frac{1}{2} \epsilon_{0} \left( 1+\dfrac{\chi}{J} \right) J \left[ \mathbf{C}^{-1}: (\mathbf{E} \otimes \mathbf{E}) \right]"/></p>
+</div><p>This energy function describe the behaviour in the coupled field,
+mechanical behaviour and electrical behaviour, where
+<img class="math" src="_images/math/a5d4acd46eac5a9653d37ccf95f57497a20322c5.png" alt="\mathbf{E}"/> is the Green-Lagrange tensor, while
+<img class="math" src="_images/math/b7d320478b7d48a84f849b89c1937729579c671f.png" alt="\mathbf{C}"/> right Cauchy-Green tensor. The material model is
+referred in the paper of ...</p>
+</li>
+</ol>
+<p>It is possible to add other material models in the current material
+library. One should implement the free energy function, invariants
+by oneself.</p>
+</div>
+<div class="section" id="neo-hookean-type-electroactive-polymer">
+<h2>Neo Hookean Type Electroactive Polymer<a class="headerlink" href="#neo-hookean-type-electroactive-polymer" title="Permalink to this headline">¶</a></h2>
+<p>The realization of Neo Hookean Type Electroactive Polymer is given below</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">neo_hook_eap</span><span class="p">(</span><span class="n">E_m</span><span class="p">,</span> <span class="n">nu_m</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span> <span class="n">epsi0</span><span class="o">=</span><span class="mf">8.85e-12</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Neo-Hookean-type EAP from &#39;Keip, Steinmann, Schroeder, 2014, CMAME&#39;</span>
+
+<span class="sd">    :param E_m: Young&#39;s Modulus</span>
+<span class="sd">    :param nu_m: Poisson ratio</span>
+<span class="sd">    :param epsi0: Vacuum Permittivity</span>
+<span class="sd">    :param kappa: Electric Susceptivity</span>
+
+<span class="sd">    :return: Matrial nh_eap</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">miu</span> <span class="o">=</span> <span class="n">E_m</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">nu_m</span><span class="p">))</span>
+    <span class="n">lmbda</span> <span class="o">=</span> <span class="n">E_m</span> <span class="o">*</span> <span class="n">nu_m</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">nu_m</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">nu_m</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">psi</span><span class="p">(</span><span class="n">inva</span><span class="p">,</span> <span class="n">miu</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span> <span class="n">epsi0</span><span class="p">):</span>
+        <span class="n">mech_term</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">miu</span> <span class="o">*</span> <span class="p">(</span><span class="n">inva</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="n">lmbda</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">inva</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> \
+                    <span class="p">(</span><span class="n">lmbda</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">miu</span><span class="p">)</span> <span class="o">*</span> <span class="n">ln</span><span class="p">(</span><span class="n">inva</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">couple_term</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">epsi0</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">kappa</span> <span class="o">/</span> <span class="n">inva</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">inva</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">inva</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">mech_term</span> <span class="o">+</span> <span class="n">couple_term</span>
+
+    <span class="n">nh_eap</span> <span class="o">=</span> <span class="n">Material</span><span class="p">(</span><span class="n">psi</span><span class="p">,</span> <span class="p">[</span><span class="n">miu</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span> <span class="n">epsi0</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">sqr_tr</span><span class="p">(</span><span class="n">F</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tr</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">F</span><span class="p">)</span>
+
+    <span class="n">nh_eap</span><span class="o">.</span><span class="n">invariant_generator_append</span><span class="p">((</span><span class="mi">0</span><span class="p">,),</span> <span class="p">[</span><span class="n">sqr_tr</span><span class="p">,</span> <span class="n">det</span><span class="p">])</span>
+    <span class="n">couple_invar_gen</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">:</span> <span class="n">inner</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">F</span><span class="p">),</span> <span class="n">outer</span><span class="p">(</span><span class="n">E</span><span class="p">,</span> <span class="n">E</span><span class="p">))</span>
+    <span class="n">nh_eap</span><span class="o">.</span><span class="n">invariant_generator_append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">[</span><span class="n">couple_invar_gen</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">nh_eap</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">cell_material.py</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#definition-steps">Definition Steps</a></li>
+<li><a class="reference internal" href="#call-the-defined-material">Call the defined material</a></li>
+<li><a class="reference internal" href="#typical-example-saint-venant-kirchhoff-material">Typical Example (Saint-Venant Kirchhoff Material)</a></li>
+<li><a class="reference internal" href="#material-library">Material Library</a></li>
+<li><a class="reference internal" href="#neo-hookean-type-electroactive-polymer">Neo Hookean Type Electroactive Polymer</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Manual on cell_geom.py.html"
+                        title="previous chapter">cell_geom.py</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Manual on cell_computation.py.html"
+                        title="next chapter">cell_computation.py</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/Manual on cell_material.py.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_computation.py.html" title="cell_computation.py"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Manual on cell_geom.py.html" title="cell_geom.py"
+             >previous</a> |</li>
+        <li><a href="index.html">Unit Cell Module Documentation 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Yi Hu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
