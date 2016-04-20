@@ -1,0 +1,62 @@
+\documentclass[paper=a4, fontsize=11pt]{scrartcl}
+%----------------------------------------------------------------------------------------
+%	IMPORT
+%----------------------------------------------------------------------------------------
+\usepackage{titlePageST}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{fourier}
+\usepackage[english,ngerman]{babel}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage[left=5cm,right=5cm,top=5cm,bottom=5cm]{geometry}
+\usepackage{pdfpages}
+%----------------------------------------------------------------------------------------
+%	Start Document
+%----------------------------------------------------------------------------------------
+\begin{document}
+%------------------------------------------
+%\includepdf{SimTechTitlePage.pdf} 
+%------------------------------------------
+\begin{titlePageST}
+%------------------------------------------
+\makeLogo%
+{- 50pt}{\includegraphics[scale=0.3]{pics/_simtech.png}}%
+{ 120pt}{\includegraphics[scale=0.8]{pics/_unilogo.png}}%
+\vspace{35pt}%
+%------------------------------------------
+\makeHeader%
+[Chair I of Applied Mechanics] %
+{Institute of Applied Mechanics (Civil Engineering)} %
+\vspace{50pt}%
+%------------------------------------------
+\makeTitle%
+{Program Simulation Technology } % %
+{Forschungsmodul I \& II}
+\vspace{80pt}%
+%------------------------------------------
+\makeTitleThesis% %
+{Homogenization for Multi-Field Modelling} %
+\vspace{100pt}%
+%------------------------------------------
+\begin{supervisorST}{2}%
+\addSuper%
+{First Supervisor}%
+{Jun.-Prof. Dr.-Ing. Marc-Andr\'e \textsc{Keip}}%
+{Institute of Applied Mechanics (Civil Engineering)}%
+\addSuper%
+{Second Supervisor}%
+{Dipl.-Ing. Matthias \textsc{Rambausek}}%
+{Institute of Applied Mechanics (Civil Engineering)}%
+\end{supervisorST}%
+\vspace{100pt}%
+%------------------------------------------
+\begin{authorST}{Submitted by}%
+\addAuthorInfo{Author}{Yi \textsc{Hu}} %
+\addAuthorInfo{Matriculation number}{2927411} %
+%\addAuthorInfo{SimTech-Nr.}{99} %
+\addAuthorInfo{Submission date}{April 2016} %
+\end{authorST}%
+%------------------------------------------
+\end{titlePageST}
+%----------------------------------------------------------------------------------------
+\end{document}
