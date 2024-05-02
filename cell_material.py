@@ -136,13 +136,13 @@ class Material(object):
         for i, field in enumerate(self.F):
             field_shape = field.shape()
             self.field_dim[i] = field_shape
-            print 'field %i', i,
+            print('field %i' %i)
             if not field_shape:
-                print 'scalar field'
+                print('scalar field')
             elif len(field_shape) > 1:
-                print 'tensor field'
+                print('tensor field')
             else:
-                print 'vector field: %d' % field_shape[0]
+                print('vector field: %d' % field_shape[0])
 
 
 # Tensor measure
@@ -341,7 +341,7 @@ def neo_hook_eap(E_m, nu_m, kappa, epsi0=8.85e-12):
 
 
 def test_st_venant():
-    print 'Test Saint Venant Material'
+    print('Test Saint Venant Material')
     mesh = UnitSquareMesh(2, 2)
     FS = FunctionSpace(mesh, 'CG', 1)
     TFS = TensorFunctionSpace(mesh, 'CG', 1)
@@ -360,7 +360,7 @@ def test_st_venant():
 
 
 def test_simo_pister():
-    print 'Test Simo Pister Thermomechanic Material'
+    print('Test Simo Pister Thermomechanic Material')
     mesh = UnitSquareMesh(2, 2)
     FS = FunctionSpace(mesh, 'CG', 1)
     TFS = TensorFunctionSpace(mesh, 'CG', 1)
@@ -377,7 +377,7 @@ def test_simo_pister():
 
 
 def test_magneto_mechano():
-    print 'Test Magneto Mechanic Material'
+    print('Test Magneto Mechanic Material')
     mesh = UnitSquareMesh(2, 2)
     # FS = FunctionSpace(mesh, 'CG', 1)
     TFS = TensorFunctionSpace(mesh, 'CG', 1)
@@ -392,7 +392,7 @@ def test_magneto_mechano():
 
 
 def test_neo_hookean_eap():
-    print 'Test neo hookean EAP Material'
+    print('Test neo hookean EAP Material')
     mesh = UnitSquareMesh(2, 2)
     # FS = FunctionSpace(mesh, 'CG', 1)
     TFS = TensorFunctionSpace(mesh, 'CG', 1)
@@ -408,7 +408,7 @@ def test_neo_hookean_eap():
 
 
 if __name__ == '__main__':
-    print 'this is for testing'
+    print('this is for testing')
     from dolfin import *
     # import unittest
     #

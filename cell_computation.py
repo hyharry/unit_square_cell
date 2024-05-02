@@ -276,7 +276,7 @@ class MicroComputation(object):
                        print_solver_info=print_solver_info)
         solver.solve()
 
-        print 'fluctuation computation finished'
+        print('fluctuation computation finished')
 
     # ==== Post-Processing Stage ====
     def _energy_update(self):
@@ -324,7 +324,7 @@ class MicroComputation(object):
         self.F = [project(self.F[i], F_space_i)
                   for i, F_space_i in enumerate(F_space)]
 
-        print 'strain computation finished'
+        print('strain computation finished')
 
     def comp_stress(self):
         """
@@ -354,7 +354,7 @@ class MicroComputation(object):
 
         self.P_merge = P
 
-        print 'stress computation finished'
+        print('stress computation finished')
 
     def avg_merge_strain(self):
         """
@@ -388,7 +388,7 @@ class MicroComputation(object):
                         mat_num)]
                     F_merge_avg[i, j] = assemble(sum(int_li))
 
-        print 'average merge strain computation finished'
+        print('average merge strain computation finished')
 
         # print F_merge_avg
         return F_merge_avg
@@ -459,7 +459,7 @@ class MicroComputation(object):
         #             int_li = [P_i[k][i, j]*dx(k) for k in range(mat_num)]
         #             P_merge_avg[i, j] = assemble(sum(int_li))
 
-        print 'average merge stress computation finished'
+        print('average merge stress computation finished')
 
         # print P_merge_avg
         return P_merge_avg
@@ -485,7 +485,7 @@ class MicroComputation(object):
         ddPi_dF = derivative(dPi_dF, self.F_merge, F_const_trial)
         C_avg = assemble(ddPi_dF)
 
-        print 'average merge moduli computation finished'
+        print('average merge moduli computation finished')
 
         return C_avg.array()
 
@@ -616,11 +616,11 @@ class MicroComputation(object):
                 plot(w, mode='color', interactive=True)
             elif len(w.shape()) is 1:
                 if w.shape()[0] != self.geom_dim:
-                    print 'plot dimension does not match'
+                    print('plot dimension does not match')
                     return
                 plot(w, mode='displacement', interactive=True)
             else:
-                print 'this is a tensor field'
+                print('this is a tensor field')
 
     def view_displacement(self, field_label=1):
         """
@@ -654,12 +654,12 @@ class MicroComputation(object):
                 plot(w + dot(F_bar, coord), mode='color', interactive=True)
             elif len(w.shape()) is 1:
                 if w.shape()[0] != self.geom_dim:
-                    print 'plot dimension does not match'
+                    print('plot dimension does not match')
                     return
                 plot(w + dot(F_bar, coord), mode='displacement',
                      interactive=True)
             else:
-                print 'this is a tensor field'
+                print('this is a tensor field')
 
     def view_post_processing(self, label, component):
         """
@@ -748,9 +748,9 @@ def set_solver_parameters(non_lin_method, lin_method=None,
     # Global solve_parameters parameters
     global solver_parameters
 
-    print '.-------------------.'
-    print '| Solver Parameters |'
-    print '.-------------------.'
+    print('.-------------------.')
+    print('| Solver Parameters |')
+    print('.-------------------.')
 
     # Set non lin solver and parameters
     if non_lin_method == 'snes':
@@ -773,9 +773,9 @@ def set_solver_parameters(non_lin_method, lin_method=None,
                        'iterative': krylov_solver_methods().keys()}
 
     if lin_method in lin_method_dict.keys():
-        print lin_method + ' method is used'
+        print(lin_method + ' method is used')
     elif lin_method is None:
-        print 'Default Setting is used'
+        print('Default Setting is used')
     else:
         raise Exception('Linear Solver Method Not Valid!')
 
@@ -791,25 +791,25 @@ def set_solver_parameters(non_lin_method, lin_method=None,
             solver_parameters["newton_solver"]["preconditioner"] = \
                 preconditioner
         else:
-            print 'a valid preconditioner should be provided'
+            print('a valid preconditioner should be provided')
 
 
 def set_post_solver_parameters(lin_method=None, linear_solver='default',
                                preconditioner=None, para=None):
     global post_solver_parameters
 
-    print '+----------------------------+'
-    print '| Post Processing Parameters |'
-    print '+----------------------------+'
+    print('+----------------------------+')
+    print('| Post Processing Parameters |')
+    print('+----------------------------+')
 
     # Linear solver types
     lin_method_dict = {'direct': lu_solver_methods().keys(),
                        'iterative': krylov_solver_methods().keys()}
 
     if lin_method in lin_method_dict.keys():
-        print lin_method + ' method is used'
+        print(lin_method + ' method is used')
     elif lin_method is None:
-        print 'Default Setting is used'
+        print('Default Setting is used')
     else:
         raise Exception('Linear Solver Method Not Valid!')
 
@@ -824,7 +824,7 @@ def set_post_solver_parameters(lin_method=None, linear_solver='default',
         if preconditioner in krylov_solver_preconditioners().keys():
             post_solver_parameters["preconditioner"] = preconditioner
         else:
-            print 'a valid preconditioner should be provided'
+            print('a valid preconditioner should be provided')
 
     if para is not None:
         post_solver_parameters.update(para)
@@ -966,7 +966,7 @@ def test_uni_field():
     """
     Test for Uni Field Problems
     """
-    print 'St-Venant Kirchhoff Material Test'
+    print('St-Venant Kirchhoff Material Test')
     import cell_geom as ce
     import cell_material as ma
 
@@ -1029,7 +1029,7 @@ def test_multi_field():
     """
     Test for Multi Field Problem
     """
-    print 'Neo-Hookean EAP Material Test'
+    print('Neo-Hookean EAP Material Test')
     import cell_geom as ce
     import cell_material as ma
 
@@ -1100,7 +1100,7 @@ def test_uni_field_3d():
     """
     Test for Uni Field 3d Problem
     """
-    print 'St-Venant Kirchhoff Material Test'
+    print('St-Venant Kirchhoff Material Test')
     import cell_geom as ce
     import cell_material as ma
 
@@ -1174,7 +1174,7 @@ def test_multi_field_3d():
     """
     Test for Multi Field 3d Problem
     """
-    print 'EAP Material Test'
+    print('EAP Material Test')
     import cell_geom as ce
     import cell_material as ma
 
@@ -1255,7 +1255,7 @@ def test_solver():
     """
     Test for Different Solvers
     """
-    print 'Solver Test'
+    print('Solver Test')
     import cell_geom as ce
     import cell_material as ma
 

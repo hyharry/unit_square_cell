@@ -111,23 +111,23 @@ class ThreeDimInclTestCase(unittest.TestCase):
 class StringTempTestCase(unittest.TestCase):
     @unittest.skip('string template check skipped')
     def test_string_template(self):
-        print "BASIC OPERATION"
-        print geom.string_template(1)
-        print geom.string_template(2)
-        print geom.string_template(3)
+        print("BASIC OPERATION")
+        print(geom.string_template(1))
+        print(geom.string_template(2))
+        print(geom.string_template(3))
 
-        print "TRIM TEST"
-        print geom.string_template(1, joint_sym='or', with_boundary=True,
-                                   coord_label=[7], in_colon=True)
+        print("TRIM TEST")
+        print(geom.string_template(1, joint_sym='or', with_boundary=True,
+                                   coord_label=[7], in_colon=True))
 
-        print "DICT TEST"
-        print geom.string_template(1, dict_output=True, joint_sym='and')
-        print geom.string_template(3, dict_output=True)
-        print geom.string_template(2, dict_output=True, joint_sym='or')
+        print("DICT TEST")
+        print(geom.string_template(1, dict_output=True, joint_sym='and'))
+        print(geom.string_template(3, dict_output=True))
+        print(geom.string_template(2, dict_output=True, joint_sym='or'))
 
-        print "NO ORIGIN TEST"
-        print geom.string_template(1, coord_label=[2], joint_sym='and',
-                                   dict_output=True, no_origin=True)
+        print("NO ORIGIN TEST")
+        print(geom.string_template(1, coord_label=[2], joint_sym='and',
+                                   dict_output=True, no_origin=True))
 
 
 class PeriodBoundTestCase(unittest.TestCase):
