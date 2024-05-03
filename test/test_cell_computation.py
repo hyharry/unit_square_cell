@@ -62,7 +62,8 @@ class TwoDimUniTestCase(unittest.TestCase):
         self.comp.comp_fluctuation()
 
     def test_comp_fluct(self):
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_comp_strain(self):
@@ -149,7 +150,8 @@ class TwoDimMultiTestCase(unittest.TestCase):
         self.comp.comp_fluctuation()
 
     def test_comp_fluct(self):
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(val_set, 0.)
 
     def test_comp_strain(self):
@@ -221,7 +223,8 @@ class ThreeDimUniTestCase(unittest.TestCase):
         self.comp.comp_fluctuation()
 
     def test_comp_fluct(self):
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_comp_strain(self):
@@ -299,31 +302,36 @@ class PETScSolverParaTestCase(unittest.TestCase):
     def test_snes_default(self):
         com.set_solver_parameters('snes')
         self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_snes_setting(self):
         com.set_solver_parameters('snes', 'iterative', 'minres')
         self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_nonlin_newton_default(self):
         com.set_solver_parameters('non_lin_newton')
         self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_nonlin_newton_setting_1(self):
         com.set_solver_parameters('non_lin_newton', 'iterative', 'cg')
         self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_nonlin_newton_setting_2(self):
         com.set_solver_parameters('non_lin_newton', 'direct')
         self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_post_solver_para_dir_default(self):
@@ -331,7 +339,8 @@ class PETScSolverParaTestCase(unittest.TestCase):
         self.comp.comp_fluctuation(print_progress=True)
         com.set_post_solver_parameters(lin_method='direct')
         self.comp.effective_moduli_2()
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_post_solver_para_iter_default(self):
@@ -339,7 +348,8 @@ class PETScSolverParaTestCase(unittest.TestCase):
         self.comp.comp_fluctuation(print_progress=True)
         com.set_post_solver_parameters(lin_method='iterative')
         self.comp.effective_moduli_2()
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array()) # Yi 2024
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
 
@@ -384,15 +394,16 @@ class EigenSolverParaTestCase(unittest.TestCase):
 
     def test_nonlin_newton_default(self):
         com.set_solver_parameters('non_lin_newton')
-        self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array())
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     def test_nonlin_newton_dir_sparselu(self):
         com.set_solver_parameters('non_lin_newton', lin_method='direct',
                                   linear_solver='sparselu')
         self.comp.comp_fluctuation(print_progress=True)
-        val_set = set(self.comp.w_merge.vector().array())
+        # val_set = set(self.comp.w_merge.vector().array())
+        val_set = set(np.array(self.comp.w_merge.vector()))
         self.assertNotEqual(len(val_set), 1)
 
     # info(NonlinearVariationalSolver.default_parameters(), True)

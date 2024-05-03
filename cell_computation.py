@@ -156,15 +156,15 @@ class MicroComputation(object):
         F_dim = len(F_li)
         if F_dim == 1:
             FS = FunctionSpace(self.cell.mesh, 'R', 0)
-            F_ex = Expression('F', F=F_li[0])
+            F_ex = Expression('F', F=F_li[0], degree=0)
             return project(F_ex, FS)
         elif F_dim == dim:
             VFS = VectorFunctionSpace(self.cell.mesh, 'R', 0)
             if dim == 2:
-                F_ex = Expression(('F1', 'F2'), F1=F_li[0], F2=F_li[1])
+                F_ex = Expression(('F1', 'F2'), F1=F_li[0], F2=F_li[1], degree=0)
             else:
                 F_ex = Expression(('F1', 'F2', 'F3'), F1=F_li[0], F2=F_li[1],
-                                  F3=F_li[2])
+                                  F3=F_li[2], degree=0)
             return project(F_ex, VFS)
         elif F_dim == dim ** 2:
             TFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
@@ -172,14 +172,14 @@ class MicroComputation(object):
                 F_ex = Expression((("F11", "F12"),
                                    ("F21", "F22")),
                                   F11=F_li[0], F12=F_li[1],
-                                  F21=F_li[2], F22=F_li[3])
+                                  F21=F_li[2], F22=F_li[3], degree=0)
             else:
                 F_ex = Expression((("F11", "F12", "F13"),
                                    ("F21", "F22", "F23"),
                                    ("F31", "F32", "F33")),
                                   F11=F_li[0], F12=F_li[1], F13=F_li[2],
                                   F21=F_li[3], F22=F_li[4], F23=F_li[5],
-                                  F31=F_li[6], F32=F_li[7], F33=F_li[8])
+                                  F31=F_li[6], F32=F_li[7], F33=F_li[8], degree=0)
             return project(F_ex, TFS)
         else:
             raise Exception('Please Input Right Dimension')
@@ -217,9 +217,11 @@ class MicroComputation(object):
         """
         bc = []
         corners = geom.compiled_corner_subdom(self.geom_dim)
-        dim = self.w_merge.shape()
+        # dim = self.w_merge.shape()
+        dim = self.geom_dim
         if dim:
-            fixed_corner = Constant((0,) * dim[0])
+            # fixed_corner = Constant((0,) * dim[0])
+            fixed_corner = Constant((0,) * dim)
         else:
             fixed_corner = Constant(0.)
         for c in corners:
@@ -305,7 +307,8 @@ class MicroComputation(object):
 
         """
         if self.field_num > 1:
-            dim = self.F_merge.shape()[0]
+            # dim = self.F_merge.shape()[0] # Yi: deprecated, but how about multi field?
+            dim = self.geom_dim
             FS = FunctionSpace(self.cell.mesh, 'R', 0)
             RFS = MixedFunctionSpace([FS] * dim)
         else:
@@ -554,10 +557,16 @@ class MicroComputation(object):
         rs = np.array(rows, dtype=np.uintp)
         cs = np.array(cols, dtype=np.uintp)
         vs = np.array(vals, dtype=np.float_)
+
+        ## Yi: incompatible with 2019 version, do it purely in numpy !!!
+        # for i in rs:
+        #     B.setrow(i, cs, vs)
+        # B.apply('insert')
+        # L = B.array()
+
+        L = B.array() # Yi 2024
         for i in rs:
-            B.setrow(i, cs, vs)
-        B.apply('insert')
-        L = B.array()
+            L[i, cs] = vs
 
         LTKL = np.zeros((F_merge_len, F_merge_len))
         L_assign = Function(self.w_merge.function_space())
@@ -595,7 +604,8 @@ class MicroComputation(object):
             # print type(b)
             solver.solve(x, b)
             # solver.solve(K_a, x, b)
-            LTKL[:, i] = L.T.dot(x.array())
+            # LTKL[:, i] = L.T.dot(x.array()) ## Yi 2024: direct multiply is avail
+            LTKL[:, i] = L.T.dot(x)
         return LTKL
 
     def view_fluctuation(self, field_label=1):
@@ -849,7 +859,7 @@ def solver_setting(solver, solver_para,
     solver.parameters.update(solver_para)
 
     if print_progress:
-        set_log_level(PROGRESS)
+        set_log_level(LogLevel.PROGRESS)
 
 
 def field_merge(func_li):
