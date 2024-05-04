@@ -1,6 +1,6 @@
 # coding=utf-8
-# Copyright (C) 2016 Yi Hu
-# python 3.7, FEniCS 1.6.0
+# Copyright (C) 2024 Yi Hu
+# python 3.6.7, FEniCS 2019.1.0
 """
 2D or 3D Unit Cell Geometry setting, Periodic Boundary condition, Inclusion
 Library

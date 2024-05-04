@@ -38,4 +38,11 @@ There are some IPython notebooks testing the features and consistency in the [ip
 If new features are added, you can use files in [test](test/) to carry out unit 
 tests.
 
-__Please note that all the results are tested under python 2.7 and FEniCS 1.6.0__
+__Please note that all the results are tested under python 3.6.7 and FEniCS 2019.1.0__
+
+this project is revived, and adapted to the mentioned versions above
+
+all the test is done via docker images - quay.io/fenicsproject/stable:current
+
+one could try and test ipy-nb with the following command
+`docker run --name old_unit_cell_jupy -w /home/fenics -v $(pwd):/home/fenics/shared -d -p 127.0.0.1:8888:8888 quay.io/fenicsproject/stable:current 'jupyter-notebook --ip=0.0.0.0'`
