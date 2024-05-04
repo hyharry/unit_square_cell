@@ -246,8 +246,9 @@ class MicroComputation(object):
 
         self.F_w = F_w
         self.J = J
-        if self.bc is None:
-            self._bc_fixed_corner()
+        # if self.bc is None: # Yi 2024 past implementation has error! when new func input, then bc also needs update (always) !!
+        #     self._bc_fixed_corner()
+        self._bc_fixed_corner()
 
     # ==== Solution ====
     def comp_fluctuation(self, print_progress=False, print_solver_info=False):
