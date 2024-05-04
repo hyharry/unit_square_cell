@@ -189,7 +189,7 @@ class MicroComputation(object):
         """
         Energy over the whole cell, called by _fem_formulation_composite()
 
-        integrate and sum up for composites， ordering should be considered,
+        integrate and sum up for composites, ordering should be considered,
         dx(0) -> composite matrix
 
         :param F: (list of dolfin Functions) extended strain, [F,E,...]
@@ -218,10 +218,9 @@ class MicroComputation(object):
         bc = []
         corners = geom.compiled_corner_subdom(self.geom_dim)
         # dim = self.w_merge.shape()
-        dim = self.geom_dim
+        dim = self.w_merge.ufl_shape
         if dim:
-            # fixed_corner = Constant((0,) * dim[0])
-            fixed_corner = Constant((0,) * dim)
+            fixed_corner = Constant((0,) * dim[0])
         else:
             fixed_corner = Constant(0.)
         for c in corners:
@@ -293,8 +292,8 @@ class MicroComputation(object):
         (self.F_merge, self.F_merge_test, self.F_merge_trial, self.F_split) = \
             set_field(self.F)
         self._total_energy(self.F_split, self.material_post)
-        # plot(self.F_merge[0,0], interactive=True)
-        # plot(self.F[0][0,0], interactive=True)
+        # plot(self.F_merge[0,0],) # Yi 2024 interactive=True)
+        # plot(self.F[0][0,0],) # Yi 2024 interactive=True)
 
     def _const_strain_FS_init(self):
         """
@@ -308,9 +307,11 @@ class MicroComputation(object):
         """
         if self.field_num > 1:
             # dim = self.F_merge.shape()[0] # Yi: deprecated, but how about multi field?
-            dim = self.geom_dim
-            FS = FunctionSpace(self.cell.mesh, 'R', 0)
-            RFS = MixedFunctionSpace([FS] * dim)
+            dim = self.F_merge.ufl_shape[0]
+            # FS = FunctionSpace(self.cell.mesh, 'R', 0)
+            # RFS = MixedFunctionSpace([FS] * dim) # Yi: MixedFunctionSpace deprecated - https://fenicsproject.discourse.group/t/replacement-of-mixedfunctionspace/798/2
+            R = FiniteElement("R", self.cell.mesh.ufl_cell(), 0)
+            RFS = FunctionSpace(self.cell.mesh, MixedElement((R,)*dim))
         else:
             RFS = TensorFunctionSpace(self.cell.mesh, 'R', 0)
 
@@ -378,7 +379,7 @@ class MicroComputation(object):
         # Not that left and right multiply with constant functions is also
         # possible
         if self.field_num > 1:
-            F_merge_dim = self.F_merge.shape()[0]
+            F_merge_dim = self.F_merge.ufl_shape[0] # Yi 2024
             F_merge_avg = np.zeros((F_merge_dim, 1))
             for i in range(F_merge_dim):
                 int_li = [self.F_merge[i] * dx(k) for k in range(mat_num)]
@@ -418,7 +419,8 @@ class MicroComputation(object):
 
         L = derivative(self.Pi, self.F_merge, F_const_test)
 
-        P_merge_avg = assemble(L).array()
+        # P_merge_avg = assemble(L).array() # Yi 2024
+        P_merge_avg = np.array(assemble(L))
 
         # 2. Method: make derivative to local energy and integrate then
         # assemble, mind that also use Constant Function as TestFunction.
@@ -618,17 +620,17 @@ class MicroComputation(object):
 
         """
         if field_label is 1:
-            plot(self.w_split[0], mode='displacement', interactive=True)
+            plot(self.w_split[0], mode='displacement', ) # Yi 2024 interactive=True)
         else:
             label = field_label - 1
             w = self.w_split[label]
             if not w.shape():
-                plot(w, mode='color', interactive=True)
+                plot(w, mode='color',) # Yi 2024 interactive=True)
             elif len(w.shape()) is 1:
                 if w.shape()[0] != self.geom_dim:
                     print('plot dimension does not match')
                     return
-                plot(w, mode='displacement', interactive=True)
+                plot(w, mode='displacement',) # Yi 2024 interactive=True)
             else:
                 print('this is a tensor field')
 
@@ -648,7 +650,7 @@ class MicroComputation(object):
             else:
                 coord = Expression(('x[0]', 'x[1]', 'x[2]'))
             plot(self.w_split[0] + dot(F_bar, coord), mode='displacement',
-                 interactive=True)
+                ) # Yi 2024 interactive=True)
         else:
             label = field_label - 1
             w = self.w_split[label]
@@ -661,13 +663,13 @@ class MicroComputation(object):
             else:
                 coord = Expression(('x[0]', 'x[1]', 'x[2]'))
             if not w.shape():
-                plot(w + dot(F_bar, coord), mode='color', interactive=True)
+                plot(w + dot(F_bar, coord), mode='color',) # Yi 2024 interactive=True)
             elif len(w.shape()) is 1:
                 if w.shape()[0] != self.geom_dim:
                     print('plot dimension does not match')
                     return
                 plot(w + dot(F_bar, coord), mode='displacement',
-                     interactive=True)
+                    ) # Yi 2024 interactive=True)
             else:
                 print('this is a tensor field')
 
@@ -685,11 +687,11 @@ class MicroComputation(object):
         if label is 'strain':
             if not self.F_merge:
                 self._energy_update()
-            plot(self.F_merge[component], mode='color', interactive=True)
+            plot(self.F_merge[component], mode='color',) # Yi 2024 interactive=True)
         elif label is 'stress':
             if not self.P_merge:
                 self.comp_stress()
-            plot(self.P_merge[component], mode='color', interactive=True)
+            plot(self.P_merge[component], mode='color',) # Yi 2024 interactive=True)
         else:
             raise Exception('invalid output name')
 
@@ -874,8 +876,12 @@ def field_merge(func_li):
     """
     # Determine Function Space
     if len(func_li) > 1:
-        FS_li = [func_i.function_space() for func_i in func_li]
-        MFS = MixedFunctionSpace(FS_li)
+        # FS_li = [func_i.function_space() for func_i in func_li]
+        # MFS = MixedFunctionSpace(FS_li)
+        # Yi 2024: ref - https://fenicsproject.discourse.group/t/replacement-of-mixedfunctionspace/798
+        Elem_l = [fi.ufl_element() for fi in func_li] # Yi 2024: get elem to create MixedFS
+        Mesh_get = func_li[0].function_space().mesh() # Yi 2024: hack to get mseh
+        MFS = FunctionSpace(Mesh_get, MixedElement(Elem_l))
         FS = MFS
         func_merge = Function(FS)
         for i, func_i in enumerate(func_li):
